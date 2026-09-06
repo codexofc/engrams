@@ -6,6 +6,15 @@ All notable changes to Engrams are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+- The tray on Linux, through the StatusNotifierItem protocol over D-Bus in pure Rust
+  (ksni): no GTK at build or run time, every release binary ships the `tray` feature.
+- `examples/tokens.rs` measures what reaches the model's context to answer the
+  benchmark queries, grep against the engine, and the size of the hot index against
+  its unbounded equivalent. On the reference corpus: 33 600 tokens per question with
+  grep, reaching the note 35 times out of 96, against 2 350 with `engram search` and
+  `engram read` (78 out of 96) and 520 with `engram answer` alone (70 out of 96).
+
 ## [0.3.1] - 2026-09-06
 
 ### Fixed

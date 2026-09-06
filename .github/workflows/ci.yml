@@ -24,9 +24,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
       - run: cargo clippy --all-targets -- -D warnings
-      # The tray feature needs GTK on Linux; it ships in the macOS binaries only.
       - run: cargo clippy --all-targets --features tray -- -D warnings
-        if: runner.os == 'macOS'
       # Tests that need the model skip themselves when it is absent; everything
       # else (parsing, ranking, index, life cycle, MCP over stdio) runs here.
       - run: cargo test --all-targets

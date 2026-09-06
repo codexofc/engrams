@@ -2,17 +2,28 @@
 //! (Linux, Windows), in colour while the warm process runs and grey otherwise, with a
 //! menu to reindex, open the notes, start or stop the process. Built with the `tray`
 //! feature only. `engram tray install` starts it at login.
+//!
+//! macOS and Windows go through tray-icon and a tao event loop. Linux speaks the
+//! StatusNotifierItem protocol over D-Bus (ksni, pure Rust): KDE, and GNOME with the
+//! AppIndicator extension, show it without GTK on either side.
 
 use crate::{root, socket_path, spawn_daemon, ui};
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+#[cfg(not(target_os = "linux"))]
+use std::time::Instant;
+#[cfg(not(target_os = "linux"))]
 use tao::event::{Event, StartCause};
+#[cfg(not(target_os = "linux"))]
 use tao::event_loop::{ControlFlow, EventLoop};
+#[cfg(not(target_os = "linux"))]
 use tray_icon::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem};
+#[cfg(not(target_os = "linux"))]
 use tray_icon::{Icon, TrayIcon, TrayIconBuilder};
 
 const EVERY: Duration = Duration::from_secs(5);
+const IDLE_LINE: &str = "Idle: the next search starts the warm process";
 const LABEL: &str = "io.github.codexofc.engrams";
 
 /// The warm process seen from its socket: one line, or None when it is down.
@@ -50,6 +61,64 @@ fn open_notes() {
     let _ = std::process::Command::new(opener).arg(root()).spawn();
 }
 
+#[cfg(target_os = "linux")]
+pub fn run() -> Result<(), String> {
+    use ksni::blocking::TrayMethods;
+    use ksni::menu::{MenuItem, StandardItem};
+
+    struct Item {
+        running: Option<String>,
+        quit: bool,
+    }
+
+    impl ksni::Tray for Item {
+        fn id(&self) -> String {
+            "engrams".into()
+        }
+        fn title(&self) -> String {
+            "Engrams".into()
+        }
+        fn icon_pixmap(&self) -> Vec<ksni::Icon> {
+            // The same mark as on macOS, ARGB in network byte order.
+            let rgba = ui::logo_rgba(64, if self.running.is_some() { None } else { Some([235, 235, 235]) });
+            let data = rgba.as_chunks::<4>().0.iter().flat_map(|p| [p[3], p[0], p[1], p[2]]).collect();
+            vec![ksni::Icon { width: 64, height: 64, data }]
+        }
+        fn menu(&self) -> Vec<MenuItem<Self>> {
+            let up = self.running.is_some();
+            vec![
+                StandardItem { label: self.running.clone().unwrap_or_else(|| IDLE_LINE.into()), enabled: false, ..Default::default() }.into(),
+                MenuItem::Separator,
+                StandardItem { label: "Reindex now".into(), activate: Box::new(|_| detached(&["index"])), ..Default::default() }.into(),
+                StandardItem { label: "Open the notes folder".into(), activate: Box::new(|_| open_notes()), ..Default::default() }.into(),
+                MenuItem::Separator,
+                StandardItem { label: "Start the warm process".into(), enabled: !up, activate: Box::new(|_| spawn_daemon()), ..Default::default() }.into(),
+                StandardItem { label: "Stop the warm process".into(), enabled: up, activate: Box::new(|_| detached(&["stop"])), ..Default::default() }.into(),
+                MenuItem::Separator,
+                StandardItem { label: "Quit".into(), activate: Box::new(|item: &mut Self| item.quit = true), ..Default::default() }.into(),
+            ]
+        }
+    }
+
+    let handle = Item { running: status_line(), quit: false }
+        .spawn()
+        .map_err(|e| format!("no status notifier host on this desktop (KDE, or GNOME with the AppIndicator extension): {e}"))?;
+    loop {
+        std::thread::sleep(EVERY);
+        let line = status_line();
+        match handle.update(|item| {
+            item.running = line;
+            item.quit
+        }) {
+            Some(false) => {}
+            _ => break,
+        }
+    }
+    handle.shutdown().wait();
+    Ok(())
+}
+
+#[cfg(not(target_os = "linux"))]
 pub fn run() -> Result<(), String> {
     let mut event_loop: EventLoop<()> = EventLoop::new();
     #[cfg(target_os = "macos")]
@@ -90,7 +159,7 @@ pub fn run() -> Result<(), String> {
         move |tray: &Option<TrayIcon>, running: &mut Option<bool>| {
             let line = status_line();
             let is_up = line.is_some();
-            status.set_text(line.as_deref().unwrap_or("Idle: the next search starts the warm process"));
+            status.set_text(line.as_deref().unwrap_or(IDLE_LINE));
             start.set_enabled(!is_up);
             stop.set_enabled(is_up);
             if *running != Some(is_up) {

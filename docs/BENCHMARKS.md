@@ -85,6 +85,40 @@ the library implementation of the ModernBERT graph (cosine 0.85 with the referen
 because of a hard-coded activation; the graph shipped here reads it from the
 configuration and reaches 1.000000).
 
+## Context cost: what reaches the model
+
+The reason to run a memory engine next to an agent is not only to find the note, it
+is to spend fewer tokens finding it. `examples/tokens.rs` runs, for each of the 96
+benchmark queries, the two ways an agent has to reach the note that answers, and
+measures what enters its context. Sizes are characters, tokens are estimated at four
+characters per token. Default model, every signal on.
+
+| path to the answer | tool output | notes read | total per query | tokens (est.) | expected note reached |
+|---|---|---|---|---|---|
+| grep, one list of files per word, then the notes in grep order (5 at most) | 48 266 | 86 082 | 134 348 | 33 587 | 35 / 96 |
+| `engram search`, then `engram read` of the note it returned | 2 024 | 7 367 | 9 391 | 2 348 | 78 / 96 |
+| `engram answer`, the passages only, what the hook and the MCP tool give | 2 070 | 0 | 2 070 | 518 | 70 / 96 |
+
+Reading: the grep path costs fourteen times more context per question and reaches
+the right note half as often, because it reads whole notes in an order that words
+alone decide. The passages of `engram answer` cite the expected note in 70 cases out
+of 96 for about five hundred tokens, and the search-then-read path, which brings the
+whole note in, stays under 2 400.
+
+The hot index a session loads at start is bounded too: 17 408 bytes per project, so
+at most about 4 400 tokens, where the notes of a project would be far more. On this
+corpus, 20 projects:
+
+| what a session could load | chars | tokens (est.) |
+|---|---|---|
+| the hot indexes as generated, bounded, all projects together | 50 145 | 12 537 |
+| one line per active note, no bound | 55 551 | 13 888 |
+| every note of the corpus | 1 700 757 | 425 190 |
+
+A session loads one project's index, 2 500 characters on average here and 17 408 at
+most, against 1.7 MB if it loaded the notes. The bound rarely bites on this corpus
+(one line per note would be 11 % larger), it is there for the projects that grow.
+
 ## The default model in detail
 
 Everything in this section is measured with `granite-embedding-278m-multilingual`,
@@ -226,6 +260,7 @@ cargo run --release --example q8_fidelity 6    # Q8 versus F32 on one paragraph 
 cargo run --release --example load_probe       # load and encode times
 cargo run --release --example rss_probe        # resident memory step by step
 cargo run --release --example charts           # redraw models-quality.svg and models-efficiency.svg from the numbers typed in
+cargo run --release --example tokens           # context spent per question, grep against the engine, and the hot index sizes
 ```
 
 To measure an isolated call: a root with two notes, `engram index` with the model,

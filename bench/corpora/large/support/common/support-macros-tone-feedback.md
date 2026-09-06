@@ -1,6 +1,6 @@
 ---
 name: support-macros-tone-feedback
-description: Carrier feedback (April 2026 survey, 212 answers) that macro replies feel robotic, leading to shorter macros, a mandatory personal first line and the removal of the "we understand your frustration" opener
+description: April 2026 survey (212 answers): macro replies felt robotic, so macros got a mandatory personal first line and lost the stock openers
 type: feedback
 status: active
 verified: 2026-05-05

@@ -1,4 +1,4 @@
 /target
 *.bak.*
 .DS_Store
-bench/corpora/*/.souvenance/
+bench/corpora/*/.kept/

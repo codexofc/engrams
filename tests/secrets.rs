@@ -1,4 +1,4 @@
-use souvenance::secrets::scan_text;
+use kept::secrets::scan_text;
 
 #[test]
 fn real_looking_secrets_are_found_with_their_line() {

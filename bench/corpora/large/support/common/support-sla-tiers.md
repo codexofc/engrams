@@ -1,6 +1,6 @@
 ---
 name: support-sla-tiers
-description: Support SLAs by plan (Starter, Business, Enterprise): first response 8 h, 4 h, 1 h on business hours, resolution targets, what counts as a breach, and the measured H1 2026 figures
+description: Support SLAs by plan: first response 8 h, 4 h, 1 h on business hours, what stops the clock, and the measured H1 2026 figures
 type: reference
 status: active
 verified: 2026-07-03
@@ -30,7 +30,7 @@ Time outside business hours does not count for Starter and Business. Enterprise 
 
 ## Breach handling
 
-Deskline flags breaches automatically. A breach on Enterprise triggers a message to the account manager and a line in the monthly review. Three breaches in a quarter on one Enterprise account and the contract says we owe a 5 % credit on the support fee, which happened once (Q4 2025, a shipper in the metals sector, after the [[support-escalation-path]] was not followed for a webhook outage).
+Deskline flags breaches automatically. A breach on Enterprise triggers a message to the account manager and a line in the monthly review. Three breaches in a quarter on one Enterprise account and the contract says we owe a 5 % credit on the support fee, which happened once (Q4 2025, a shipper in the metals sector, after the [[support-escalation-levels-l1-l2-l3]] was not followed for a webhook outage).
 
 ## Measured, H1 2026
 

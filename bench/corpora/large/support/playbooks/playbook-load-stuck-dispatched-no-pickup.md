@@ -1,6 +1,6 @@
 ---
 name: playbook-load-stuck-dispatched-no-pickup
-description: Playbook pour un chargement bloqué en DISPATCHED sans pickup : vérifier le chauffeur assigné, son appareil, sa dernière synchro, puis pickup forcé par le transporteur ou retrait, jamais de transition par le support
+description: Chargement bloqué en DISPATCHED sans pickup : chauffeur assigné, appareil, synchro, verrouillage PIN, visibilité, jamais de transition par le support
 type: reference
 status: active
 verified: 2026-06-30

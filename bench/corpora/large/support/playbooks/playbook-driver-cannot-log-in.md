@@ -1,6 +1,6 @@
 ---
 name: playbook-driver-cannot-log-in
-description: Playbook connexion chauffeur : numéro au format E.164, compteur de PIN à 5, compte désactivé, deuxième appareil, KYC transporteur, et la commande pin-link limitée à 3 par jour
+description: Connexion chauffeur : numéro E.164, compteur PIN à 5 et unlock, compte désactivé, second appareil, pin-link limité à 3 par jour
 type: reference
 status: active
 verified: 2026-07-15
@@ -49,3 +49,19 @@ On ne lit jamais le PIN, il n'est stocké nulle part en clair. On ne le change p
 L2 si `unlock` puis reconnexion échoue deux fois avec un PIN dont le transporteur est sûr, ou si `pin-link` est refusé alors que le compteur du jour est à zéro.
 
 L'ancienne version de ce playbook, d'avant le verrouillage à 5 tentatives, est [[playbook-driver-cannot-log-in-old]], gardée pour comprendre les vieux tickets.
+
+## Ce que le transporteur peut faire seul
+
+Depuis HF-3155 (mai 2026), le back-office transporteur a, sur la fiche de chaque chauffeur, trois boutons : « Envoyer un lien PIN », « Déconnecter les appareils », « Réactiver ». Ils font exactement ce que `pin-link`, `revoke-device` sur tous les appareils et la réactivation font chez nous, avec les mêmes limites (trois liens par jour). La réponse au ticket doit toujours mentionner ces boutons, parce que le prochain chauffeur qui oubliera son PIN sera lundi à 6 h et nous ne serons pas là. La macro `driver-login-selfservice` a la capture d'écran.
+
+Ce que le transporteur ne peut pas faire seul : remettre le compteur de PIN à zéro sans reconnexion (il doit envoyer le lien, qui remet le compteur), voir le PIN (personne ne peut), créer un chauffeur avec un numéro déjà utilisé dans une autre organisation (le numéro est unique sur la plateforme ; un chauffeur qui change d'employeur doit être supprimé de l'ancien, ou demander lui-même le transfert, ce qui est un autre playbook en cours d'écriture).
+
+## Chiffres
+
+`driver:login` : 25 % des tickets au premier semestre 2026, dont 60 % « PIN oublié ». Depuis les boutons du back-office transporteur, les tickets « PIN oublié » venant de transporteurs qui ont utilisé les boutons au moins une fois ont baissé de moitié ; ceux des autres, pas du tout. Le travail restant est de faire connaître les boutons, pas d'en ajouter. Le message de bienvenue des nouveaux transporteurs les mentionne depuis juillet.
+
+## Cas vus une fois, gardés ici
+
+- Un chauffeur avec un numéro en `+44` enregistré sans le `+` par un import CSV du transporteur : `driver find` ne trouvait rien, le chauffeur ne pouvait pas se connecter, la fiche affichait le numéro « correct ». L'import normalise en E.164 depuis HF-3158, et `driver find` accepte maintenant un numéro sans indicatif en demandant le pays.
+
+- Un téléphone dont l'horloge automatique était désactivée et qui avait 11 minutes de retard : « Connexion impossible » à chaque essai, tout le reste correct. Le message d'erreur de l'app dit désormais « Vérifiez l'heure de votre téléphone » quand le serveur renvoie `clock_skew`.

@@ -181,9 +181,9 @@ fn efficiency_svg() -> String {
 const CONTEXT: &[(&str, u32, u32, &str)] = &[
     ("grep, every word of the query, then the notes in grep order", 33587, 35, "#6f7a84"),
     ("grep, the three longest words, then the notes in grep order", 14884, 36, "#6f7a84"),
-    ("souvenance search, then souvenance read of the note it returned", 2348, 78, "#b7410e"),
-    ("souvenance answer, the passages only", 518, 70, "#b7410e"),
-    ("souvenance hook, what every prompt receives", 266, 57, "#b7410e"),
+    ("kept search, then kept read of the note it returned", 2348, 78, "#b7410e"),
+    ("kept answer, the passages only", 518, 70, "#b7410e"),
+    ("kept hook, what every prompt receives", 266, 57, "#b7410e"),
 ];
 
 fn context_svg() -> String {
@@ -203,7 +203,7 @@ fn context_svg() -> String {
         s += &format!("  <rect x=\"{x0}\" y=\"{y}\" width=\"{width:.1}\" height=\"{bar_h}\" rx=\"2\" fill=\"{colour}\"/>\n");
         s += &format!("  <text x=\"{}\" y=\"{}\" fill=\"{INK}\" font-size=\"12\" font-weight=\"600\">{} tokens</text>\n", x0 + width + 8.0, y + 13, tokens);
     }
-    s += &format!("  <text x=\"20\" y=\"{}\" fill=\"{MUTED}\" font-size=\"11\">Grey: an agent with a notes folder and grep. Rust: the same agent with Souvenance. Default model, every signal on.</text>\n", h - 14);
+    s += &format!("  <text x=\"20\" y=\"{}\" fill=\"{MUTED}\" font-size=\"11\">Grey: an agent with a notes folder and grep. Rust: the same agent with Kept. Default model, every signal on.</text>\n", h - 14);
     s += "</svg>\n";
     s
 }

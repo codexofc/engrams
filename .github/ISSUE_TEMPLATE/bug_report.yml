@@ -8,22 +8,22 @@ body:
       label: What happened
       description: The command, its output, and what you expected instead.
       placeholder: |
-        $ souvenance search "..."
-        souvenance: ...
+        $ kept search "..."
+        kept: ...
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: souvenance version
-      placeholder: output of `souvenance version`
+      label: kept version
+      placeholder: output of `kept version`
     validations:
       required: true
   - type: textarea
     id: status
     attributes:
-      label: souvenance status
-      description: Output of `souvenance status` (paths only, no note content).
+      label: kept status
+      description: Output of `kept status` (paths only, no note content).
       render: text
   - type: input
     id: platform
@@ -42,6 +42,6 @@ body:
     attributes:
       label: Checks
       options:
-        - label: I ran `souvenance check` and it reports no problem on my notes
+        - label: I ran `kept check` and it reports no problem on my notes
         - label: This report contains no secret, token or private note content
           required: true

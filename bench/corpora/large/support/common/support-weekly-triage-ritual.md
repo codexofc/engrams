@@ -1,6 +1,6 @@
 ---
 name: support-weekly-triage-ritual
-description: Le tri hebdomadaire du lundi 14 h (support, un backend, un produit) qui relit les catégories de la semaine, décide ce qui devient ticket HF, et tient la liste des dix irritants
+description: Le tri hebdomadaire du lundi 14 h (support, un backend, un produit), son déroulé et la liste des dix irritants de juin 2026
 type: project
 status: active
 verified: 2026-06-22

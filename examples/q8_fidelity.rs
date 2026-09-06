@@ -1,20 +1,20 @@
 //! Fidelity of Q8 to F32 on real paragraphs of the corpus: cosine between the two
 //! vectors, per length bucket. This is the measurement that justifies Q8 by default.
-use souvenance::chunking::{budget_for, split};
-use souvenance::embedder::Embedder;
-use souvenance::note::Note;
-use souvenance::similarity::cosine;
+use kept::chunking::{budget_for, split};
+use kept::embedder::Embedder;
+use kept::note::Note;
+use kept::similarity::cosine;
 
 fn main() {
-    let root = souvenance::paths::root();
-    let model = souvenance::paths::model_dir();
-    std::env::set_var("SOUVENANCE_PRECISION", "f32");
+    let root = kept::paths::root();
+    let model = kept::paths::model_dir();
+    std::env::set_var("KEPT_PRECISION", "f32");
     let f32e = Embedder::load(&model).unwrap();
-    std::env::set_var("SOUVENANCE_PRECISION", "q8");
+    std::env::set_var("KEPT_PRECISION", "q8");
     let q8e = Embedder::load(&model).unwrap();
     let step: usize = std::env::args().nth(1).and_then(|s| s.parse().ok()).unwrap_or(8);
     let mut texts = Vec::new();
-    for f in souvenance::hot::notes_of(&root) {
+    for f in kept::hot::notes_of(&root) {
         let Ok(content) = std::fs::read_to_string(&f) else { continue };
         let note = Note::parse(&content);
         let (name, desc) = (note.field("name").unwrap_or_default(), note.field("description").unwrap_or_default());

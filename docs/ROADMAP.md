@@ -5,7 +5,7 @@ date. Each item ships with its measurement, as everything before it did.
 
 ## Two storage modes
 
-Souvenance has one mode today, the **file mode**: markdown notes are the truth, the
+Kept has one mode today, the **file mode**: markdown notes are the truth, the
 index is derived and disposable, everything lives on one machine and in one git
 repository. It is the right mode for a person and their agents, and it stays the
 default.
@@ -32,9 +32,9 @@ thousands of notes, and a memory that outlives any one laptop. The plan:
 Most people who try the engine already have a memory: a folder of markdown, the
 memory directory of Claude Code, `GEMINI.md` or `AGENTS.md` files, notes without a
 header and with several facts per file. The benchmarks assume the format
-`souvenance check` enforces, so a raw import scores below them.
+`kept check` enforces, so a raw import scores below them.
 
-`souvenance import <path> --from claude-code|gemini|codex|plain --into <family/project>`:
+`kept import <path> --from claude-code|gemini|codex|plain --into <family/project>`:
 
 - a raw mode that keeps every file whole, derives the name from the file name, the
   description from the first heading or line, the type by default, the date from

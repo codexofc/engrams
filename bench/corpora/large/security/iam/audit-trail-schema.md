@@ -1,6 +1,6 @@
 ---
 name: audit-trail-schema
-description: Every security-relevant event is a row in audit_events (actor, action, target, org, ip, request_id, jsonb details) written through AuditRecorder in the same transaction as the change, 34 action codes, 13 month retention
+description: Every security event is a row in audit_events (actor, action, target, org, ip, request_id, details) written in the same transaction, 34 action codes
 type: reference
 status: active
 verified: 2026-05-20
@@ -69,3 +69,48 @@ The actor comes from `Security::getToken()`, so services called from a Messenger
 - Analysts: replicated to the warehouse nightly with `ip` and `user_agent` dropped.
 
 Export and retention specifics are in [[audit-trail-retention-and-export]].
+
+## Querying it well
+
+Three shapes cover nearly every question the table gets asked.
+
+Everything about one organization in a window (support, customer request):
+
+```sql
+SELECT occurred_at, actor_type, actor_id, action, target_type, target_id, details
+FROM audit_events
+WHERE organization_id = :org AND occurred_at >= :from AND occurred_at < :to
+ORDER BY id;
+```
+
+Everything one actor did (offboarding, incident):
+
+```sql
+SELECT occurred_at, action, organization_id, target_type, target_id, ip
+FROM audit_events
+WHERE actor_id = :actor AND occurred_at >= now() - interval '30 days'
+ORDER BY id;
+```
+
+Who touched one object (a disputed invoice, a load cancelled by staff):
+
+```sql
+SELECT occurred_at, actor_type, actor_id, acting_as_id, action, details
+FROM audit_events
+WHERE target_type = 'Invoice' AND target_id = :id
+ORDER BY id;
+```
+
+All three hit an index and return in milliseconds on 13 months of data. Anything that starts with `WHERE details->>'...'` does not, and is a sign that the fact should be a column or a dedicated action code. We added `acting_as_id` as a column for exactly that reason after a month of `details->>'impersonated_user'` queries.
+
+## Sizes and rates
+
+- 2.1 million rows for a typical month in 2026, about 30 per second at the busiest hour, 190 MB per monthly partition with indexes.
+
+- Top actions by volume: `auth.login_succeeded` (38 %), `authz.denied` even sampled (14 %), `apikey.*` usage is **not** audited per call (it would be 40 million rows a month); only lifecycle events are.
+
+- `details` median size 140 bytes, maximum allowed 4 KB by the JSON schemas; a handler that tried to log a full load payload failed validation in staging and was fixed before release.
+
+## Consistency with the entity change log
+
+`audit_log` (the API project's per-field change log) and `audit_events` overlap for some actions: a role change appears in both, once as a field diff and once as `member.role_changed`. They are joined by `request_id` when someone needs both views. We considered making one the source of the other and decided against it: `audit_log` is generated from Doctrine lifecycle events and knows nothing about intent; `audit_events` is written by the service that knows why. Two tables, two purposes, one join key.

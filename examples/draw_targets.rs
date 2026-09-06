@@ -6,8 +6,8 @@
 //! the second half of its note, where an index by heading never looked.
 //! Output: a JSON skeleton to fill in the `query` fields by hand.
 
-use souvenance::chunking::{budget_for, split};
-use souvenance::note::Note;
+use kept::chunking::{budget_for, split};
+use kept::note::Note;
 use std::collections::BTreeMap;
 
 /// Reproducible generator (xorshift64): a draw that changes at every run compares nothing.
@@ -26,16 +26,16 @@ impl Rng {
 }
 
 fn main() {
-    let root = souvenance::paths::root();
+    let root = kept::paths::root();
     let budget = budget_for(512);
     let per_family: usize = std::env::args().nth(1).and_then(|s| s.parse().ok()).unwrap_or(30);
     let seed: u64 = std::env::args().nth(2).and_then(|s| s.parse().ok()).unwrap_or(0x5EED_1234_ABCD_0001);
 
     let mut notes: Vec<(String, String)> = Vec::new();
     let mut details: Vec<(String, usize, String)> = Vec::new();
-    for file in souvenance::hot::notes_of(&root) {
+    for file in kept::hot::notes_of(&root) {
         let Ok(content) = std::fs::read_to_string(&file) else { continue };
-        let path = souvenance::paths::relative(&file, &root);
+        let path = kept::paths::relative(&file, &root);
         let note = Note::parse(&content);
         let chunks = split(note.body(), budget);
         if chunks.is_empty() {

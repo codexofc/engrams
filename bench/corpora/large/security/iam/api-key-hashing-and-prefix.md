@@ -1,6 +1,6 @@
 ---
 name: api-key-hashing-and-prefix
-description: An API key is hfk_ plus 6 char prefix plus 32 random base62 chars, stored as SHA-256 of the full key with the prefix in clear for lookup, since HF-2087; the plaintext column was dropped in 2026-01
+description: Since HF-2087 a key is hfk_ plus 6 char prefix plus 32 base62 chars, stored as SHA-256 with the prefix in clear; the plaintext column was dropped 2026-01
 type: project
 status: active
 verified: 2026-02-20

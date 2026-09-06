@@ -1,6 +1,6 @@
 ---
 name: audit-trail-retention-and-export
-description: audit_events partitions are kept 13 months online then exported as monthly gzip NDJSON to the audit-archive bucket with a checksum manifest, kept 6 years, restored on request with audit:archive:restore
+description: audit_events partitions stay 13 months online, then are exported as gzip NDJSON with a checksum manifest to hf-audit-archive and kept 6 years
 type: project
 status: active
 verified: 2026-06-10

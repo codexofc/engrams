@@ -1,9 +1,8 @@
 ---
 name: api-keys-legacy-plaintext
-description: Until December 2025 API keys were 40 hex chars stored in clear in api_keys.secret, looked up by equality, never expiring, and visible to any staff user in the back-office
+description: Legacy 40 hex API keys (pre HF-2087) still valid until their retroactive expiry in 2027: how to recognise them, what support can and cannot do
 type: reference
-status: archived
-superseded_by: [[api-key-hashing-and-prefix]]
+status: active
 verified: 2025-11-10
 ---
 

@@ -1,23 +1,23 @@
 [package]
-name = "souvenance"
-version = "0.5.0"
+name = "kept"
+version = "0.6.0"
 edition = "2021"
 rust-version = "1.98"
 description = "Local semantic memory for coding agents: markdown notes in, a 200 MB search engine out. No server, no network, no database."
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/codexofc/souvenance"
-homepage = "https://github.com/codexofc/souvenance"
+repository = "https://github.com/codexofc/kept"
+homepage = "https://github.com/codexofc/kept"
 readme = "README.md"
 keywords = ["embeddings", "semantic-search", "memory", "agents", "mcp"]
 categories = ["command-line-utilities", "text-processing"]
 exclude = ["docs/*.png", "docs/*.pdf", "bench/", ".github/", "scripts/", "Dockerfile", "install.sh"]
 
 [lib]
-name = "souvenance"
+name = "kept"
 path = "src/lib.rs"
 
 [[bin]]
-name = "souvenance"
+name = "kept"
 path = "src/main.rs"
 
 [dependencies]
@@ -45,7 +45,7 @@ opt-level = 3
 lto = true
 strip = true
 
-# `souvenance tray`: the mark in the menu bar or the system tray. macOS and Windows go
+# `kept tray`: the mark in the menu bar or the system tray. macOS and Windows go
 # through tray-icon and tao, Linux through the StatusNotifierItem D-Bus protocol in
 # pure Rust, so no GTK at build or run time.
 [target.'cfg(not(target_os = "linux"))'.dependencies]

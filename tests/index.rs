@@ -1,7 +1,7 @@
 //! The index is derived and disposable. What must be solid is that it refuses to
 //! serve vectors produced by another model or for a file that changed.
 
-use souvenance::index::{Header, Index};
+use kept::index::{Header, Index};
 
 fn header() -> Header {
     Header { model: "model-a".into(), weights_hash: "abc123".into(), dim: 3, pooling: "cls".into(), prompts: String::new() }
@@ -98,7 +98,7 @@ fn an_index_built_with_the_same_header_is_accepted() {
 
 #[test]
 fn save_leaves_no_temporary_file_and_round_trips() {
-    let dir = std::env::temp_dir().join(format!("souvenance-index-test-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("kept-index-test-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("index.bin");
     let mut idx = Index::new(header());
@@ -135,7 +135,7 @@ fn a_non_finite_vector_is_refused() {
 
 #[test]
 fn the_old_json_format_is_still_readable() {
-    let dir = std::env::temp_dir().join(format!("souvenance-index-json-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("kept-index-json-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("index.json");
     let mut idx = Index::new(header());

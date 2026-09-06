@@ -26,7 +26,7 @@ language than the passage. Targets are drawn with a fixed seed
 (`examples/draw_targets.rs`).
 
 The metric that counts is **the expected note among the five returned**, because
-five notes is what `souvenance search` shows. A proportion on *n* cases has a standard
+five notes is what `kept search` shows. A proportion on *n* cases has a standard
 error of √(p(1−p)/n): 14 points at 12 cases, 10 at 24, 8 at 36. Two variants that
 differ by two cases out of twenty-four are not distinguished, and the tables say so.
 The "overall" figure of the model comparison is the hit rate over the 96 queries,
@@ -34,7 +34,7 @@ each family weighted by its number of cases.
 
 ## The models compared
 
-Seven checkpoints, the ones `souvenance models` offers. Same notes, same 96 queries,
+Seven checkpoints, the ones `kept models` offers. Same notes, same 96 queries,
 text only (no indexed questions, no identifier bonus) so that only the encoder
 changes. The isolated call is measured on a two-note root: load the model, encode
 one query, rank, exit, best of three runs, peak resident memory from `time -l`.
@@ -103,7 +103,7 @@ target passages, one in three in the other language.
 Expected note among the five returned, default model, text only (no indexed
 questions, the identifier bonus changes nothing on these corpora):
 
-| corpus | family | words only | Souvenance |
+| corpus | family | words only | Kept |
 |---|---|---|---|
 | large | topic of a note (24) | 50 % | **92 %** |
 | large | buried detail (24) | 79 % | **100 %** |
@@ -118,12 +118,12 @@ Context cost on the same queries, same protocol as the section below:
 |---|---|---|
 | large, grep with every word, then the notes in grep order | 17 801 | 41 / 60 |
 | large, grep with the three longest words, then the notes | 5 325 | 35 / 60 |
-| large, `souvenance search` then `souvenance read` | 1 583 | 56 / 60 |
-| large, `souvenance answer`, passages only | 478 | 54 / 60 |
-| large, `souvenance hook`, every prompt | 245 | 42 / 60 |
+| large, `kept search` then `kept read` | 1 583 | 56 / 60 |
+| large, `kept answer`, passages only | 478 | 54 / 60 |
+| large, `kept hook`, every prompt | 245 | 42 / 60 |
 | small, grep with the three longest words, then the notes | 1 985 | 23 / 30 |
-| small, `souvenance search` then `souvenance read` | 1 074 | 29 / 30 |
-| small, `souvenance hook`, every prompt | 240 | 24 / 30 |
+| small, `kept search` then `kept read` | 1 074 | 29 / 30 |
+| small, `kept hook`, every prompt | 240 | 24 / 30 |
 
 Reading, with the caution these corpora deserve. They score higher than the private
 one on every family: they were written to be specific, one fact per note, with a
@@ -136,11 +136,11 @@ the grep and misses one query instead of seven. The private corpus, with its rep
 and its French and English mixed inside one note, is the harder and the more
 realistic of the three, and its numbers are the ones the README leads with.
 
-Every figure in this document assumes notes in the format `souvenance check`
+Every figure in this document assumes notes in the format `kept check`
 enforces: a name, a one-line description, paragraphs as the unit of meaning. A
 memory imported raw from another tool, without descriptions and with several facts
 per file, will score below these tables until it is converted, which is what the
-planned `souvenance import` is for.
+planned `kept import` is for.
 
 ## Context cost: what reaches the model
 
@@ -167,15 +167,15 @@ expected note is reached, five notes at most.
 |---|---|---|---|---|---|
 | consultation, grep with every word of the query, then the notes in grep order | 48 266 | 86 082 | 134 348 | 33 587 | 35 / 96 |
 | consultation, grep with the three longest words, then the notes in grep order | 5 421 | 54 114 | 59 535 | 14 884 | 36 / 96 |
-| consultation, `souvenance search` then `souvenance read` of the note it returned | 2 024 | 7 367 | 9 391 | 2 348 | 78 / 96 |
-| consultation, `souvenance answer`, the passages only | 2 070 | 0 | 2 070 | 518 | 70 / 96 |
-| every prompt, `souvenance hook`, two passages of 700 characters at most or nothing | 1 062 | 0 | 1 062 | 266 | 57 / 96 |
+| consultation, `kept search` then `kept read` of the note it returned | 2 024 | 7 367 | 9 391 | 2 348 | 78 / 96 |
+| consultation, `kept answer`, the passages only | 2 070 | 0 | 2 070 | 518 | 70 / 96 |
+| every prompt, `kept hook`, two passages of 700 characters at most or nothing | 1 062 | 0 | 1 062 | 266 | 57 / 96 |
 
-Reading. A consultation through Souvenance costs six times less context than the
+Reading. A consultation through Kept costs six times less context than the
 keyword grep and reaches the right note twice as often, because grep reads whole
 notes in an order that words alone decide, and it misses the note two times out of
 three even with the right keywords when the query does not share its vocabulary.
-The every-word grep costs fourteen times more than Souvenance for the same recall as
+The every-word grep costs fourteen times more than Kept for the same recall as
 the keyword grep: its lists of files are the cost. The hook is the passive path: at
 every prompt, whether the agent asks or not, 266 tokens on average bring the
 expected note into the context 57 times out of 96, and nothing at all when no
@@ -243,13 +243,13 @@ most, against 1.7 MB if it loaded the notes. The bound rarely bites on this corp
 ## The default model in detail
 
 Everything in this section is measured with `granite-embedding-278m-multilingual`,
-Q8_0 linear layers, the configuration `souvenance init` installs when no other model is
+Q8_0 linear layers, the configuration `kept init` installs when no other model is
 chosen.
 
 ### Retrieval signals
 
 Same index for every column; ablations remove signals before ranking
-(`SOUVENANCE_NO_QUESTIONS=1`, `SOUVENANCE_ID_BONUS=0`, `SOUVENANCE_LEXICAL=1`).
+(`KEPT_NO_QUESTIONS=1`, `KEPT_ID_BONUS=0`, `KEPT_LEXICAL=1`).
 
 | family | words only | text only | + identifier bonus | + indexed questions (default) |
 |---|---|---|---|---|
@@ -371,12 +371,12 @@ through the global attention layers in one piece.
 ## Reproduce
 
 ```sh
-souvenance index                                   # build the index on your notes
+kept index                                   # build the index on your notes
 cargo run --release --example draw_targets 24  # JSON skeleton of blind targets, fill the queries
 cargo run --release --example bench            # the tables above, on your corpus
-SOUVENANCE_NO_QUESTIONS=1 cargo run --release --example bench
-SOUVENANCE_LEXICAL=1 cargo run --release --example bench
-SOUVENANCE_MODEL=~/.souvenance/models/multilingual-e5-base cargo run --release --example bench   # another model, after `souvenance index` with it
+KEPT_NO_QUESTIONS=1 cargo run --release --example bench
+KEPT_LEXICAL=1 cargo run --release --example bench
+KEPT_MODEL=~/.kept/models/multilingual-e5-base cargo run --release --example bench   # another model, after `kept index` with it
 cargo run --release --example q8_fidelity 6    # Q8 versus F32 on one paragraph in six
 cargo run --release --example load_probe       # load and encode times
 cargo run --release --example rss_probe        # resident memory step by step
@@ -384,5 +384,5 @@ cargo run --release --example charts           # redraw models-quality.svg and m
 cargo run --release --example tokens           # context spent per question, grep against the engine, and the hot index sizes
 ```
 
-To measure an isolated call: a root with two notes, `souvenance index` with the model,
-then `/usr/bin/time -l souvenance search "…"` three times with `SOUVENANCE_NO_DAEMON=1`.
+To measure an isolated call: a root with two notes, `kept index` with the model,
+then `/usr/bin/time -l kept search "…"` three times with `KEPT_NO_DAEMON=1`.

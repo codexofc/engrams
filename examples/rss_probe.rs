@@ -5,8 +5,8 @@ fn rss_mb() -> f64 {
 }
 
 fn main() {
-    let root = souvenance::paths::root();
-    let model = souvenance::paths::model_dir();
+    let root = kept::paths::root();
+    let model = kept::paths::model_dir();
     let mut prev = rss_mb();
     let mut step = |label: &str| {
         let now = rss_mb();
@@ -14,14 +14,14 @@ fn main() {
         prev = now;
     };
     step("start");
-    let e = souvenance::embedder::Embedder::load(&model).unwrap();
+    let e = kept::embedder::Embedder::load(&model).unwrap();
     step("model loaded (tokenizer, Q8 layers)");
     let _ = e.encode("a medium sized text to see the activations, with DB_HOST and release-v2 in it").unwrap();
     step("after one encoding");
     let long: String = (0..60).map(|i| format!("Paragraph {i}: the worktree points DB_HOST at the agents database on port 3334. ")).collect();
     let _ = e.encode(&long).unwrap();
     step("after a long encoding (512 tokens)");
-    let idx = souvenance::index::Index::load(&souvenance::paths::state_dir(&root).join("index.bin")).expect("index missing, run `souvenance index`");
+    let idx = kept::index::Index::load(&kept::paths::state_dir(&root).join("index.bin")).expect("index missing, run `kept index`");
     step("index loaded");
     let chunks: Vec<(String, usize, Vec<f32>)> = idx.iter().map(|(k, v)| (k.to_string(), 0, v.to_vec())).collect();
     step("chunk copy for ranking");

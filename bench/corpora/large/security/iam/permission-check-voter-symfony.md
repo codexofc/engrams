@@ -1,6 +1,6 @@
 ---
 name: permission-check-voter-symfony
-description: One PermissionVoter answers every isGranted('load.cancel', $load) call by loading the caller's permissions once per request from a cached set keyed by (user, organization), denies by default and logs denials
+description: A single PermissionVoter resolves the organization context, loads a 60 s cached permission set per (user, org), denies by default and logs denials
 type: reference
 status: active
 verified: 2026-04-08

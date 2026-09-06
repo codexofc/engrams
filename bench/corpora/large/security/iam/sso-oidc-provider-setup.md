@@ -1,6 +1,6 @@
 ---
 name: sso-oidc-provider-setup
-description: Staff and back-office SSO goes through the self-hosted Idento OIDC provider at sso.hf.internal, one client per app, groups claim mapped to roles, 8 h sessions, PKCE mandatory since HF-2104
+description: Staff SSO runs on the self-hosted Idento OIDC provider at sso.hf.internal, one client per app, groups claim mapped to roles, PKCE mandatory since HF-2104
 type: reference
 status: active
 verified: 2026-05-12

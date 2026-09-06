@@ -1,6 +1,6 @@
 ---
-name: support-escalation-path
-description: Chemin d'escalade support en trois niveaux (L1 Deskline, L2 support technique, astreinte backend), avec les critères qui justifient un page et ceux qui attendent le matin
+name: support-escalation-levels-l1-l2-l3
+description: Escalade support en trois niveaux (L1 Deskline, L2 technique, astreinte backend) et les cinq critères qui justifient un page
 type: reference
 status: active
 verified: 2026-05-12

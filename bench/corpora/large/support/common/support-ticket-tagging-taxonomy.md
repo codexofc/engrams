@@ -1,6 +1,6 @@
 ---
 name: support-ticket-tagging-taxonomy
-description: Deskline ticket categories fixed in HF-3005 (12 categories, sub-tags with a colon), what each covers, and the H1 2026 split where load lifecycle and driver login make 46 % of volume
+description: Deskline ticket categories fixed in HF-3005 (12 closed values), the one-category rule and the H1 2026 split by category
 type: project
 status: active
 verified: 2026-07-10
@@ -14,7 +14,7 @@ Before HF-3005 (November 2025) tags were free text and we had `login`, `Login`, 
 
 | Category | Covers | Typical playbook |
 |---|---|---|
-| `load:stuck` | a load that does not move to the next state | [[playbook-load-stuck-dispatched-no-pickup]] |
+| `load:stuck` | a load that does not move to the next state | the stuck-load playbook (support/playbooks) |
 | `load:cancel` | cancellation requests and refusals | cancellation playbooks |
 | `load:duplicate` | a load published twice, or twice via a partner | duplicate playbooks |
 | `load:search` | a carrier cannot find a load, or sees a wrong one | search playbook |

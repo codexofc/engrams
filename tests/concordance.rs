@@ -7,12 +7,12 @@
 //!
 //! Skipped when the model is absent, so the suite runs on a bare machine and in CI.
 
-use souvenance::embedder::Embedder;
-use souvenance::similarity::cosine;
+use kept::embedder::Embedder;
+use kept::similarity::cosine;
 use std::path::PathBuf;
 
 fn model_path() -> Option<PathBuf> {
-    let d = souvenance::paths::model_dir();
+    let d = kept::paths::model_dir();
     d.join("model.safetensors").exists().then_some(d)
 }
 
@@ -41,7 +41,7 @@ impl<'de> serde::Deserialize<'de> for Case {
 #[test]
 fn encoding_matches_the_reference_implementation() {
     let Some(dir) = model_path() else {
-        eprintln!("model absent, test skipped; run `souvenance init`");
+        eprintln!("model absent, test skipped; run `kept init`");
         return;
     };
     let embedder = Embedder::load(&dir).expect("model");
@@ -89,9 +89,9 @@ fn a_short_text_is_not_reported_as_truncated() {
 /// stalled at 0.85 on this model, which declares SiLU.
 #[test]
 fn the_modernbert_model_matches_its_reference() {
-    let dir = souvenance::paths::alt_model_dir();
+    let dir = kept::paths::alt_model_dir();
     if !dir.join("model.safetensors").exists() {
-        eprintln!("ModernBERT model absent, test skipped; run `souvenance init --model {}`", souvenance::paths::ALT_MODEL_REPO);
+        eprintln!("ModernBERT model absent, test skipped; run `kept init --model {}`", kept::paths::ALT_MODEL_REPO);
         return;
     }
     let embedder = Embedder::load(&dir).expect("model");

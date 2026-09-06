@@ -2,21 +2,21 @@
 //!
 //! Families are reported SEPARATELY and never merged into one score. The metric
 //! that counts is whether the expected NOTE is among the five returned, since that
-//! is what `souvenance search` shows; the second says whether the right passage was
+//! is what `kept search` shows; the second says whether the right passage was
 //! the one put forward for that note.
 //!
-//! Queries come from a JSON file (`SOUVENANCE_BENCH`, default `<root>/.souvenance/bench-queries.json`)
+//! Queries come from a JSON file (`KEPT_BENCH`, default `<root>/.kept/bench-queries.json`)
 //! of the form `{"family": [{"path": "...", "ordinal": 0, "query": "..."}]}`. Write
 //! them blind: the author sees only the target passage, never the title.
 //!
 //! Variants, by environment variable, measured on the same index:
-//! `SOUVENANCE_NO_QUESTIONS=1` drops the question vectors, `SOUVENANCE_ID_BONUS=0` cuts the
-//! lexical bonus, `SOUVENANCE_LEARN=0` cuts the learned bonus, `SOUVENANCE_LEXICAL=1` runs a
-//! words-only baseline, `SOUVENANCE_CENTER=1` recenters vectors, `SOUVENANCE_MMR=<lambda>`
+//! `KEPT_NO_QUESTIONS=1` drops the question vectors, `KEPT_ID_BONUS=0` cuts the
+//! lexical bonus, `KEPT_LEARN=0` cuts the learned bonus, `KEPT_LEXICAL=1` runs a
+//! words-only baseline, `KEPT_CENTER=1` recenters vectors, `KEPT_MMR=<lambda>`
 //! reranks by maximal marginal relevance.
 
-use souvenance::index::Index;
-use souvenance::similarity::rank_notes;
+use kept::index::Index;
+use kept::similarity::rank_notes;
 use std::path::PathBuf;
 
 #[derive(serde::Deserialize)]
@@ -27,13 +27,13 @@ struct Case {
 }
 
 fn main() {
-    let root = souvenance::paths::root();
-    let model = souvenance::paths::model_dir();
-    let state = souvenance::paths::state_dir(&root);
-    let index = Index::load(&state.join("index.bin")).expect("index missing, run `souvenance index`");
-    let embedder = souvenance::embedder::Embedder::load(&model).expect("model");
+    let root = kept::paths::root();
+    let model = kept::paths::model_dir();
+    let state = kept::paths::state_dir(&root);
+    let index = Index::load(&state.join("index.bin")).expect("index missing, run `kept index`");
+    let embedder = kept::embedder::Embedder::load(&model).expect("model");
 
-    let no_questions = std::env::var("SOUVENANCE_NO_QUESTIONS").is_ok();
+    let no_questions = std::env::var("KEPT_NO_QUESTIONS").is_ok();
     let chunks: Vec<(String, usize, Vec<f32>)> = index
         .iter()
         .filter(|(key, _)| !(no_questions && Index::is_question_key(key)))
@@ -43,9 +43,9 @@ fn main() {
         })
         .collect();
 
-    let center = std::env::var("SOUVENANCE_CENTER").is_ok();
-    let mmr: Option<f32> = std::env::var("SOUVENANCE_MMR").ok().and_then(|v| v.parse().ok());
-    let lexical = std::env::var("SOUVENANCE_LEXICAL").is_ok();
+    let center = std::env::var("KEPT_CENTER").is_ok();
+    let mmr: Option<f32> = std::env::var("KEPT_MMR").ok().and_then(|v| v.parse().ok());
+    let lexical = std::env::var("KEPT_LEXICAL").is_ok();
     let dim = chunks.first().map(|c| c.2.len()).unwrap_or(0);
     let mut mean = vec![0f32; dim];
     for (_, _, v) in &chunks {
@@ -66,30 +66,30 @@ fn main() {
         println!("# variants: center={center} mmr={mmr:?} no_questions={no_questions} lexical={lexical}\n");
     }
 
-    let bench = std::env::var("SOUVENANCE_BENCH").map(PathBuf::from).unwrap_or_else(|_| state.join("bench-queries.json"));
+    let bench = std::env::var("KEPT_BENCH").map(PathBuf::from).unwrap_or_else(|_| state.join("bench-queries.json"));
     let raw = std::fs::read_to_string(&bench).unwrap_or_else(|e| panic!("{}: {e}", bench.display()));
     let cases: std::collections::BTreeMap<String, Vec<Case>> = serde_json::from_str(&raw).expect("unreadable queries");
 
     println!("# model {}, {} vectors\n", model.file_name().unwrap().to_string_lossy(), chunks.len());
     println!("{:<12} {:>6} {:>8} {:>8} {:>10} {:>12}", "family", "cases", "top 1", "top 5", "passage", "top 5 tol.");
 
-    let id_bonus: f32 = std::env::var("SOUVENANCE_ID_BONUS").ok().and_then(|v| v.parse().ok()).unwrap_or(0.04);
+    let id_bonus: f32 = std::env::var("KEPT_ID_BONUS").ok().and_then(|v| v.parse().ok()).unwrap_or(0.04);
     // Link resolution, by name and by file stem, for the tolerant column.
     let mut by_key: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-    for f in souvenance::hot::notes_of(&root) {
-        let rel = souvenance::paths::relative(&f, &root);
+    for f in kept::hot::notes_of(&root) {
+        let rel = kept::paths::relative(&f, &root);
         if let Ok(content) = std::fs::read_to_string(&f) {
-            if let Some(name) = souvenance::note::Note::parse(&content).field("name") {
-                by_key.insert(souvenance::check::link_key(name), rel.clone());
+            if let Some(name) = kept::note::Note::parse(&content).field("name") {
+                by_key.insert(kept::check::link_key(name), rel.clone());
             }
         }
-        by_key.insert(souvenance::check::link_key(&f.file_stem().unwrap_or_default().to_string_lossy()), rel);
+        by_key.insert(kept::check::link_key(&f.file_stem().unwrap_or_default().to_string_lossy()), rel);
     }
 
     // Usage feedback: applied as in production, leaving out the evaluated pair.
     // The table also yields a "real" family: the pairs themselves.
-    let learn = std::env::var("SOUVENANCE_LEARN").map_or(true, |v| v != "0");
-    let table = souvenance::feedback::Table::load(&state.join("feedback.json"));
+    let learn = std::env::var("KEPT_LEARN").map_or(true, |v| v != "0");
+    let table = kept::feedback::Table::load(&state.join("feedback.json"));
     let today = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() / 86_400;
     let mut past: std::collections::HashMap<String, Vec<f32>> = std::collections::HashMap::new();
     if learn {
@@ -99,13 +99,13 @@ fn main() {
             }
         }
     }
-    let learned = |v: &[f32], query: &str, base: &[souvenance::similarity::NoteHit]| -> std::collections::HashMap<String, f32> {
+    let learned = |v: &[f32], query: &str, base: &[kept::similarity::NoteHit]| -> std::collections::HashMap<String, f32> {
         if !learn {
             return Default::default();
         }
-        let b = souvenance::feedback::learned_bonus(&table, today, |q| past.get(q).map(|pv| souvenance::similarity::cosine(v, pv)), Some(query));
+        let b = kept::feedback::learned_bonus(&table, today, |q| past.get(q).map(|pv| kept::similarity::cosine(v, pv)), Some(query));
         let scores = base.iter().map(|h| (h.path.clone(), h.score)).collect();
-        souvenance::feedback::within_window(b, &scores)
+        kept::feedback::within_window(b, &scores)
     };
     let mut cases = cases;
     if learn && !table.pairs.is_empty() {
@@ -117,7 +117,7 @@ fn main() {
         let mut misses: Vec<&str> = Vec::new();
         for case in list {
             let v = recenter(&embedder.encode_query(&case.query).expect("encoding"));
-            let mut bonus = souvenance::similarity::lexical_bonus(&root, &souvenance::similarity::identifiers(&case.query), id_bonus);
+            let mut bonus = kept::similarity::lexical_bonus(&root, &kept::similarity::identifiers(&case.query), id_bonus);
             for (p, b) in learned(&v, &case.query, &rank_notes(&v, &chunks, 50)) {
                 *bonus.entry(p).or_insert(0.0) += b;
             }
@@ -125,7 +125,7 @@ fn main() {
                 lexical_hits(&root, &case.query)
             } else {
                 match mmr {
-                    None => souvenance::similarity::rank_notes_with_bonus(&v, &chunks, 5, &bonus),
+                    None => kept::similarity::rank_notes_with_bonus(&v, &chunks, 5, &bonus),
                     Some(lambda) => mmr_rerank(&v, &chunks, lambda),
                 }
             };
@@ -170,7 +170,7 @@ fn accepted_paths(base: &std::path::Path, path: &str, by_key: &std::collections:
     let mut out = std::collections::HashSet::new();
     out.insert(path.to_string());
     let Ok(content) = std::fs::read_to_string(base.join(path)) else { return out };
-    let note = souvenance::note::Note::parse(&content);
+    let note = kept::note::Note::parse(&content);
     let mut linked: Vec<&str> = Vec::new();
     if let Some(sup) = note.field("superseded_by") {
         linked.push(sup);
@@ -184,7 +184,7 @@ fn accepted_paths(base: &std::path::Path, path: &str, by_key: &std::collections:
             let after = &rest[start + 2..];
             let Some(end) = after.find("]]") else { break };
             let target = after[..end].split(['|', '#']).next().unwrap_or("").trim();
-            if let Some(p) = by_key.get(&souvenance::check::link_key(target)) {
+            if let Some(p) = by_key.get(&kept::check::link_key(target)) {
                 out.insert(p.clone());
             }
             rest = &after[end + 2..];
@@ -194,10 +194,10 @@ fn accepted_paths(base: &std::path::Path, path: &str, by_key: &std::collections:
 }
 
 /// Maximal marginal relevance over the twenty best notes.
-fn mmr_rerank(query: &[f32], chunks: &[(String, usize, Vec<f32>)], lambda: f32) -> Vec<souvenance::similarity::NoteHit> {
+fn mmr_rerank(query: &[f32], chunks: &[(String, usize, Vec<f32>)], lambda: f32) -> Vec<kept::similarity::NoteHit> {
     let pool = rank_notes(query, chunks, 20);
     let vec_of = |path: &str, ordinal: usize| chunks.iter().find(|(p, o, _)| p == path && *o == ordinal).map(|c| c.2.as_slice());
-    let mut chosen: Vec<souvenance::similarity::NoteHit> = Vec::new();
+    let mut chosen: Vec<kept::similarity::NoteHit> = Vec::new();
     while chosen.len() < 5 && chosen.len() < pool.len() {
         let mut best: Option<(f32, usize)> = None;
         for (i, cand) in pool.iter().enumerate() {
@@ -205,7 +205,7 @@ fn mmr_rerank(query: &[f32], chunks: &[(String, usize, Vec<f32>)], lambda: f32) 
                 continue;
             }
             let cv = vec_of(&cand.path, cand.ordinal).unwrap_or(&[]);
-            let redundancy = chosen.iter().filter_map(|c| vec_of(&c.path, c.ordinal)).map(|v| souvenance::similarity::cosine(cv, v)).fold(0f32, f32::max);
+            let redundancy = chosen.iter().filter_map(|c| vec_of(&c.path, c.ordinal)).map(|v| kept::similarity::cosine(cv, v)).fold(0f32, f32::max);
             let score = lambda * cand.score - (1.0 - lambda) * redundancy;
             if best.is_none_or(|(b, _)| score > b) {
                 best = Some((score, i));
@@ -221,11 +221,11 @@ fn mmr_rerank(query: &[f32], chunks: &[(String, usize, Vec<f32>)], lambda: f32) 
 
 /// Words-only baseline: a note scores the number of distinct query words it
 /// contains (three characters or more, case-insensitive), then total occurrences.
-fn lexical_hits(base: &std::path::Path, query: &str) -> Vec<souvenance::similarity::NoteHit> {
+fn lexical_hits(base: &std::path::Path, query: &str) -> Vec<kept::similarity::NoteHit> {
     let words: Vec<String> =
         query.split(|c: char| !c.is_alphanumeric() && c != '_' && c != '-').map(|w| w.to_lowercase()).filter(|w| w.chars().count() >= 3).collect();
     let mut scored: Vec<(usize, usize, String)> = Vec::new();
-    for f in souvenance::hot::notes_of(base) {
+    for f in kept::hot::notes_of(base) {
         let Ok(content) = std::fs::read_to_string(&f) else { continue };
         let low = content.to_lowercase();
         let distinct = words.iter().filter(|w| low.contains(w.as_str())).count();
@@ -233,8 +233,8 @@ fn lexical_hits(base: &std::path::Path, query: &str) -> Vec<souvenance::similari
             continue;
         }
         let total: usize = words.iter().map(|w| low.matches(w.as_str()).count()).sum();
-        scored.push((distinct, total, souvenance::paths::relative(&f, base)));
+        scored.push((distinct, total, kept::paths::relative(&f, base)));
     }
     scored.sort_by(|a, b| b.0.cmp(&a.0).then(b.1.cmp(&a.1)).then(a.2.cmp(&b.2)));
-    scored.into_iter().take(5).map(|(d, _, path)| souvenance::similarity::NoteHit { path, ordinal: 0, score: d as f32 }).collect()
+    scored.into_iter().take(5).map(|(d, _, path)| kept::similarity::NoteHit { path, ordinal: 0, score: d as f32 }).collect()
 }

@@ -1,6 +1,6 @@
 ---
 name: scim-provisioning-shipper-tenants
-description: Enterprise shippers can provision users through a SCIM 2.0 endpoint at /scim/v2 with a per-organization bearer secret, group to role mapping in scim_group_mappings, and deprovisioning that disables rather than deletes
+description: Enterprise shippers provision users through /scim/v2 with a per-org hfs_ secret, group to role mapping in scim_group_mappings, deprovisioning disables only
 type: project
 status: active
 verified: 2026-04-22

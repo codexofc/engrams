@@ -2,7 +2,7 @@
 //!
 //! A query is short and interrogative, a technical paragraph is long and
 //! declarative. For each paragraph, an external command (a language model chosen by
-//! `SOUVENANCE_QUESTIONS_CMD`) writes the questions it answers; they are embedded and
+//! `KEPT_QUESTIONS_CMD`) writes the questions it answers; they are embedded and
 //! indexed as extra entries pointing back to the paragraph. The cache maps a
 //! paragraph fingerprint to its questions, so an unchanged paragraph never goes
 //! through the model twice. The engine knows no model: it runs a command, feeds it

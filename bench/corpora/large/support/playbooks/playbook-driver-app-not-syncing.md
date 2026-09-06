@@ -1,6 +1,6 @@
 ---
 name: playbook-driver-app-not-syncing
-description: Playbook for a driver app that does not sync: read sync-status, distinguish no network, outbox stuck on a poison event, expired refresh token and battery optimisation, with the app version checks
+description: Driver app not syncing: read sync-status, tell apart no network, poison outbox event, expired refresh token, battery optimisation
 type: reference
 status: active
 verified: 2026-07-15

@@ -1,6 +1,6 @@
 ---
 name: mfa-rollout-backoffice
-description: MFA (TOTP or WebAuthn) became mandatory for all staff in Idento on 2026-01-15 after a 6 week opt-in, 3 accounts locked out on day one, hardware keys for staff_admin and staff_finance since March
+description: MFA (TOTP or WebAuthn) became mandatory for all staff in Idento on 2026-01-15 after a 6 week opt-in; hardware keys required for staff_admin and finance
 type: project
 status: active
 verified: 2026-03-18

@@ -1,7 +1,7 @@
 //! Two notes that say the same thing come out as one pair, never two chunks of one
 //! note, never an archived note.
-use souvenance::duplicates::near_duplicates;
-use souvenance::index::{Header, Index};
+use kept::duplicates::near_duplicates;
+use kept::index::{Header, Index};
 use std::collections::HashSet;
 
 fn header() -> Header {

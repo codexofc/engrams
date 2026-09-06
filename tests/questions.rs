@@ -1,6 +1,6 @@
 //! Cleaning a model command's output, and the index keys of questions.
-use souvenance::index::Index;
-use souvenance::questions::{parse_output, Store, MAX_QUESTIONS};
+use kept::index::Index;
+use kept::questions::{parse_output, Store, MAX_QUESTIONS};
 
 #[test]
 fn model_output_is_cleaned_into_at_most_three_questions() {
@@ -23,7 +23,7 @@ fn question_keys_point_to_their_chunk() {
 
 #[test]
 fn the_store_round_trips_and_prunes() {
-    let dir = std::env::temp_dir().join(format!("souvenance-questions-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("kept-questions-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("questions.json");
     let mut s = Store::load(&path);

@@ -1,4 +1,4 @@
-# Contributing to Souvenance
+# Contributing to Kept
 
 Thanks for considering a contribution. This document is short on purpose: the rules
 below are the ones that keep the project honest, and there are few of them.
@@ -6,7 +6,7 @@ below are the ones that keep the project honest, and there are few of them.
 ## Ground rules
 
 1. **Files are the truth.** Notes are plain markdown owned by the user. Nothing the
-   engine writes under `.souvenance/` is precious, and no change may make the notes
+   engine writes under `.kept/` is precious, and no change may make the notes
    depend on the engine.
 2. **No silent errors.** A plausible wrong vector is worse than a crash. Refuse an
    unknown pooling, a mismatched index, a non-finite vector. If you add a fallback,
@@ -15,22 +15,22 @@ below are the ones that keep the project honest, and there are few of them.
    model path comes with a benchmark line in `docs/BENCHMARKS.md`, including the
    variants you tried and discarded. A number without its error bar is not a result.
 4. **Zero personal data in the repository.** Fixtures are synthetic or public. No
-   corpus excerpts, no hostnames, no tickets, no tokens. `souvenance secrets` must pass
+   corpus excerpts, no hostnames, no tickets, no tokens. `kept secrets` must pass
    on anything you add.
 5. **English everywhere.** Identifiers, comments, messages, documentation.
 
 ## Development
 
 ```sh
-git clone https://github.com/codexofc/souvenance
-cd souvenance
+git clone https://github.com/codexofc/kept
+cd kept
 cargo build --release
 cargo test            # model-dependent tests skip themselves when the model is absent
-souvenance init ~/tmp-notes   # optional: downloads the model, enables the full suite
+kept init ~/tmp-notes   # optional: downloads the model, enables the full suite
 ```
 
 The full suite (concordance with the reference vectors, tokenizer parity on a corpus,
-parallel determinism) needs the model in `~/.souvenance/models/` or `SOUVENANCE_MODEL`.
+parallel determinism) needs the model in `~/.kept/models/` or `KEPT_MODEL`.
 
 Before opening a pull request:
 
@@ -58,8 +58,8 @@ and writes the badge of the README to the `badges` branch at every push to `mast
 
 ## Benchmarks
 
-`examples/bench.rs` reads a JSON file of queries (`SOUVENANCE_BENCH`, default
-`<root>/.souvenance/bench-queries.json`) and reports each family separately. Two public corpora
+`examples/bench.rs` reads a JSON file of queries (`KEPT_BENCH`, default
+`<root>/.kept/bench-queries.json`) and reports each family separately. Two public corpora
 live under `bench/corpora/` (a large one, 220 notes, and a small one, 30 notes, both
 synthetic, bilingual, with their blind queries): `scripts/bench-corpus.sh large` replays
 the benchmark and the context cost measurement on a copy. A change to ranking must
@@ -92,7 +92,7 @@ environment variables so they run on the same index. See `docs/BENCHMARKS.md`.
 
 ## Reporting a bug
 
-Open an issue with the command, the output, `souvenance version`, `souvenance status`, and
+Open an issue with the command, the output, `kept version`, `kept status`, and
 the platform. If the bug involves a ranking, attach the query and the expected note
 (anonymised); a reproducible case is worth more than a description.
 

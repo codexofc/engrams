@@ -1,6 +1,6 @@
 ---
 name: support-hfctl-cli-cheatsheet
-description: The hfctl commands support actually uses, grouped by object (org, load, driver, invoice, webhook, partner), with the flags that matter, the roles they need and the ones that are dry-run by default
+description: The hfctl commands support uses by object (org, load, driver, invoice, webhook, partner), dry-run by default, --apply to act
 type: reference
 status: active
 verified: 2026-08-14
@@ -92,8 +92,37 @@ hfctl audit <user_login> --since 24h       # what did a colleague do
 hfctl whoami
 ```
 
-`page backend` asks for confirmation and reminds you of the criteria from [[support-escalation-path]]. It does not check them, you do.
+`page backend` asks for confirmation and reminds you of the criteria from [[support-escalation-levels-l1-l2-l3]]. It does not check them, you do.
 
 ## Habits
 
 Copy the command you ran into the Deskline internal note, with its output. `hfctl` output includes the audit id, which is what the backend asks for when they need to find your action.
+
+## Output and scripting
+
+Every listing command accepts `-o json` and `--fields a,b,c`. Combined with `jq`, that is how L2 answers "how many of this org's loads are stuck" without SQL:
+
+```
+hfctl load list --org <org_id> --status DISPATCHED -o json \
+  | jq '[.[] | select(.pickup_window_end < now|todate)] | length'
+```
+
+Pagination is automatic for lists under 1 000 rows; above, `--limit` and `--cursor` are needed and the command says so. There is no `--all`, on purpose.
+
+Exit codes: 0 done, 1 refused by the API (the message is the API's error envelope, with `request_id`), 2 dry run completed (so a script can tell "would do" from "did"), 3 not allowed for your role, 4 confirmation token expired or wrong.
+
+## Errors you will see
+
+- `role_insufficient`: you have `support-read` and the command needs `support-write`. Ask L2, do not ask for the role.
+
+- `ticket_required`: the command needs `--ticket` and you did not pass one. Open the HF ticket first; the key is validated against the tracker, a made-up key is refused.
+
+- `dry_run_only`: you forgot `--apply`. The output above the error is what would have happened.
+
+- `confirm_required`: `cancel-in-transit`, waiting for the second person. The token is printed once; if you lose it, re-run.
+
+- `stale_client`: your `hfctl` is older than the minimum the admin API accepts (the team pins a version, the API refuses anything two minors behind). `hfctl update` fetches the signed binary from `registry.hf.internal`.
+
+## Where the audit goes
+
+`sys_audit_log` rows are readable by L2 with `hfctl audit <login> --since 7d` and by the backend with SQL. Each row has the command, the arguments with secrets masked, the `request_id`, the outcome, and the ticket when given. Retained two years. The weekly triage does not read it; the security review does, quarterly, looking for `--apply` without a Deskline or HF reference in the same hour.

@@ -3,8 +3,8 @@
 FROM debian:bookworm-slim
 ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl procps git && rm -rf /var/lib/apt/lists/*
-COPY dist/${TARGETARCH}/souvenance /usr/local/bin/souvenance
-ENV SOUVENANCE_ROOT=/notes
-VOLUME ["/notes", "/root/.souvenance"]
-ENTRYPOINT ["souvenance"]
+COPY dist/${TARGETARCH}/kept /usr/local/bin/kept
+ENV KEPT_ROOT=/notes
+VOLUME ["/notes", "/root/.kept"]
+ENTRYPOINT ["kept"]
 CMD ["help"]

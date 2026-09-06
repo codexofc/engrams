@@ -1608,6 +1608,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "kept"
+version = "0.6.0"
+dependencies = [
+ "base64",
+ "candle-core",
+ "candle-nn",
+ "candle-transformers",
+ "half",
+ "ksni",
+ "libc",
+ "regex",
+ "safetensors 0.4.5",
+ "serde",
+ "serde_json",
+ "spm_precompiled",
+ "tao",
+ "tokenizers",
+ "tray-icon",
+ "unicode-normalization",
+]
+
+[[package]]
 name = "keyboard-types"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2729,28 +2751,6 @@ name = "smallvec"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9be42f50aa861c555654aa3a37f52f4b1074bacf4e48fe0ef7fa584e80f1f0f"
-
-[[package]]
-name = "souvenance"
-version = "0.5.0"
-dependencies = [
- "base64",
- "candle-core",
- "candle-nn",
- "candle-transformers",
- "half",
- "ksni",
- "libc",
- "regex",
- "safetensors 0.4.5",
- "serde",
- "serde_json",
- "spm_precompiled",
- "tao",
- "tokenizers",
- "tray-icon",
- "unicode-normalization",
-]
 
 [[package]]
 name = "spm_precompiled"

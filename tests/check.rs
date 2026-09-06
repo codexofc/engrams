@@ -1,14 +1,14 @@
-//! `souvenance check` gives every frontmatter field a reader, and defines by what it
+//! `kept check` gives every frontmatter field a reader, and defines by what it
 //! refuses the YAML subset the memory accepts.
 
-use souvenance::check::{check_corpus, check_note};
-use souvenance::note::Note;
+use kept::check::{check_corpus, check_note};
+use kept::note::Note;
 
 fn note(raw: &str) -> Note {
     Note::parse(raw)
 }
 
-fn messages(findings: &[souvenance::check::Finding]) -> String {
+fn messages(findings: &[kept::check::Finding]) -> String {
     findings.iter().map(|f| f.message.as_str()).collect::<Vec<_>>().join(" | ")
 }
 

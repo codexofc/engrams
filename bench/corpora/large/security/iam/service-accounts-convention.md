@@ -1,6 +1,6 @@
 ---
 name: service-accounts-convention
-description: Internal service-to-service calls use service accounts svc-<consumer>-<provider> with a fixed role, mTLS inside the mesh and a signed JWT outside it, never a human's credentials or a customer API key
+description: Internal calls use service accounts svc-<consumer>-<provider> with one fixed role, mTLS inside the mesh and 5 min ES256 JWTs outside it, never human creds
 type: reference
 status: active
 verified: 2026-03-30

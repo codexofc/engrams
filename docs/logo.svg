@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="560" height="140" viewBox="0 0 560 140" role="img" aria-label="souvenance">
-  <title>souvenance</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="140" viewBox="0 0 560 140" role="img" aria-label="kept">
+  <title>kept</title>
   <!-- The mark: a memory trace. Three arcs, each one a retrieval leaving a deeper imprint, around the fact itself. -->
   <g transform="translate(70 70)" fill="none" stroke="#b7410e" stroke-linecap="round">
     <path d="M -46 -18 A 50 50 0 0 1 -18 -46" stroke-width="5" opacity="0.35"/>
@@ -10,6 +10,6 @@
     <path d="M -18 14 A 22 22 0 0 0 18 14" stroke-width="8"/>
   </g>
   <circle cx="70" cy="70" r="9" fill="#b7410e"/>
-  <text x="150" y="86" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="500" letter-spacing="-1" fill="#10202b">souvenance</text>
+  <text x="150" y="86" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="500" letter-spacing="-1" fill="#10202b">kept</text>
   <text x="153" y="116" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#485864">local semantic memory for coding agents</text>
 </svg>

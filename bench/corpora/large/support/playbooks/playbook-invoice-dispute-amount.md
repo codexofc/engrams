@@ -1,6 +1,6 @@
 ---
 name: playbook-invoice-dispute-amount
-description: Playbook litige sur le montant d'une facture : comparer avec l'offre acceptée et les événements du chargement, TVA et devise, puis avoir de la finance, jamais de modification d'une facture finalisée
+description: Litige sur un montant de facture : comparer à l'offre acceptée et aux suppléments, TVA, devise, doublon, puis dossier finance pour avoir
 type: reference
 status: active
 verified: 2026-05-20

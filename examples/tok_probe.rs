@@ -8,13 +8,13 @@ fn rss_mb() -> f64 {
 }
 
 fn main() {
-    let dir = souvenance::paths::model_dir();
+    let dir = kept::paths::model_dir();
     let which = std::env::args().nth(1).unwrap_or_else(|| "native".into());
     let before = rss_mb();
     let t = Instant::now();
     let tok = match which.as_str() {
-        "json" => souvenance::tokenizer::Unigram::from_file(&dir.join("tokenizer.json"), 512).unwrap(),
-        _ => souvenance::tokenizer::Unigram::from_sentencepiece(&dir.join("sentencepiece.bpe.model"), 512).unwrap(),
+        "json" => kept::tokenizer::Unigram::from_file(&dir.join("tokenizer.json"), 512).unwrap(),
+        _ => kept::tokenizer::Unigram::from_sentencepiece(&dir.join("sentencepiece.bpe.model"), 512).unwrap(),
     };
     let load = t.elapsed();
     let n = tok.encode("how are the databases isolated between agents, port 3334, release-v2").ids.len();

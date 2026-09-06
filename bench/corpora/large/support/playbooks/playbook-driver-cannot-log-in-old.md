@@ -1,6 +1,6 @@
 ---
 name: playbook-driver-cannot-log-in-old
-description: Historical driver login playbook from before app 4.5 introduced the 5-attempt lockout and the SMS PIN link, kept to read old tickets, replaced by the current playbook
+description: Historical driver login playbook from before app 4.5 (no lockout, no SMS link, PIN reset by carrier admin), kept to read old tickets
 type: reference
 status: archived
 superseded_by: [[playbook-driver-cannot-log-in]]

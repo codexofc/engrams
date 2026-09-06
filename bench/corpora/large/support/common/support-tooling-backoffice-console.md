@@ -1,6 +1,6 @@
 ---
 name: support-tooling-backoffice-console
-description: Outillage support : Deskline pour les tickets, le back-office bo.halden.example avec impersonation lecture seule, hfctl pour les actions, la réplique pg-ro.hf.internal pour L2, Grafana pour les logs
+description: Outils support : Deskline, back-office bo.halden.example en impersonation lecture seule, hfctl, réplique pg-ro.hf.internal, Grafana
 type: reference
 status: active
 verified: 2026-06-18

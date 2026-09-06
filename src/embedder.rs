@@ -71,7 +71,7 @@ impl Embedder {
         let vb =
             unsafe { VarBuilder::from_mmaped_safetensors(std::slice::from_ref(&weights), dtype, &device).map_err(|e| format!("unreadable weights: {e}"))? };
 
-        let precision = match std::env::var("SOUVENANCE_PRECISION").as_deref() {
+        let precision = match std::env::var("KEPT_PRECISION").as_deref() {
             Ok("f32") => Precision::F32,
             _ => Precision::Q8,
         };
@@ -80,7 +80,7 @@ impl Embedder {
                 let raw = read_text(dir, "config.json")?;
                 let cfg: XlmConfig = serde_json::from_str(&raw).map_err(|e| format!("config incompatible with the BERT graph: {e}"))?;
                 // Q8_0 on the linear layers by default: weights only, F32 activations,
-                // cosine 0.9999 with F32 on real paragraphs. `SOUVENANCE_PRECISION=f32`
+                // cosine 0.9999 with F32 on real paragraphs. `KEPT_PRECISION=f32`
                 // restores full precision.
                 let bert = config.architecture == Architecture::Bert;
                 Graph::XlmRoberta(Box::new(XLMRobertaModel::new(&cfg, vb, &weights, precision, &device, bert).map_err(|e| format!("graph: {e}"))?))

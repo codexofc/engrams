@@ -1,6 +1,6 @@
 ---
 name: support-team-preferences
-description: Préférences de l'équipe support (six personnes) : identifiants avant tout, hfctl plutôt que SQL, réponses courtes en langue du client, pas de promesse de délai technique, playbooks courts
+description: Préférences de l'équipe support : identifiants avant tout, hfctl plutôt que SQL, réponses courtes, pas de promesse de délai
 type: user
 status: active
 verified: 2026-04-08

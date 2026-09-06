@@ -9,14 +9,14 @@
 //!   or more), whose lists of files enter the context, the notes ranked by the number
 //!   of words they contain (the words-only baseline of the benchmark), then read in
 //!   that order until the expected note is reached, five notes at most.
-//! - **souvenance**: `souvenance search`, whose five lines enter the context, then `souvenance
-//!   read` of the expected note when the search returned it. And `souvenance answer`
+//! - **kept**: `kept search`, whose five lines enter the context, then `kept
+//!   read` of the expected note when the search returned it. And `kept answer`
 //!   alone, the passages ready to cite, which is what the hook and the MCP tool give.
 //!
-//! Queries come from the same file as `bench` (`SOUVENANCE_BENCH`, default
-//! `<root>/.souvenance/bench-queries.json`). `SOUVENANCE_BIN` names the binary (`souvenance`).
+//! Queries come from the same file as `bench` (`KEPT_BENCH`, default
+//! `<root>/.kept/bench-queries.json`). `KEPT_BIN` names the binary (`kept`).
 
-use souvenance::note::Note;
+use kept::note::Note;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -32,7 +32,7 @@ fn tokens(chars: usize) -> usize {
 }
 
 fn run(bin: &str, args: &[&str]) -> String {
-    let out = Command::new(bin).args(args).env("SOUVENANCE_NO_DAEMON", "1").output().expect("running the binary");
+    let out = Command::new(bin).args(args).env("KEPT_NO_DAEMON", "1").output().expect("running the binary");
     String::from_utf8_lossy(&out.stdout).into_owned()
 }
 
@@ -41,7 +41,7 @@ fn run_hook(bin: &str, prompt: &str) -> String {
     use std::io::Write;
     let mut child = Command::new(bin)
         .arg("hook")
-        .env("SOUVENANCE_NO_DAEMON", "1")
+        .env("KEPT_NO_DAEMON", "1")
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .spawn()
@@ -57,7 +57,7 @@ fn run_hook(bin: &str, prompt: &str) -> String {
 fn grep_path(root: &Path, words: &[String], expected: &str, tally: &mut Tally) {
     let mut per_file: BTreeMap<String, usize> = BTreeMap::new();
     for word in words {
-        let out = run("grep", &["-rli", "--include=*.md", "--exclude-dir=.souvenance", "-e", word, &root.display().to_string()]);
+        let out = run("grep", &["-rli", "--include=*.md", "--exclude-dir=.kept", "-e", word, &root.display().to_string()]);
         tally.output += out.len();
         for file in out.lines() {
             *per_file.entry(file.to_string()).or_default() += 1;
@@ -96,9 +96,9 @@ impl Tally {
 }
 
 fn main() {
-    let root = souvenance::paths::root();
-    let bin = std::env::var("SOUVENANCE_BIN").unwrap_or_else(|_| "souvenance".into());
-    let file = std::env::var("SOUVENANCE_BENCH").map(PathBuf::from).unwrap_or_else(|_| souvenance::paths::state_dir(&root).join("bench-queries.json"));
+    let root = kept::paths::root();
+    let bin = std::env::var("KEPT_BIN").unwrap_or_else(|_| "kept".into());
+    let file = std::env::var("KEPT_BENCH").map(PathBuf::from).unwrap_or_else(|_| kept::paths::state_dir(&root).join("bench-queries.json"));
     let raw = std::fs::read_to_string(&file).unwrap_or_else(|e| panic!("{}: {e}", file.display()));
     let families: BTreeMap<String, Vec<Case>> = serde_json::from_str(&raw).expect("bench-queries.json");
     let cases: Vec<&Case> = families.values().flatten().collect();
@@ -116,7 +116,7 @@ fn main() {
         picked.truncate(3);
         grep_path(&root, &picked, &expected, &mut grep_picked);
 
-        // souvenance search, then the note if the search returned it.
+        // kept search, then the note if the search returned it.
         let out = run(&bin, &["search", &case.query]);
         let hit = out.lines().any(|l| l.contains(&case.path));
         search.output += out.len();
@@ -125,7 +125,7 @@ fn main() {
             search.reached += 1;
         }
 
-        // souvenance answer: passages only, nothing read afterwards.
+        // kept answer: passages only, nothing read afterwards.
         let out = run(&bin, &["answer", &case.query]);
         answer.output += out.len();
         answer.reached += usize::from(out.contains(&case.path));
@@ -141,9 +141,9 @@ fn main() {
     for (name, t) in [
         ("grep with every word of the query, then the notes in grep order (5 at most)", &grep_all),
         ("grep with the three longest words, then the notes in grep order (5 at most)", &grep_picked),
-        ("souvenance search, then souvenance read", &search),
-        ("souvenance answer, passages only", &answer),
-        ("souvenance hook, what every prompt receives", &hook),
+        ("kept search, then kept read", &search),
+        ("kept answer, passages only", &answer),
+        ("kept hook, what every prompt receives", &hook),
     ] {
         let total = (t.output + t.notes) / n;
         println!("| {name} | {} | {} | {total} | {} | {} / {n} |", t.output / n, t.notes / n, tokens(total), t.reached);
@@ -155,7 +155,7 @@ fn main() {
     let mut unbounded = 0usize;
     let mut all_notes = 0usize;
     let mut projects = 0usize;
-    for project in souvenance::hot::projects(&root) {
+    for project in kept::hot::projects(&root) {
         let dir = root.join(&project);
         let index = dir.join("MEMORY.md");
         if !index.exists() {
@@ -163,20 +163,19 @@ fn main() {
         }
         projects += 1;
         bounded += std::fs::metadata(&index).map(|m| m.len() as usize).unwrap_or(0);
-        for f in souvenance::hot::notes_of(&dir) {
+        for f in kept::hot::notes_of(&dir) {
             let Ok(content) = std::fs::read_to_string(&f) else { continue };
             all_notes += content.len();
             let note = Note::parse(&content);
             if note.is_active() {
                 let rel = f.strip_prefix(&dir).unwrap_or(&f).to_string_lossy().into_owned();
-                unbounded +=
-                    format!("- [{}]({}): {}\n", souvenance::hot::display_name(&f, &note), rel, note.field("description").unwrap_or_default().trim()).len();
+                unbounded += format!("- [{}]({}): {}\n", kept::hot::display_name(&f, &note), rel, note.field("description").unwrap_or_default().trim()).len();
             }
         }
     }
     println!("\n| what a session could load | chars | tokens (est.) |");
     println!("|---|---|---|");
-    println!("| the hot indexes as generated, bounded at {} bytes each, {projects} projects | {bounded} | {} |", souvenance::hot::BOUND, tokens(bounded));
+    println!("| the hot indexes as generated, bounded at {} bytes each, {projects} projects | {bounded} | {} |", kept::hot::BOUND, tokens(bounded));
     println!("| one line per active note, no bound | {unbounded} | {} |", tokens(unbounded));
     println!("| every note of the corpus | {all_notes} | {} |", tokens(all_notes));
 }

@@ -1,6 +1,6 @@
 ---
 name: incident-2026-01-stale-admin-role
-description: A contractor kept staff_admin for 47 days after leaving because the SSO group was removed but the role cache and a personal API key were not, found by the Q1 access review, fixed by tying staff roles to live group membership
+description: A contractor kept staff_admin 47 days after leaving because the role row and an API key outlived the SSO group; fixed by deriving roles from the live claim
 type: project
 status: active
 verified: 2026-02-26

@@ -1,6 +1,6 @@
 ---
 name: playbook-load-stuck-in-transit-after-delivery
-description: Playbook for a load still IN_TRANSIT after the goods were delivered: check the driver outbox, the deliver event in load_events, POD presence, and the two ways out (driver resync or carrier admin closing from the web)
+description: Load still IN_TRANSIT after delivery: check load_events, driver outbox, POD, then driver resync or carrier admin confirmation (HF-3118)
 type: reference
 status: active
 verified: 2026-06-30

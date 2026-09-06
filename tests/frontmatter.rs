@@ -1,7 +1,7 @@
 //! The frontmatter is the contract of the memory: if it is misread, everything
 //! derived from it lies.
 
-use souvenance::Note;
+use kept::Note;
 
 #[test]
 fn reads_top_level_fields() {

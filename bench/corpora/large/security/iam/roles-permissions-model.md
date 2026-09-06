@@ -1,6 +1,6 @@
 ---
 name: roles-permissions-model
-description: Permissions are strings resource.action checked by voters, roles are named bundles per audience (shipper, carrier, staff), stored in role_permissions, and no code ever checks a role name directly
+description: Code checks permissions (resource.action strings), never roles; roles are per-audience bundles in role_permissions, no hierarchy, no per-object ACL
 type: reference
 status: active
 verified: 2026-06-03
@@ -63,3 +63,47 @@ Depuis HF-2141 (mars 2026), un `shipper_admin` peut créer des rôles personnali
 - Pas de permissions au niveau d'un chargement individuel (ACL par objet). Le périmètre d'un utilisateur est son organisation, le filtrage se fait par `organization_id`, voir [[tenant-isolation-checks]]. Les cas où un chargeur veut partager un chargement avec un tiers passent par un lien signé, pas par une ACL.
 
 La vérification concrète côté Symfony est décrite dans [[permission-check-voter-symfony]].
+
+## Requêtes utiles
+
+Les trois questions qui reviennent, et la requête qui y répond. Elles marchent parce que le modèle est plat.
+
+Qui peut annuler un chargement dans l'organisation X :
+
+```sql
+SELECT u.email, r.code
+FROM organization_memberships m
+JOIN roles r ON r.id = m.role_id
+JOIN role_permissions rp ON rp.role_id = r.id
+JOIN users u ON u.id = m.user_id
+WHERE m.organization_id = :org AND rp.permission = 'load.cancel' AND m.ended_at IS NULL;
+```
+
+Quelles permissions ne sont accordées par aucun rôle (permission morte, à retirer de l'enum) :
+
+```sql
+SELECT p FROM unnest(:enum_values::text[]) p
+EXCEPT SELECT DISTINCT permission FROM role_permissions;
+```
+
+Quels rôles personnalisés contiennent une permission sensible, pour la revue d'accès trimestrielle :
+
+```sql
+SELECT r.organization_id, r.code, rp.permission
+FROM roles r JOIN role_permissions rp ON rp.role_id = r.id
+WHERE r.is_system = false AND rp.permission IN ('member.remove', 'apikey.create', 'invoice.void');
+```
+
+## Chiffres de juin 2026
+
+- 11 rôles système, 34 rôles personnalisés dans 11 organisations.
+
+- 41 permissions pour l'audience `shipper`, 28 pour `carrier`, 52 pour `staff`, 9 pour `service`, 6 pour `integrator`.
+
+- Le rôle le plus attribué : `carrier_driver`, 6 800 adhésions actives. Le moins : `staff_finance`, 4 personnes.
+
+- Aucun `hasRole` hors de `StaffGroupToRoleMapper` dans le code de l'API, vérifié par une règle d'analyse statique (`RoleCheckForbiddenRule`) ajoutée en HF-2033 après qu'on en a trouvé douze en revue manuelle.
+
+## Ce qui reste ouvert
+
+Deux demandes qu'on n'a pas tranchées. Un rôle « lecture seule sur une sélection de chargements » pour des auditeurs externes chez les chargeurs, qui ressemble beaucoup à une ACL par objet et qu'on a pour l'instant traité par une organisation dédiée et un partage de chargements par lien signé. Et une permission temporaire (valable jusqu'à une date), demandée pour les remplaçants de congé, que le flux d'approbation ([[role-assignment-approval-flow]]) pourrait porter avec une colonne `expires_at` sur `organization_memberships` ; pas fait, parce que personne n'a encore montré le cas où retirer le rôle à la main ne suffisait pas.

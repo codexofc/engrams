@@ -47,18 +47,18 @@ jobs:
       - uses: actions/cache@v4
         id: models
         with:
-          path: ~/.souvenance/models
+          path: ~/.kept/models
           key: models-granite-278m-multilingual-97m-multilingual-r2-v1
       - if: steps.models.outputs.cache-hit != 'true'
         run: |
           for repo in ibm-granite/granite-embedding-278m-multilingual ibm-granite/granite-embedding-97m-multilingual-r2; do
-            dir="$HOME/.souvenance/models/${repo##*/}"
+            dir="$HOME/.kept/models/${repo##*/}"
             mkdir -p "$dir/1_Pooling"
             for f in config.json 1_Pooling/config.json tokenizer.json model.safetensors sentence_bert_config.json sentencepiece.bpe.model; do
               curl -sfL -o "$dir/$f" "https://huggingface.co/$repo/resolve/main/$f" || rm -f "$dir/$f"
             done
           done
-          du -sh "$HOME/.souvenance/models"/*
+          du -sh "$HOME/.kept/models"/*
       - run: cargo llvm-cov --release --all-targets --lcov --output-path lcov.info
       - run: cargo llvm-cov report --release --json --summary-only --output-path coverage-summary.json
       - uses: actions/upload-artifact@v4
@@ -107,5 +107,5 @@ jobs:
       - run: cargo build --release --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: souvenance-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/souvenance
+          name: kept-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/kept

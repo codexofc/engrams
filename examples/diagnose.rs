@@ -4,8 +4,8 @@
 //! out: an aggregation or identity defect. Clearly below while results share the
 //! topic: dilution. At background level: the query or the language is the cause.
 
-use souvenance::index::Index;
-use souvenance::similarity::{cosine, rank_notes};
+use kept::index::Index;
+use kept::similarity::{cosine, rank_notes};
 use std::path::PathBuf;
 
 #[derive(serde::Deserialize)]
@@ -16,10 +16,10 @@ struct Case {
 }
 
 fn main() {
-    let root = souvenance::paths::root();
-    let state = souvenance::paths::state_dir(&root);
-    let index = Index::load(&state.join("index.bin")).expect("index missing, run `souvenance index`");
-    let embedder = souvenance::embedder::Embedder::load(&souvenance::paths::model_dir()).expect("model");
+    let root = kept::paths::root();
+    let state = kept::paths::state_dir(&root);
+    let index = Index::load(&state.join("index.bin")).expect("index missing, run `kept index`");
+    let embedder = kept::embedder::Embedder::load(&kept::paths::model_dir()).expect("model");
     let chunks: Vec<(String, usize, Vec<f32>)> = index
         .iter()
         .map(|(key, v)| {
@@ -27,7 +27,7 @@ fn main() {
             (path.to_string(), ordinal, v.to_vec())
         })
         .collect();
-    let bench = std::env::var("SOUVENANCE_BENCH").map(PathBuf::from).unwrap_or_else(|_| state.join("bench-queries.json"));
+    let bench = std::env::var("KEPT_BENCH").map(PathBuf::from).unwrap_or_else(|_| state.join("bench-queries.json"));
     let cases: std::collections::BTreeMap<String, Vec<Case>> = serde_json::from_str(&std::fs::read_to_string(bench).expect("queries")).unwrap();
 
     println!("{:<12} {:>5} {:>8} {:>8} {:>7} {:>6}  query", "family", "found", "target", "top", "gap", "chars");
@@ -41,8 +41,8 @@ fn main() {
             let target_len = std::fs::read_to_string(root.join(&case.path))
                 .ok()
                 .and_then(|content| {
-                    let note = souvenance::note::Note::parse(&content);
-                    souvenance::chunking::split(note.body(), souvenance::chunking::budget_for(embedder.window()))
+                    let note = kept::note::Note::parse(&content);
+                    kept::chunking::split(note.body(), kept::chunking::budget_for(embedder.window()))
                         .into_iter()
                         .find(|c| c.ordinal == case.ordinal)
                         .map(|c| c.text.chars().count())

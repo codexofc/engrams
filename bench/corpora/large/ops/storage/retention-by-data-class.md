@@ -1,6 +1,6 @@
 ---
 name: retention-by-data-class
-description: Cinq classes de données (documents légaux, données métier, télémétrie, sauvegardes, caches) avec une durée de conservation, un mécanisme d'effacement et un propriétaire chacune, 10 ans pour les CMR et POD, 5 ans pour les factures, 400 jours pour le brut de l'entrepôt, et la conservation légale qui bloque l'effacement
+description: Cinq classes de données avec durée, mécanisme d'effacement et propriétaire: 10 ans CMR et POD, 5 ans factures, 400 jours brut entrepôt, verrou légal
 type: reference
 status: active
 verified: 2026-04-15
@@ -17,6 +17,11 @@ Toute donnée stockée appartient à une classe, et la classe fixe la durée, le
 | documents à valeur légale | CMR, POD, lettres de voiture, factures PDF | 10 ans après la date du document (5 pour les factures, 10 retenu pour tout par simplicité) | `retain_until` sur `documents`, règle de cycle de vie du bucket, verrou de conservation | juridique |
 | données métier | chargements, enchères, transporteurs, utilisateurs | durée de la relation + 5 ans, effacement individuel sur demande | purge applicative, pipeline d'effacement RGPD de l'entrepôt | produit |
 | télémétrie | positions, événements d'app, traces, journaux | 7 jours (traces), 30 jours (journaux), 90 jours (positions dans `raw`), 400 jours (`raw` agrégé) | TTL ClickHouse, rétention Tempo et Loki, rétention des topics | données |
+
+### Tableau des classes, suite
+
+| Classe | Exemples | Durée | Mécanisme | Propriétaire |
+|---|---|---|---|---|
 | sauvegardes | WAL, bases, instantanés, Velero | 35 jours (PITR), 30 jours (volumes), 14 jours (objets), 90 jours (vault), 52 semaines (hors site) | rétention de l'outil de sauvegarde, cycle de vie du bucket | ops |
 | caches et dérivés | tuiles, exports clients, index de recherche | 7 jours (exports), reconstruit (tuiles, index) | cycle de vie, reconstruction | plateforme |
 

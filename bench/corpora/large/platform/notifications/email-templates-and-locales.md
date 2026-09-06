@@ -1,6 +1,6 @@
 ---
 name: email-templates-and-locales
-description: Templates e-mail en MJML dans templates/notifications/<event>/<locale>.mjml, 11 locales avec repli sur en, compilées au build, variables typées par un schéma par événement
+description: Templates e-mail MJML dans templates/notifications/<event>/<locale>.mjml, 11 locales avec repli sur en, compilées au build, variables typées par schéma
 type: reference
 status: active
 verified: 2026-05-20

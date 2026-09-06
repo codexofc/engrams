@@ -1,6 +1,6 @@
 ---
 name: shipper-bid-digest-batching
-description: Depuis février 2026 les notifications d'enchère aux expéditeurs sont regroupées en digest horaire (immédiat pour la première enchère et les 2 h avant clôture), 71 % d'e-mails en moins sur ce type, HF-4150
+description: Depuis février 2026 les notifications d'enchère aux expéditeurs sont regroupées en digest horaire, immédiat pour la première et avant clôture, −71 % d'e-mails
 type: project
 status: active
 verified: 2026-04-14

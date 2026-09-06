@@ -1,6 +1,6 @@
 ---
 name: provider-webhook-verification-and-replay
-description: Courrix and Bipline webhooks are HMAC-verified, deduplicated on provider event id, stored raw before being applied, and can be replayed from notification_provider_events or refetched from the provider for a time range
+description: Courrix and Bipline webhooks are HMAC-verified, deduplicated on provider event id, stored raw before being applied, and replayable or refetchable by time range
 type: reference
 status: active
 verified: 2026-02-24

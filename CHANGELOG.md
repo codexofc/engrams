@@ -6,12 +6,17 @@ All notable changes to Kept are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- The large public corpus grew from 220 to 523 notes (30 projects in seven families,
+  2.9 MB): the 60 blind queries stay the same, the new notes act as distractors, and
+  docs/BENCHMARKS.md carries the new figures next to the old ones.
+
 ## [0.6.0] - 2026-09-06
 
 ### Changed
 - The project is named Kept: the binary `kept`, the settings `KEPT_*`, the
   directories `~/.kept` and `<root>/.kept`, the repository codexofc/kept (the old
-  addresses redirect). Version 0.5.0 carried the name Souvenance for two hours; its
+  addresses redirect). Version 0.5.0 carried the name Souvenance for two hours, and its
   crate is yanked. Existing installations rename `~/.engram` or `~/.souvenance` to
   `~/.kept`, the same for `<root>/.engram`, and replace the prefix in `~/.kept/env`.
 

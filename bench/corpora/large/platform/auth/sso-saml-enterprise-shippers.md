@@ -1,6 +1,6 @@
 ---
 name: sso-saml-enterprise-shippers
-description: SAML 2.0 SP for enterprise shippers since Feb 2026 (HF-4350), 9 connections live, IdP-initiated refused, SP-initiated with signed AuthnRequest, attribute map per connection, enforced mode disables passwords for the org, JIT provisioning off by default
+description: SAML 2.0 SP for enterprise shippers since Feb 2026 (HF-4350): 9 connections live, SP-initiated only, attribute map per connection, enforced mode, JIT off
 type: project
 status: active
 verified: 2026-06-10
@@ -49,3 +49,19 @@ Off by default. A SAML login for an e-mail unknown to us fails with "ask your ad
 ## Audit
 
 Every SSO event is in `auth_events` with `type` starting `sso.` ([[auth-events-audit-log]]): `sso.start`, `sso.assertion_ok`, `sso.assertion_rejected` (with the reason), `sso.user_unknown`, `sso.enforced_changed`. Rejections in June 2026: 210, of which 180 `InResponseTo` unknown (users double-clicking or waiting more than 5 minutes on the IdP page), 25 signature failures during one customer's certificate rotation, 5 audience mismatches from a customer's test IdP pointed at prod.
+
+## Setting up a connection
+
+The checklist sales and the org admin go through, in order, with the average time each step took over the nine connections:
+
+1. Verify the organisation's e-mail domains by DNS TXT record (`hf-sso-verify=<token>`), 1 day, mostly waiting for the customer's DNS team.
+
+2. Exchange metadata: they import ours from the metadata URL, we import theirs (file upload on the admin page, or URL if they publish one). 1 hour.
+
+3. Map attributes on the admin page, using a test login whose decoded assertion is shown. Median 2 hours, worst 3 weeks (the `NameID` format case).
+
+4. Test with three users, including one who does not exist on our side (to see the "ask your administrator" message) and one admin.
+
+5. Switch `enforced` when the admin says so, never on our initiative. Two connections have been live for months without enforcement because the customer wants password fallback for contractors, which is their call.
+
+6. Confirm the certificate expiry date is in `idp_certificates` and that `sso:check-certs` sees it; the admin gets the 30-day reminder e-mail address confirmed.

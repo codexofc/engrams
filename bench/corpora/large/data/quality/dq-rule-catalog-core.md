@@ -1,6 +1,6 @@
 ---
 name: dq-rule-catalog-core
-description: Les règles de qualité sur core.loads, core.bids, core.invoices, core.carriers et core.load_status_history en juin 2026, avec leur sévérité et leur origine, les 41 règles qui appellent et pourquoi
+description: Les règles de qualité sur core.loads, bids, invoices, carriers et load_status_history en juin 2026, avec sévérité et origine; les 41 règles page
 type: reference
 status: active
 verified: 2026-06-26

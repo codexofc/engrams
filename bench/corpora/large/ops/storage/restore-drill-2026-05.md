@@ -1,6 +1,6 @@
 ---
 name: restore-drill-2026-05
-description: The May 2026 restore drill rebuilt a working staging-like platform from backups alone on a throwaway cluster in 5 h 10, exercised the appliance failover, the vault restore, the batch version restore, PITR to a timestamp and a Velero namespace restore, with 6 findings, HF-4620
+description: May 2026 drill rebuilt a working platform from backups alone in 5 h 10: appliance failover, vault, PITR, Velero, batch version restore, 6 findings, HF-4620
 type: project
 status: active
 verified: 2026-06-04
@@ -21,9 +21,19 @@ Quarterly drill, this one bigger than usual: the question was "if rack A is a ho
 | etcd not restored (fresh cluster), Velero restore of `platform-prod` objects from `objects-6h` | 09:20 | 20 min | ok, 1 400 objects, 3 warnings on reflector-copied secrets (known) |
 | PostgreSQL PITR of the main cluster to 2026-05-13T06:00:00Z on `hf-drill` | 09:40 | 2 h 05 | ok, 5 h of WAL at 1.2 GB per 10 min plus base restore |
 | Velero volume restore of RabbitMQ and Redis (Longhorn) | 09:45 | 30 min | ok, in parallel with PITR |
+
+### Sequence, continued: documents, warehouse, registry
+
+| Step | Started | Duration | Result |
+|---|---|---|---|
 | documents: batch version restore of 5 000 keys on `hf-documents-staging` after deleting them | 10:20 | 12 min | ok, from the runbook without the vendor doc |
 | ClickHouse hot restore from the daily snapshot into a 1-node warehouse | 10:40 | 1 h 30 | ok for `core` and `mart`, `raw` restored partially by design |
 | schema registry and CDC state from `hf-torrent-snapshots` | 11:50 | 10 min | ok |
+
+### Sequence, end: applications and tear-down
+
+| Step | Started | Duration | Result |
+|---|---|---|---|
 | API, auth-svc, dispatch tool pointed at the restored stores, smoke test | 12:00 | 40 min | ok after finding 3 |
 | end-to-end: log in, publish a load, bid, assign, upload a document, invoice | 12:40 | 30 min | ok |
 | tear down, VIP back, buckets back to replica mode | 13:20 | 20 min | ok |

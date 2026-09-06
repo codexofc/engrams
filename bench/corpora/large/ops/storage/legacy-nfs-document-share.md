@@ -1,6 +1,6 @@
 ---
 name: legacy-nfs-document-share
-description: Jusqu'en 2024 les documents (CMR, POD, pièces transporteurs) vivaient sur un partage NFS monté par les pods de l'API, sauvegardé par rsync nocturne vers un second serveur, sans versionnage, avec un chemin par identifiant de chargement, remplacé par le stockage objet et les URL présignées
+description: Jusqu'en 2024 les documents vivaient sur un partage NFS monté par les pods de l'API, rsync nocturne, sans versionnage; remplacé par le stockage objet
 type: reference
 status: archived
 superseded_by: [[object-store-buckets-and-layout]]

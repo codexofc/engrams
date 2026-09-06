@@ -1,7 +1,7 @@
 ---
 name: reconciliation-payla-settlements
-description: Daily reconciliation between core.invoices paid amounts and Payla settlements from billing.payla.settlements, per currency, tolerance 100 cents or 5 unmatched settlements, page above, the four kinds of mismatch it finds and what each means
-type: reference
+description: Daily reconciliation of core.invoices paid amounts against Payla settlements per currency, tolerance 100 cents or 5 unmatched, and the four mismatch kinds
+type: project
 status: active
 verified: 2026-06-03
 ---

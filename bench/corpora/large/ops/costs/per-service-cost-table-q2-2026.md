@@ -1,6 +1,6 @@
 ---
 name: per-service-cost-table-q2-2026
-description: Q2 2026 run cost split by service from the cost labels, API 14 %, warehouse 15 %, notifications 17 % (SMS), storage 11 %, torrent 4 %, ML and OCR 9 %, auth 2 %, with the allocation method per line and what each service's owner can act on
+description: Q2 2026 run cost by service from the cost labels: notifications 17 %, warehouse 15 %, API 14 %, storage 11 %, with the allocation method and each owner's lever
 type: reference
 status: active
 verified: 2026-07-08
@@ -32,10 +32,20 @@ Every euro of [[infra-cost-overview-2026]] is attributed to one service or to `s
 | storage (object store, backups, offsite) | 10 800 | 11 % | Stashbox amortisation 6 900, offsite 1 900, support 2 000 |
 | onboarding and KYC | 7 900 | 8 % | Verifid 6 800, compute 1 100 |
 | ML and OCR | 8 600 | 9 % | 2 GPU nodes 2 300, `ml-infer` and feature store compute, `hf-ml-artifacts-prod`, see [[gpu-vs-cpu-inference-cost]] |
+
+### Monthly average, continued: smaller services
+
+| Service | EUR / month | Share | Main components |
+|---|---|---|---|
 | maps and routing | 6 400 | 7 % | data provider 5 600, tile server compute, CDN share |
 | torrent | 3 800 | 4 % | 5 nodes amortised, power |
 | dispatch tool and web front | 3 100 | 3 % | compute, CDN share for assets |
 | auth | 1 900 | 2 % | 3 pods plus its PostgreSQL share; the cheapest thing on the list for what it protects |
+
+### Monthly average, end: driver backend, shared lines, total
+
+| Service | EUR / month | Share | Main components |
+|---|---|---|---|
 | driver app backend and sync | 2 700 | 3 % | compute, push relay |
 | logging, traces, monitoring (shared) | 2 600 | 3 % | Loki and Tempo storage, Prometheus nodes, the APM licence |
 | CI and staging (shared) | 1 800 | 2 % | Skyvale burst VMs, one staging node |
@@ -79,3 +89,7 @@ The table is for owners, not for blame, and each line has a lever that its owner
 - Requests, not usage: a service with generous requests and low usage looks expensive here, which is the intended pressure.
 
 - The Payla fees are not here. They are 0.9 % of settled volume and belong to finance's margin analysis, not to the run cost.
+
+## Reading your own line
+
+Each service owner gets, with the monthly table, a one-page breakdown of their line: the direct invoices, the labelled compute at 21 EUR per requested core and 2.60 EUR per requested GB, the block storage, the object store buckets they own, and their share of the by-share lines. The page ends with two numbers the owner can move this quarter and one they cannot. For notifications in June 2026: SMS segments per assignment (movable, 0.36 and falling), e-mail sends per bid (movable, 0.29 after the digest), and the Bipline unit price (contract, January). For the warehouse: `raw` retention days and cold-part compression (movable), and the two-replica topology (not movable, decided). The page is generated, the two-plus-one sentence at the end is written by the owner, and the review reads that sentence first.

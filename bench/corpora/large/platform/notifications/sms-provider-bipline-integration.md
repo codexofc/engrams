@@ -1,7 +1,7 @@
 ---
 name: sms-provider-bipline-integration
-description: Bipline est le fournisseur SMS depuis octobre 2025, API REST v2, expéditeur alphanumérique HALDEN sauf pays interdits, accusés par webhook, 3 segments max, contrat 300 000 SMS par mois
-type: reference
+description: Bipline est le fournisseur SMS depuis octobre 2025: API v2, expéditeur HALDEN sauf pays interdits, accusés par webhook, 3 segments max, 300 000 SMS/mois
+type: project
 status: active
 verified: 2026-06-02
 ---

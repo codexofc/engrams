@@ -1,6 +1,6 @@
 ---
 name: backup-encryption-and-key-custody
-description: Backups leaving the racks are encrypted client-side with age-style keys per data class, the private keys live in the vault and in three sealed envelopes held by three people, the vault's own unseal shares are split 3-of-5, rotation yearly with the old keys kept for the retention window, and the drill checks that the envelopes open
+description: Backups leaving the racks are encrypted client-side with per-class keys; private keys in the vault and in three sealed envelopes, yearly rotation, drill-tested
 type: reference
 status: active
 verified: 2026-05-27

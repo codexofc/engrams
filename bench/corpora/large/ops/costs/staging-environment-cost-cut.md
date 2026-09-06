@@ -1,6 +1,6 @@
 ---
 name: staging-environment-cost-cut
-description: Décembre 2025 à février 2026, staging ramené de 3 nœuds permanents plus 8 VM Skyvale à 1 nœud et des VM à la demande éteintes la nuit et le week-end, la copie de prod réduite à un échantillon de 1 %, −2 100 EUR par mois, ce qui a cassé et ce qu'on a gardé, HF-4725
+description: Décembre 2025 à février 2026: staging ramené de 3 nœuds et 8 VM à 1 nœud et des VM à la demande, copie de prod à 1 %, −2 100 EUR/mois, HF-4725
 type: project
 status: active
 verified: 2026-03-10

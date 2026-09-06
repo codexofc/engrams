@@ -1,6 +1,6 @@
 ---
 name: password-reset-flow
-description: Reset is a 32-byte token hashed in password_reset_tokens, 30 min, single use, the request endpoint always answers 202 in constant time, confirm revokes every session and trusted device, 3 requests per address per hour
+description: Reset is a 32-byte token hashed in password_reset_tokens, 30 min, single use; the request endpoint answers 202 in constant time, confirm revokes all sessions
 type: reference
 status: active
 verified: 2026-04-02

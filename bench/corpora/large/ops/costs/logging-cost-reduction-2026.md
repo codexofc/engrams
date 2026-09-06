@@ -1,6 +1,6 @@
 ---
 name: logging-cost-reduction-2026
-description: Jan to Mar 2026, log volume into Loki cut from 1.8 TB a day to 620 GB by dropping four noisy sources, moving access logs to sampled and aggregated, and changing debug-by-default in two services, Loki retention kept at 30 days, storage and node cost down 1 900 EUR a month, nothing anyone missed, HF-4720
+description: Jan to Mar 2026: log volume cut from 1.8 TB a day to 620 GB by dropping four noisy sources and sampling access logs, retention kept, −2 550 EUR/month, HF-4720
 type: project
 status: active
 verified: 2026-04-14

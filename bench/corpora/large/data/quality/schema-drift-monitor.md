@@ -1,6 +1,6 @@
 ---
 name: schema-drift-monitor
-description: schema rules compare a table's actual columns and types to the set declared in the marmot model, run after every model and hourly, unexpected column is warn, missing or retyped column is page, an explicit allowlist mode for tables that must never gain a column, 9 rules plus generated ones
+description: schema rules compare a table's columns and types to the marmot model's declared set, after every run and hourly; missing or retyped column pages
 type: reference
 status: active
 verified: 2026-05-19

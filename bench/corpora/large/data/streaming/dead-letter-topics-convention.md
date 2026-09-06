@@ -1,7 +1,7 @@
 ---
 name: dead-letter-topics-convention
-description: One dead letter topic per consumer group named dlq.<group>, 90 days, the failed message copied verbatim with headers for source topic, partition, offset, error class and attempt, mandatory for critical consumers since Feb 2026, drained by a weekly review not by automation
-type: reference
+description: One dead letter topic per consumer group, dlq.<group>, 90 days, message copied verbatim with source and error headers, mandatory for critical consumers
+type: project
 status: active
 verified: 2026-04-30
 ---

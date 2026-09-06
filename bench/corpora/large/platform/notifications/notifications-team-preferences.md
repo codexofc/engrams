@@ -1,6 +1,6 @@
 ---
 name: notifications-team-preferences
-description: How the two platform engineers who own notifications like to work, one path for every channel, yaml over code for policy, no new channel without a provider contract, incidents reviewed within a week
+description: How the two engineers who own notifications work: one path for every channel, policy in yaml, no channel without a contract, incidents reviewed in a week
 type: user
 status: active
 verified: 2026-07-14

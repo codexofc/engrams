@@ -1,6 +1,6 @@
 ---
 name: core-topics-catalog
-description: Catalogue des 30 topics qui comptent sur torrent en juin 2026, par famille, avec partitions, rétention, clé, débit et consommateurs critiques, et les cinq qu'on surveille de près
+description: Catalogue des 30 topics qui comptent en juin 2026: partitions, rétention, clé, débit et consommateurs critiques, et les cinq qu'on regarde chaque matin
 type: reference
 status: active
 verified: 2026-06-18

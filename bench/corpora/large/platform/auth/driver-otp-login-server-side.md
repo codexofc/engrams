@@ -1,6 +1,6 @@
 ---
 name: driver-otp-login-server-side
-description: Côté serveur de la connexion chauffeur, code à 6 chiffres haché dans otp_codes, 5 min, 5 essais, 3 demandes par 10 min et par numéro, liaison à un device_id, session de 30 jours, 68 000 connexions par jour, HF-4305
+description: Côté serveur de la connexion chauffeur: code à 6 chiffres HMAC dans otp_codes, 5 min, 5 essais, 3 demandes/10 min, liaison device_id, 68 000 connexions/jour
 type: project
 status: active
 verified: 2026-04-28

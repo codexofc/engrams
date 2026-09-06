@@ -1,6 +1,6 @@
 ---
 name: incident-2026-06-timezone-shift-status-history
-description: June 2026, a dispatch tool release wrote status changed_at in local time labelled as UTC for 2 hours, 3 100 transitions shifted by 1 or 2 hours in core.load_status_history, caught in 25 minutes by lsh_changed_at_monotonic (written for a different reason), fixed by a targeted replay, HF-4560
+description: June 2026: a dispatch release wrote local time labelled UTC for 2 h, 3 100 transitions shifted, caught in 25 min by lsh_changed_at_monotonic, HF-4560
 type: project
 status: active
 verified: 2026-07-02

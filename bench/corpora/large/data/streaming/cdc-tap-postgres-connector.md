@@ -1,6 +1,6 @@
 ---
 name: cdc-tap-postgres-connector
-description: cdc-tap reads the API's PostgreSQL logical replication slot hf_cdc and produces one compacted topic per table under cdc.app.*, with before and after images, column filters, a heartbeat table against slot bloat, 2 instances active-passive, 60 tables, 4 000 changes/s peak
+description: cdc-tap reads the logical slot hf_cdc and produces one compacted topic per table under cdc.app.*, before and after images, column filters, heartbeat
 type: reference
 status: active
 verified: 2026-06-12

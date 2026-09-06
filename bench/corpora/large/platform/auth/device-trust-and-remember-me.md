@@ -1,6 +1,6 @@
 ---
 name: device-trust-and-remember-me
-description: A trusted device is a cookie hf_dt holding a random 32-byte id matched against trusted_devices, valid 30 days, skips the MFA challenge but never the password, revoked on reset, at most 5 per user, no fingerprinting
+description: A trusted device is a cookie hf_dt holding a random id matched against trusted_devices, 30 days, skips MFA but never the password, at most 5 per user
 type: reference
 status: active
 verified: 2026-05-14
@@ -63,3 +63,7 @@ Corporate proxies that strip cookies on `auth.halden.example` were a real case: 
 ## What we would change
 
 If the driver app ever gets a dispatcher mode, push-based approval on a trusted phone would replace TOTP for most dispatchers and the cookie would become less central. Until then, the cookie is the simplest thing that holds. The review notes in [[auth-review-feedback-2026]] have the discussion.
+
+## Cookie details
+
+`hf_dt` is set by `auth.halden.example` only, `Path=/`, `HttpOnly`, `Secure`, `SameSite=Lax`, `Max-Age=2592000`. The value is 32 random bytes, base64url, no structure and no user id inside: the server looks the hash up and finds the user from the row. Rotation: on every successful skip, the row's `last_seen_at` is updated and, once every 7 days, the identifier itself is replaced (new cookie value, same row, old hash kept valid for 5 minutes for the in-flight request), so that a copied cookie stops working within a week even if the user never logs out. The rotation was added in April 2026 after a review question; it costs one `UPDATE` a week per device and closes the "cookie stolen once, valid for 30 days" gap to 7 days. Revocation still applies immediately through the row, rotation only bounds the undetected case.

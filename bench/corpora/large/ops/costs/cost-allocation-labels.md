@@ -1,7 +1,7 @@
 ---
 name: cost-allocation-labels
-description: Deux étiquettes Kubernetes obligatoires, hf.cost/team et hf.cost/service, sur tout Deployment, StatefulSet, CronJob et PVC, valeurs dans une liste fermée, refusées par la CI si absentes depuis mars 2026, la requête Prometheus qui fait la répartition, et le cas des ressources partagées
-type: reference
+description: Deux étiquettes obligatoires, hf.cost/team et hf.cost/service, valeurs fermées, refusées par la CI depuis mars 2026; la requête Prometheus de répartition
+type: project
 status: active
 verified: 2026-04-08
 ---

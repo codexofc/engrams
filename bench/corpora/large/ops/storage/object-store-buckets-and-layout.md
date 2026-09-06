@@ -1,6 +1,6 @@
 ---
 name: object-store-buckets-and-layout
-description: Two Stashbox S3 appliances, stash-a (rack A) and stash-b (rack B), 60 TB usable each, async replication a to b, endpoint s3.hf.internal, 14 buckets with one owner each, 46 TB used in June 2026, documents 9 TB, warehouse cold 31 TB, backups 6 TB
+description: Two Stashbox S3 appliances, stash-a and stash-b, 60 TB usable each, async replication, 14 buckets with one owner each, 46 TB used in June 2026
 type: reference
 status: active
 verified: 2026-06-30
@@ -27,6 +27,11 @@ One bucket per data class and environment, one owning team, versioning and lifec
 | `hf-warehouse-cold-prod` | data | 31 TB | 2.1 M | ClickHouse cold parts, 90 days and older |
 | `hf-pg-backups-prod` | platform | 4.8 TB | 900 k | WAL archive plus base backups, 35 days |
 | `hf-velero-prod` | ops | 1.1 TB | | cluster object and volume backups |
+
+### Bucket inventory, continued: small buckets
+
+| Bucket | Owner | Size | Objects | Notes |
+|---|---|---|---|---|
 | `hf-torrent-snapshots` | data | 60 GB | | connector state, registry dumps, not the topics |
 | `hf-tempo` | ops | 300 GB | | traces, 7 days |
 | `hf-tiles-prod` | platform | 180 GB | 12 M | map tiles for the dispatch tool, cache, rebuildable |

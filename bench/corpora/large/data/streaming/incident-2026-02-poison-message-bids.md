@@ -1,6 +1,6 @@
 ---
 name: incident-2026-02-poison-message-bids
-description: Février 2026, un message domain.bid.placed avec un montant négatif a fait planter pricing-projector en boucle sur la partition 17 pendant 3 h 20, les autres partitions avançaient, la file de rebut n'était pas branchée sur ce consommateur, HF-4420
+description: Février 2026: une enchère à montant négatif a fait planter pricing-projector en boucle sur la partition 17 pendant 3 h 20, pas de file de rebut, HF-4420
 type: project
 status: active
 verified: 2026-03-05

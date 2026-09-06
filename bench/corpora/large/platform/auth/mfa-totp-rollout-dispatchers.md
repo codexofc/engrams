@@ -1,6 +1,6 @@
 ---
 name: mfa-totp-rollout-dispatchers
-description: TOTP made mandatory for the 41 000 dispatcher accounts between Jan and Mar 2026 (HF-4310), enrolment by grace period then hard wall, 94 % enrolled before the wall, support load peaked at 60 tickets a day, what we changed midway
+description: TOTP made mandatory for 41 000 dispatcher accounts Jan to Mar 2026 (HF-4310): grace period then hard wall, 94 % enrolled before the wall, 60 tickets a day peak
 type: project
 status: active
 verified: 2026-04-20
@@ -62,3 +62,16 @@ Payout bank account changes on dispatcher-side accounts, which require a fresh M
 - No per-carrier exemption. One carrier with a fleet of 300 asked for an exemption "because we have our own VPN". A VPN is not authentication of the person.
 
 - No push-based MFA ("approve this login on your phone"). Would be nicer, would need our own app on every dispatcher's phone, and the dispatch tool has no mobile app. Revisit if the driver app ever gets a dispatcher mode.
+
+## Enrolment by carrier size
+
+The spreadsheet measure worked differently depending on the carrier's size, and the numbers below are why the support team now starts with the middle band.
+
+| Carrier size (dispatcher accounts) | Carriers | Enrolled at hard wall | Enrolled at 03-31 |
+|---|---|---|---|
+| 1 to 3 | 6 100 | 91 % | 98.9 % |
+| 4 to 19 | 1 900 | 93 % | 99.3 % |
+| 20 to 99 | 310 | 97 % | 99.8 % |
+| 100 and more | 22 | 99 % | 100 % |
+
+The big carriers had an IT department and a deadline, and were done early. The smallest ones enrol when the owner-dispatcher next logs in, which is daily, so they caught up by themselves. The 4-to-19 band was the slowest at the wall and the one where the spreadsheet to the admin made the difference: 40 % of its late enrolments happened within 3 days of the admin receiving the list.

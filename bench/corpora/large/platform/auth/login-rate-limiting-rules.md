@@ -1,7 +1,7 @@
 ---
 name: login-rate-limiting-rules
-description: LoginThrottle applique quatre compteurs avant tout hachage, 20 tentatives par IP et par heure, 10 par e-mail et par heure, 5 par couple, plus un mode dégradé global au-delà de 40 % d'échecs, tout dans Redis, réponses indistinguables
-type: reference
+description: LoginThrottle applique quatre compteurs avant tout hachage: 20 échecs/IP/h, 10/e-mail/h, 5/couple/15 min, mode dégradé global au-delà de 40 % d'échecs
+type: project
 status: active
 verified: 2026-04-09
 ---

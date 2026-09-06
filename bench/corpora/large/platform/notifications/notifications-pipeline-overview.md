@@ -1,6 +1,6 @@
 ---
 name: notifications-pipeline-overview
-description: One pipeline for e-mail, SMS and push since HF-4100 (Nov 2025), notify-worker consumes the notifications Messenger transport, Courrix for e-mail, Bipline for SMS, 1.9 M deliveries a week
+description: One pipeline for e-mail, SMS and push since HF-4100 (Nov 2025): notify-worker on the Messenger transport, Courrix and Bipline, 1.9 M deliveries a week
 type: reference
 status: active
 verified: 2026-07-14

@@ -1,6 +1,6 @@
 ---
 name: restore-2025-11-documents-prefix-deleted
-description: Nov 2025, a cleanup script with a wrong prefix deleted 212 000 current versions of carrier documents in hf-documents-prod, all restored from bucket versioning in 3 h 40 with the appliance's batch restore, 0 documents lost, deletion rights removed from every application key afterwards, HF-4602
+description: Nov 2025: a wrong-prefix cleanup deleted 212 000 document versions in hf-documents-prod, all restored from versioning in 3 h 40, 0 lost, HF-4602
 type: project
 status: active
 verified: 2025-12-09
@@ -64,3 +64,20 @@ Total 3 h 40 from deletion to verified restore, of which 2 h 45 was the batch an
 ## Lesson
 
 Versioning is the backup that restores in an afternoon; the offsite copy ([[backup-inventory-and-retention]]) would have restored the same objects in two days. Both exist for different failures, and this one was the cheap kind because versioning was on. The expensive part was human: 11 minutes of deletion before someone looked at the terminal. The wrapper and the alert are the fixes for that, and the removed delete rights are the fix for the next person.
+
+## Commands, as they went into the runbook
+
+```
+# list delete markers created after a timestamp, paged
+stashctl list-object-versions --bucket hf-documents-prod --prefix 2025-0 \
+  --delete-markers-only --since 2025-11-26T14:10:00Z --output csv > markers.csv
+
+# restore by removing the markers, in batches, with a report
+stashctl restore-versions --bucket hf-documents-prod --manifest markers.csv \
+  --batch-size 1000 --report restore-report.csv
+
+# verify against the database
+documents-verify --bucket hf-documents-prod --since 2025-01-01 --until 2025-09-30 --workers 8
+```
+
+`documents-verify` is the 80-line script written that afternoon (`HEAD` per key from `documents`, compare `Content-Length` and, for a 1 % sample, the checksum), kept in `halden-infra/storage/tools/`. The `--dry-run` flag on `restore-versions` prints what it would do, and the runbook says to run it first on 100 keys, which is what the on-call did in the drill.

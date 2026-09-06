@@ -1,6 +1,6 @@
 ---
 name: bucket-versioning-and-lifecycle-rules
-description: Versioning on every prod bucket that holds primary data, noncurrent versions kept 90 days on documents and 30 elsewhere, lifecycle rules per bucket in Git applied by the CI, expiration never on documents (the app decides), abort incomplete multipart uploads at 2 days, the rules table as of April 2026
+description: Versioning on every prod bucket holding primary data, noncurrent versions 90 days on documents and 30 elsewhere, lifecycle rules per bucket in Git
 type: reference
 status: active
 verified: 2026-04-15
@@ -28,6 +28,11 @@ Declared in `halden-infra/storage/lifecycle/<bucket>.yaml`, applied by the CI wi
 | `hf-vault-snapshots` | 30 days | 95 days | 1 day | |
 | `hf-torrent-snapshots` | 30 days | 35 days | 1 day | |
 | `hf-ml-artifacts-prod` | 30 days | none | 2 days | artifacts are addressed by hash; pruning is a manual job with the registry |
+
+### Rules per bucket, continued: unversioned buckets
+
+| Bucket | Noncurrent expiry | Current expiry | Multipart abort | Notes |
+|---|---|---|---|---|
 | `hf-tiles-prod` | not versioned | 30 days since last access is unsupported, so 60 days since creation | 1 day | the tile server re-fetches |
 | `hf-exports-prod` | not versioned | 7 days | 1 day | |
 | `hf-tempo` | not versioned | none, Tempo compacts and deletes | 1 day | |

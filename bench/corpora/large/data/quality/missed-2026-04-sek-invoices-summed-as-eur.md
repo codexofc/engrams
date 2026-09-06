@@ -1,6 +1,6 @@
 ---
 name: missed-2026-04-sek-invoices-summed-as-eur
-description: Avril 2026, 1 900 factures suédoises en SEK ont été additionnées comme des EUR dans le mart de chiffre d'affaires pendant six semaines (+11 fois leur montant), aucune règle ne regardait la devise, trouvé par un commercial, règles de devise et de cohérence EUR ajoutées, HF-4530
+description: Avril 2026: 1 900 factures SEK additionnées comme des EUR dans le mart de chiffre d'affaires pendant six semaines, aucune règle sur la devise, HF-4530
 type: project
 status: active
 verified: 2026-05-14

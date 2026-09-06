@@ -1,6 +1,6 @@
 ---
 name: auth-service-overview
-description: auth-svc handles login, sessions, MFA, password reset, device trust and SSO for 380 000 users since the Oct 2025 extraction from the API monolith (HF-4300), endpoints under /v1/auth, tables sessions, credentials, mfa_methods, trusted_devices, auth_events
+description: auth-svc owns login, sessions, MFA, reset, device trust and SSO for 380 000 users since HF-4300 (Oct 2025): endpoints under /v1/auth, tables in schema auth
 type: reference
 status: active
 verified: 2026-06-30

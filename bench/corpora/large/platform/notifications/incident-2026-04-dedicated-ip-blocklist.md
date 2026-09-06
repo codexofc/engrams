@@ -1,6 +1,6 @@
 ---
 name: incident-2026-04-dedicated-ip-blocklist
-description: April 2026, our new dedicated Courrix IP landed on a public blocklist on day 6 of warm-up because the warm-up plan ramped on total volume while 40 % of it was carrier invites, 2 days at 30 % deferrals, HF-4210
+description: April 2026: the new dedicated Courrix IP was blocklisted on warm-up day 6 because 40 % of its volume was carrier invites, 2 days of 30 % deferrals, HF-4210
 type: project
 status: active
 verified: 2026-05-12

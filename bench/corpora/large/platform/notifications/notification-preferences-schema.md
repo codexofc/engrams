@@ -1,6 +1,6 @@
 ---
 name: notification-preferences-schema
-description: notification_preferences stores one row per user and event group with a channel mask, defaults come from event_types.yaml, critical events ignore preferences, unsubscribe is all_email=false not a row per event
+description: notification_preferences holds one row per user and event group with a channel mask; defaults from event_types.yaml, critical events ignore preferences
 type: reference
 status: active
 verified: 2026-03-18

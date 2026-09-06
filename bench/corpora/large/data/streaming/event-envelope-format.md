@@ -1,6 +1,6 @@
 ---
 name: event-envelope-format
-description: Every torrent message carries seven headers (event-id, event-type, schema-id, produced-at, producer, trace-id, key-version) and a JSON body whose top level is the event itself, no wrapper object, tombstones are null values, keys are JSON
+description: Every torrent message carries seven headers (event-id, event-type, schema-id, produced-at, producer, trace-id, key-version), a JSON key and a bare JSON body
 type: reference
 status: active
 verified: 2026-05-08

@@ -1,6 +1,6 @@
 ---
 name: dq-scorecards-per-domain
-description: Depuis février 2026 chaque domaine a une fiche mensuelle de qualité, taux de succès, règles en échec, silences, coût, incidents attrapés et manqués, générée depuis dq.results, présentée à la revue, et ce que six mois de fiches ont montré, HF-4510
+description: Depuis février 2026 chaque domaine a une fiche mensuelle de qualité générée depuis dq.results: succès, échecs, silences, coût, attrapé/manqué, HF-4510
 type: project
 status: active
 verified: 2026-07-07

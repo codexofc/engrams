@@ -1,6 +1,6 @@
 ---
 name: replay-procedure-runbook
-description: Procédure de rejeu d'un consommateur torrent, par horodatage ou par offset, avec la liste de contrôle (idempotence, effets de bord, capacité, annonce), la commande de réinitialisation d'offset, le mode « topic de rejeu » pour les cas partiels, et les quatre rejeux faits depuis 2025
+description: Procédure de rejeu d'un consommateur torrent: liste de contrôle en sept points, réinitialisation d'offset par horodatage, mode topic de rejeu, historique
 type: reference
 status: active
 verified: 2026-06-24
@@ -68,3 +68,13 @@ Quand on ne veut rejouer qu'un sous-ensemble (les messages d'un seul transporteu
 | 2026-06 | `eta-projector` | `cdc.app.loads` 7 jours | 2 h | correction d'un bug de fuseau horaire dans la projection |
 
 Aucun n'a produit de doublon, aucun n'a envoyé de notification ou de virement, parce que la liste a été suivie. Le rejeu de décembre a rappelé que `ingest-svc` avait besoin de 900 s de tolérance de retard (voir la note de lag).
+
+## Ce qu'on ne rejoue jamais
+
+- `notify-fanout` sans `NOTIFY_FANOUT_DRY_RUN=1`. Un rejeu à blanc écrit dans `notifications.replay_log` ce qu'il aurait envoyé, et c'est ce journal qu'on lit pour décider, à la main, s'il faut renvoyer quelque chose (jamais à ce jour).
+
+- `billing-svc` sans `BILLING_REPLAY_MODE=1`, pour la même raison, côté virements.
+
+- Un `cdc.*` compacté pour reconstruire un historique. Le résultat est faux par construction et la note sur la compaction explique pourquoi.
+
+- Un groupe dont le propriétaire n'a pas relu la liste. Le rejeu de novembre 2025 lancé sur le mauvais groupe (la note de qualité des données sur les doublons de chargements) est la raison d'être de cette ligne : la commande est copiée depuis le ticket, jamais depuis l'historique du shell, et `torrent-consumer-groups` sur `ops-tools` est enveloppé par un script qui affiche le groupe, le topic et le nombre de partitions touchées et demande une confirmation tapée en entier.

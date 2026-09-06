@@ -1,6 +1,6 @@
 ---
 name: exactly-once-vs-idempotent-consumers
-description: What we learned building consumers, at-least-once delivery plus idempotent handlers beats transactional exactly-once for every consumer except ingest-svc, the offset-in-the-sink pattern, and the review questions asked of every new consumer
+description: At-least-once plus idempotent handlers beats broker transactions for every consumer except ingest-svc (offset in the sink); the review questions for a consumer
 type: feedback
 status: active
 verified: 2026-04-30

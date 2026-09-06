@@ -1,6 +1,6 @@
 ---
 name: replay-2026-03-invoice-projection
-description: Mars 2026, billing-projector a écrit un statut overdue à tort sur 2 140 factures pendant 14 jours à cause d'une comparaison de dates en UTC contre une échéance en heure locale, corrigé par un rejeu filtré sur un topic de rejeu de 61 000 messages en 40 minutes, HF-4432
+description: Mars 2026: billing-projector a marqué 2 140 factures overdue à tort (UTC contre échéance locale), rejeu filtré de 61 000 messages en 40 min, HF-4432
 type: project
 status: active
 verified: 2026-04-07

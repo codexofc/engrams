@@ -1,6 +1,6 @@
 ---
 name: legacy-rabbitmq-domain-events
-description: Before 2024 domain events went through RabbitMQ topic exchanges with one queue per consumer, no replay, no retention, no schema, and a fan-out that lost messages whenever a consumer's queue was absent, replaced by torrent
+description: Before 2024 domain events went through RabbitMQ topic exchanges, one queue per consumer, no replay, no retention, no schema, lost fan-out; replaced by torrent
 type: reference
 status: archived
 superseded_by: [[torrent-broker-overview]]

@@ -1,6 +1,6 @@
 ---
 name: auth-events-audit-log
-description: auth_events is the append-only audit table of auth-svc, 60 event types with a stable naming scheme, 2-year retention, 1.9 GB, monthly partitions, queried by auth:events and mirrored daily to the warehouse without IPs
+description: auth_events is the append-only audit table of auth-svc: 60 event types, stable naming, 2-year monthly partitions, 1.9 GB, read by auth:events
 type: reference
 status: active
 verified: 2026-05-14

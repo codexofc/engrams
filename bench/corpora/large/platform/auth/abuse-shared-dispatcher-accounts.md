@@ -1,6 +1,6 @@
 ---
 name: abuse-shared-dispatcher-accounts
-description: Février 2026, 1 800 comptes dispatch partagés par plusieurs personnes détectés par sessions simultanées et appareils de confiance saturés, décision de ne pas bloquer mais de rendre les comptes nominatifs gratuits et de forcer le MFA par personne, HF-4330
+description: Février 2026: 1 800 comptes dispatch partagés détectés (sessions simultanées, appareils saturés); pas de blocage, comptes nominatifs gratuits et MFA, HF-4330
 type: project
 status: active
 verified: 2026-05-20

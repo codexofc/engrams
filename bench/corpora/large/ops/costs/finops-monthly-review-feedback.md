@@ -1,6 +1,6 @@
 ---
 name: finops-monthly-review-feedback
-description: Ce que neuf revues mensuelles des coûts ont appris, une heure suffit si la table est prête, les gros gains étaient des erreurs pas des optimisations, les demandes de matériel se discutent avec les chiffres d'usage du demandeur, la refacturation interne reste refusée, et l'ordre du jour fixe
+description: Ce que neuf revues mensuelles des coûts ont appris: les gros gains étaient des erreurs, le matériel se discute avec l'usage, refacturation refusée
 type: feedback
 status: active
 verified: 2026-07-08

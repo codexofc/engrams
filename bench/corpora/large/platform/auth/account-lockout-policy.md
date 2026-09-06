@@ -1,6 +1,6 @@
 ---
 name: account-lockout-policy
-description: Lockout is distinct from throttling, triggered by signals not counts (breached password unchanged after 7 days, 3 reuse detections in a day, admin action, inactivity 90 days), unlock only by the user through reset or by support with two proofs
+description: Lockout is distinct from throttling: triggered by signals (stale breached password, repeated reuse, admin, inactivity) never by failed attempts; unlock rules
 type: reference
 status: active
 verified: 2026-04-09

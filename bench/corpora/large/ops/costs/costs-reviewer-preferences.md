@@ -1,6 +1,6 @@
 ---
 name: costs-reviewer-preferences
-description: How the rotating cost reviewer works, invoices typed in by hand on day one and reconciled the same morning, usage before invoice, requests not usage for compute, no internal billing, one saving per month written down with its measurement, and a refusal to optimise anything under 200 EUR a month
+description: How the rotating cost reviewer works: invoices typed by hand on day one, usage before invoice, requests not usage, no internal billing, one saving a month
 type: user
 status: active
 verified: 2026-07-08

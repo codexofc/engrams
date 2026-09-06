@@ -1,6 +1,6 @@
 ---
 name: auth-review-feedback-2026
-description: What the six-month review of auth-svc (April 2026) concluded, what worked, what we would do differently, and the rules reviewers now apply to any change in the auth code
+description: What the six-month review of auth-svc (April 2026) concluded, what we would do differently, and the seven rules reviewers apply to any auth change
 type: feedback
 status: active
 verified: 2026-04-24

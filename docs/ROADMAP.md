@@ -15,15 +15,15 @@ and several agents writing to the same memory at once, corpora of tens of
 thousands of notes, and a memory that outlives any one laptop. The plan:
 
 - the same CLI, the same MCP tools and the same hook, unchanged, so that a project
-  can move from one mode to the other without touching the agents;
+  can move from one mode to the other without touching the agents,
 - a store behind a trait, with SQLite and its vector extension as the first
   backend (one file, no server), and a networked backend after it, so that the
-  choice is a configuration line;
+  choice is a configuration line,
 - notes stay readable markdown: the database holds the vectors, the questions
   cache, the feedback table and the access log, the notes themselves are exported
-  as files on demand and can be versioned as today;
+  as files on demand and can be versioned as today,
 - concurrent writers, one writer per note at a time, with the same refusal of
-  secrets and near-duplicates as the CLI;
+  secrets and near-duplicates as the CLI,
 - the benchmark run in both modes on the same corpus, so that the database mode
   cannot silently lose recall or latency.
 
@@ -38,12 +38,12 @@ header and with several facts per file. The benchmarks assume the format
 
 - a raw mode that keeps every file whole, derives the name from the file name, the
   description from the first heading or line, the type by default, the date from
-  the file, and adds the header without touching the body;
+  the file, and adds the header without touching the body,
 - a converting mode that splits a long file into one note per `##` section, skips
   index files (the `MEMORY.md` of Claude Code are pointers, not facts), reports
-  near-duplicates of existing notes and refuses secrets;
+  near-duplicates of existing notes and refuses secrets,
 - `--dry-run` first, always, with a report of what would be converted, split and
-  left aside;
+  left aside,
 - a third public corpus in `bench/corpora/`, the large one degraded mechanically
   (headers removed, notes merged by project, descriptions lost), to measure what the
   engine gives on raw notes, what the import recovers, and the gap with the clean

@@ -1,6 +1,6 @@
 ---
 name: backup-inventory-and-retention
-description: Inventaire de ce qui est sauvegardé, par quoi, où, à quelle fréquence et combien de temps, en une table tenue à jour à chaque revue trimestrielle, avec les trois choses qui ne sont pas sauvegardées et pourquoi
+description: Inventaire de ce qui est sauvegardé, par quoi, où, à quelle fréquence, combien de temps, et la dernière restauration réelle; les trois choses non sauvegardées
 type: reference
 status: active
 verified: 2026-06-30
@@ -22,9 +22,19 @@ La table ci-dessous est la référence. Elle est relue à chaque exercice de res
 | volumes Longhorn (Redis, RabbitMQ, registre) | Velero + CSI | `hf-velero-prod` | quotidien 02:30 | 30 jours | exercice mai 2026 (RabbitMQ) |
 | etcd RKE2 | natif RKE2 | `hf-etcd-snapshots` | toutes les 6 h | 30 jours | avril 2026, cluster jetable |
 | vault (secrets) | instantané natif | `hf-vault-snapshots` | horaire | 90 jours | exercice mai 2026 |
+
+### Table d'inventaire, suite : documents et entrepôt
+
+| Quoi | Par quoi | Vers | Fréquence | Rétention | Dernière restauration réelle |
+|---|---|---|---|---|---|
 | documents (`hf-documents-prod`) | versionnage du bucket + réplication + copie hors site | `stash-b`, copie hors site | continu, hebdomadaire hors site | versions 90 jours, hors site 52 semaines | [[restore-2025-11-documents-prefix-deleted]] |
 | entrepôt ClickHouse, données chaudes | instantanés incrémentaux natifs | `hf-warehouse-cold-prod`, préfixe `backups/` | quotidien 03:30 | 35 jours | décembre 2025, `raw.bids` |
 | entrepôt ClickHouse, parties froides | déjà sur l'objet ; réplication + hors site | `stash-b`, hors site | continu, hebdomadaire | versions 30 jours | jamais restauré, voir ci-dessous |
+
+### Table d'inventaire, fin : bus, Git, ML
+
+| Quoi | Par quoi | Vers | Fréquence | Rétention | Dernière restauration réelle |
+|---|---|---|---|---|---|
 | topics torrent | non sauvegardés, réplication 3 | | | rétention des topics | sans objet |
 | état du connecteur CDC et registre de schémas | export | `hf-torrent-snapshots` | horaire | 30 jours | exercice mai 2026 (registre) |
 | dépôts Git | miroir sur `ops-tools` + hébergeur | `hf-ops-misc/git-mirror/` | horaire | 30 jours | 2025, pour un dépôt supprimé par erreur |

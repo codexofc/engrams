@@ -1,6 +1,6 @@
 ---
 name: streaming-team-preferences
-description: Habitudes de l'équipe données sur le bus d'événements, tout dans topics.yaml, pas de topic sans propriétaire ni schéma, un consommateur est idempotent ou il a un mode rejeu, des secondes pas des messages, on lit le code du broker avant de le régler
+description: Habitudes de l'équipe données sur le bus: tout dans topics.yaml, un propriétaire par topic, des secondes pas des messages, consommateurs idempotents
 type: user
 status: active
 verified: 2026-06-24

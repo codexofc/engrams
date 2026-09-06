@@ -1,6 +1,6 @@
 ---
 name: missed-2025-11-duplicate-loads-after-replay
-description: Nov 2025, core.loads carried 41 000 duplicate load rows for 9 days after a search-indexer replay was accidentally run on the shared ingest group, row counts looked plausible, dashboards over-counted loads by 1.3 %, caught by a finance reconciliation not by us, the rules and the framework came out of it, HF-4480
+description: Nov 2025: core.loads carried 41 000 duplicate rows for 9 days after a replay on the wrong group; row counts looked fine, finance caught it, HF-4480
 type: project
 status: active
 verified: 2025-12-18
@@ -66,3 +66,15 @@ The fourth column is the check that did not exist. It is a 200 ms query. This ta
 ## Lesson written in the review
 
 "Plausible" is the most dangerous state of a number. A metric that moves by 40 % gets looked at; one that moves by 1.3 % in the right direction gets believed. Quality rules must test invariants (a load appears once, an invoice has one currency, an assigned load has a carrier), not plausibility.
+
+## Timeline
+
+- 2025-11-04 10:40: offset reset run against `ingest-svc` instead of `search-indexer`. Rebalances for 25 minutes, overlapping batches, 41 000 duplicate rows in `raw.cdc_app_loads` and 380 000 in `raw.cdc_app_bids` (the bids duplicates were removed the same day by the warehouse's own deduplication of bid versions, which is why only loads mattered).
+
+- 2025-11-05 to 11-12: dashboards over-count by 1.3 %, nobody notices, weekly ETA retrain on the 10th uses the data.
+
+- 2025-11-13 15:00: finance asks about 1 200 extra delivered loads. 16:10: duplicates found. 17:30: `raw` cleaned. 18:30: `core.loads` rebuilt.
+
+- 2025-11-14: marts rebuilt for 9 days, October report reissued, ML retrain re-run.
+
+- 2025-11-17: review. HF-4480 opened with the five items above. `dq-runner` first commit 11-18, first `unique` rule in production 11-25.

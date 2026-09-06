@@ -1,6 +1,6 @@
 ---
 name: reserved-capacity-decision-2026-01
-description: Janvier 2026, passage à un engagement annuel chez Skyvale pour le CDN, le DNS et les VM de burst (−900 EUR par mois contre l'usage à la demande), et à un tarif interne « engagé » pour les nœuds du pool partagé, ce qui a été engagé, ce qui ne l'a pas été et pourquoi, HF-4700
+description: Janvier 2026: engagement annuel Skyvale à 80 % de l'usage (−900 EUR/mois) et tarif interne engagé pour 4 nœuds du pool, 0 nœud commandé en 2026, HF-4700
 type: project
 status: active
 verified: 2026-02-12

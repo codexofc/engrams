@@ -1,6 +1,6 @@
 ---
 name: incident-2026-05-torrent-3-disk-full
-description: May 2026, torrent-3 filled its log disk to 100 % after a retention change on driver.positions from 7 to 14 days was applied without checking the per-broker share, the broker stopped for 12 minutes, 41 partitions under-replicated, fixed by reverting retention and adding a per-broker projection check to the CI, HF-4450
+description: May 2026: torrent-3 hit 100 % disk after driver.positions retention went 7 to 14 days without a per-broker check, broker down 12 min, 0 loss, HF-4450
 type: project
 status: active
 verified: 2026-06-05

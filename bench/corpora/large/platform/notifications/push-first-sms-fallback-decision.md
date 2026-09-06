@@ -1,6 +1,6 @@
 ---
 name: push-first-sms-fallback-decision
-description: Since Dec 2025 driver assignment notifications go push first, SMS only if the push is not acknowledged within 3 min, cut assignment SMS by 64 % with no measurable change in pickup lateness
+description: Since Dec 2025 driver assignments go push first, SMS only if unacknowledged after 3 min: assignment SMS down 64 %, pickup lateness unchanged
 type: project
 status: active
 verified: 2026-03-02

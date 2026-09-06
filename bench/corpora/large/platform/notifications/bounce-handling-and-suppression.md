@@ -1,6 +1,6 @@
 ---
 name: bounce-handling-and-suppression
-description: Hard bounces suppress an address at once, soft bounces after 5 in 30 days, complaints suppress for good, the suppression list is in suppressed_recipients per channel and is checked before every send
+description: Hard bounces suppress at once, soft after 5 in 30 days, complaints for good; suppressed_recipients is per channel and checked before every send
 type: reference
 status: active
 verified: 2026-04-08

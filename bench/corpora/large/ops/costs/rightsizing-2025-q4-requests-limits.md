@@ -1,6 +1,6 @@
 ---
 name: rightsizing-2025-q4-requests-limits
-description: Q4 2025 pass over CPU and memory requests on hf-main, requests summed to 158 cores against 61 cores of p95 usage, cut requests by 38 % on 40 workloads using 30 days of p95 plus 30 %, freed 6 nodes' worth of schedulable capacity, cancelled the 2026 order of 4 nodes (2 200 EUR a month for 4 years), HF-4705
+description: Q4 2025 pass over requests on hf-main: 158 cores requested for 61 used, cut 38 % on 40 workloads with p95 plus 30 %, 4-node order cancelled, HF-4705
 type: project
 status: active
 verified: 2026-01-20

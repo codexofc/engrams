@@ -1,6 +1,6 @@
 ---
 name: vendor-invoices-reconciliation
-description: Chaque facture fournisseur variable (Bipline, Courrix, Verifid, Skyvale, fournisseur cartographique) est rapprochée de notre propre compte d'usage le premier jour ouvré du mois, écart toléré 1 %, les six écarts trouvés depuis 2025 et ce qu'ils ont rapporté, et les clauses de contrat qu'on relit à chaque reconduction
+description: Chaque facture variable (Bipline, Courrix, Verifid, Skyvale, cartographie) est rapprochée de notre compte d'usage le premier jour ouvré, écart toléré 1 %
 type: reference
 status: active
 verified: 2026-07-08
@@ -19,6 +19,11 @@ Une facture à l'usage se vérifie contre notre usage, pas contre la facture du 
 | Bipline | segments SMS par pays de destination, numéros longs loués | `notification_deliveries` : `sum(segments)` par `sms_country` sur les livraisons `sent` ou `delivered` du mois | 0,2 à 0,5 % (les `expired` que le contrat dit gratuits) |
 | Courrix | e-mails acceptés, IP dédiée au forfait | `notification_deliveries` canal email, statut au moins `sent` | 0,1 % |
 | Verifid | vérifications par type (identité, entreprise, document) | `kyc_checks` par `check_type` avec un `provider_ref` | 0 à 0,3 % |
+
+### Par fournisseur, suite
+
+| Fournisseur | Ce qu'il facture | Notre compte | Écart typique |
+|---|---|---|---|
 | Skyvale | egress par hôte, heures de VM par groupe, requêtes DNS par million, plan engagé | rapport d'usage Skyvale par hôte (le leur) croisé avec nos journaux CDN échantillonnés ; heures de VM depuis nos propres événements de création et suppression | 1 à 2 % sur l'egress (l'échantillonnage), 0 sur les VM |
 | fournisseur cartographique | appels d'API par type (géocodage, itinéraire, matrice), tuiles au forfait | compteur `maps.api_calls{type}` de notre proxy | 0,5 % |
 | prestataire datacentre | forfait racks, électricité au relevé, mains distantes à l'heure | relevé du compteur électrique visible sur le portail, tickets de mains distantes | 0 sur le forfait ; l'électricité varie avec la saison |
@@ -56,3 +61,17 @@ Total récupéré : environ 1 300 EUR. Total de temps passé : une heure par moi
 ## Ce qu'on ne rapproche pas et pourquoi
 
 Les frais Payla : c'est un pourcentage du volume réglé, la facturation le rapproche à la transaction dans sa propre réconciliation quotidienne, et le résultat va à la finance. Le refaire ici serait une deuxième version d'un contrôle qui existe.
+
+## La requête type, pour Bipline
+
+Celle qu'on colle dans le mail quand il y a un écart, à adapter aux autres fournisseurs :
+
+```
+SELECT sms_country, sum(segments) AS segments, count() AS messages
+FROM analytics.notification_daily
+WHERE day BETWEEN '2026-05-01' AND '2026-05-31'
+  AND channel = 'sms' AND status IN ('sent', 'delivered')
+GROUP BY sms_country ORDER BY segments DESC
+```
+
+Elle tourne sur l'agrégat quotidien de l'entrepôt, pas sur PostgreSQL, parce que les livraisons de plus de 180 jours ont été purgées côté application et qu'un litige de facture peut remonter à trois mois. Le résultat est collé dans `finops/reconciliations/2026-05-bipline.md` avec le total de la facture, l'écart en segments et en euros, et la décision (payer, contester, noter). Douze fichiers par an et par fournisseur, ce qui est la trace que la finance demandait.

@@ -1,6 +1,6 @@
 ---
 name: notifications-purge-and-retention
-description: Rétention des tables de notification, 180 jours pour notifications et notification_deliveries, 90 jours pour les événements fournisseur, contenu rendu jamais stocké, purge nocturne par lots de 20 000, export mensuel agrégé vers l'entrepôt
+description: Rétention des tables de notification: 180 jours pour notifications et deliveries, 90 pour les événements fournisseur, rendu jamais stocké, purge par lots
 type: reference
 status: active
 verified: 2026-04-22

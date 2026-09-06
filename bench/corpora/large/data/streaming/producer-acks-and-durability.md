@@ -1,6 +1,6 @@
 ---
 name: producer-acks-and-durability
-description: Tous les producteurs métier écrivent avec acks=all, producteur idempotent, min.insync.replicas=2, via une table outbox dans la transaction PostgreSQL et un relais, sauf driver.positions en acks=1 sans outbox, et ce que ça garantit ou pas
+description: Tous les producteurs métier écrivent en acks=all, idempotents, via une table outbox et un relais; driver.positions en acks=1 sans outbox, et ce que ça garantit
 type: reference
 status: active
 verified: 2026-05-28

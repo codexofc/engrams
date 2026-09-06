@@ -1,6 +1,6 @@
 ---
 name: dq-checks-runtime-cost
-description: Mai 2026, les 370 règles coûtaient 48 minutes de CPU entrepôt par jour, 6 % du total, trois règles en faisaient 60 %, élagage à 310 règles et réécriture de cinq requêtes, 22 minutes par jour depuis, la revue de coût est obligatoire au-dessus de 10 s par exécution, HF-4550
+description: Mai 2026: 370 règles coûtaient 48 min de CPU entrepôt par jour, trois en faisaient 60 %; élagage à 310 règles, 22 min par jour depuis, HF-4550
 type: project
 status: active
 verified: 2026-06-26
@@ -21,6 +21,11 @@ Le panneau « temps d'exécution par règle » du tableau de bord ([[dq-framewor
 | `bids_load_exists` | requête | `core.bids` (41 M) | 96 | 6 min | anti-jointure sur toute la table à chaque run |
 | `lsh_pk_unique` | `unique` | `core.load_status_history` | 96 | 3 min | toute la table |
 | `loads_count_vs_cdc` | réconciliation | `core.loads` / `raw` | 96 | 2 min | |
+
+### Les dix règles les plus coûteuses, suite
+
+| Règle | Type | Table | Exécutions / jour | Temps total / jour | Cause |
+|---|---|---|---|---|---|
 | `bids_pk_unique` | `unique` | `core.bids` | 96 | 2 min | |
 | `invoices_status_transitions` | requête | `core.invoice_status_history` | 24 | 1 min 30 | fonction fenêtre sur tout l'historique |
 | `carriers_one_current_row` | requête | `core.carriers` | 24 | 40 s | |

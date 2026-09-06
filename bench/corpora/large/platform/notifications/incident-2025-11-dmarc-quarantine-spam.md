@@ -1,6 +1,6 @@
 ---
 name: incident-2025-11-dmarc-quarantine-spam
-description: Nov 2025, DMARC moved to p=quarantine while the dispatch tool still sent from an unaligned subdomain, 38 % of dispatch e-mails went to spam for 6 days, HF-4102
+description: Nov 2025: DMARC p=quarantine while the dispatch tool sent from an unaligned relay, 38 % of dispatch e-mails in spam for 6 days, HF-4102
 type: project
 status: active
 verified: 2025-12-15

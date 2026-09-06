@@ -1,6 +1,6 @@
 ---
 name: infra-cost-overview-2026
-description: Infrastructure and vendor run cost in H1 2026, 96 000 EUR a month all-in, colocation and hardware amortisation 41 %, SaaS vendors 33 % (Payla fees excluded), cloud services 9 %, people not counted, with the per-line table, the trend since Q4 2025 and what moves it
+description: Infrastructure and vendor run cost in H1 2026: 96 000 EUR a month all-in, colocation and amortisation 41 %, SaaS vendors 33 %, per-line table and trend
 type: reference
 status: active
 verified: 2026-07-08
@@ -26,10 +26,20 @@ The predecessor of this table was a spreadsheet ([[legacy-cost-spreadsheet]]); t
 | Skyvale: CDN and egress | 3 100 | 3 % | −4 200 ([[egress-finding-map-tiles-2025-11]]) |
 | Skyvale: DNS, status page, burst VMs (staging, CI runners) | 2 400 | 3 % | −1 800 ([[staging-environment-cost-cut]]) |
 | Skyvale: committed plan discount | −900 | | since January ([[reserved-capacity-decision-2026-01]]) |
+
+### By line, continued: vendors
+
+| Line | EUR / month | Share | Trend vs Q4 2025 |
+|---|---|---|---|
 | Courrix (e-mail) | 4 200 | 4 % | +600 (dedicated IP) |
 | Bipline (SMS) | 11 200 | 12 % | −2 100 (push-first fallback) |
 | Verifid (KYC) | 6 800 | 7 % | +900 (volume) |
 | map and routing data provider | 5 600 | 6 % | flat |
+
+### By line, end: licences, internal lines, total
+
+| Line | EUR / month | Share | Trend vs Q4 2025 |
+|---|---|---|---|
 | software licences: monitoring, an APM, the ClickHouse support contract, the Stashbox support contract, misc | 9 400 | 10 % | flat |
 | logging and traces storage (internal, marginal disk and object) | 700 | 1 % | −1 900 ([[logging-cost-reduction-2026]]) |
 | torrent nodes power and amortisation (already in the lines above, shown for the chargeback) | (3 800) | | |

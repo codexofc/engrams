@@ -1,6 +1,6 @@
 ---
 name: incident-2026-03-reset-timing-enumeration
-description: Mars 2026, la réponse de POST /v1/auth/reset/request prenait 60 ms de plus pour une adresse existante à cause du dispatch vers les notifications, permettant d'énumérer les comptes, trouvé par un chercheur, corrigé en déplaçant le dispatch hors requête, HF-4340
+description: Mars 2026: POST /v1/auth/reset/request prenait 60 ms de plus pour une adresse existante (dispatch synchrone), énumération possible, corrigé, HF-4340
 type: project
 status: active
 verified: 2026-04-02

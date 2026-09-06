@@ -1,6 +1,6 @@
 ---
 name: incident-2026-01-otp-sms-retry-loop
-description: Janvier 2026, une boucle de retry côté app conducteur a demandé 14 300 OTP SMS à 300 chauffeurs en 70 minutes, 2 100 EUR de SMS, la limite par destinataire n'était pas branchée, HF-4131
+description: Janvier 2026: une boucle de retry de l'app conducteur a demandé 14 300 OTP SMS à 300 chauffeurs en 70 min, 2 100 EUR, limite par destinataire absente, HF-4131
 type: project
 status: active
 verified: 2026-02-10

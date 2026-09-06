@@ -1,6 +1,6 @@
 ---
 name: dq-rules-review-feedback
-description: Ce que la revue mensuelle des règles de qualité a appris en neuf mois, une règle par hypothèse même implicite, tester l'invariant pas la vraisemblance, comparer les lignes entre elles plutôt qu'à l'horloge, sample_keys partout, et les cinq questions posées à toute nouvelle règle
+description: Ce que la revue mensuelle des règles a appris en neuf mois: une règle par hypothèse, l'invariant pas la vraisemblance, sample_keys partout, cinq questions
 type: feedback
 status: active
 verified: 2026-07-07

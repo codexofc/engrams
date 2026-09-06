@@ -1,6 +1,6 @@
 ---
 name: cost-anomaly-alerts
-description: Daily anomaly checks on the usage side of every variable cost (SMS segments, e-mail sends, Verifid verifications, CDN egress per host, Skyvale VM hours, object store growth per bucket, cluster requests per service), same-weekday band over 8 weeks, warn to the owning team, page only for SMS above 3× the band
+description: Daily anomaly checks on the usage behind every variable cost (SMS, e-mail, KYC, egress per host, VM hours, bucket growth), warn to owners, page only on SMS
 type: reference
 status: active
 verified: 2026-05-12

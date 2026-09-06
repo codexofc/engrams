@@ -1,6 +1,6 @@
 ---
 name: retention-and-compaction-policy
-description: Rétention par famille de topics, 7 jours driver, 30 jours domain, 400 jours billing, compaction sur cdc avec tombstones à 7 jours, segments de 1 GB, tout changement passe par topics.yaml et la vérification par broker de la CI depuis mai 2026
+description: Rétention par famille: 7 jours driver, 30 domain, 400 billing, compaction sur cdc avec tombstones 7 jours, segments 1 GB, tout changement via topics.yaml
 type: reference
 status: active
 verified: 2026-06-05

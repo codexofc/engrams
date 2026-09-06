@@ -1,7 +1,7 @@
 ---
 name: consumer-lag-alerting
-description: Lag is alerted in seconds behind the log head, not messages, per consumer group with a threshold declared in topics.yaml, 9 critical groups page the owning team, 60 s warn and 300 s page by default, the exporter samples every 15 s
-type: reference
+description: Lag is alerted in seconds behind the log head, not messages, per group with thresholds in topics.yaml; 9 critical groups page, 60 s warn, 300 s page
+type: project
 status: active
 verified: 2026-06-18
 ---

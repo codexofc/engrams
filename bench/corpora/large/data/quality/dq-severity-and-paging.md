@@ -1,6 +1,6 @@
 ---
 name: dq-severity-and-paging
-description: Trois sévérités (page, warn, info), page réservée aux invariants dont la violation fausse une décision ou un paiement, routage vers le propriétaire du domaine, regroupement par domaine et par 15 minutes, silence par ticket, et les 41 règles page relues chaque trimestre
+description: Trois sévérités (page, warn, info), page réservée aux invariants qui faussent une décision ou un paiement, routage au domaine, silences par ticket
 type: reference
 status: active
 verified: 2026-06-26

@@ -1,6 +1,6 @@
 ---
 name: legacy-row-count-checks
-description: Until Oct 2025 data quality was 14 shell scripts comparing today's row count of a core table to yesterday's within 20 %, plus a freshness ping, run from a cron on ops-tools, green through both misses of 2025, replaced by dq-runner and its anomaly rules
+description: Until Oct 2025 data quality was 14 shell scripts comparing a table's row count to yesterday's within 20 %, green through both misses of 2025
 type: reference
 status: archived
 superseded_by: [[volume-anomaly-seasonal-thresholds]]

@@ -1,6 +1,6 @@
 ---
 name: notifications-oncall-runbook
-description: Runbook for the notifications pipeline alerts (NotifyBacklog, NotifyRecipientBurst, NotifyBounceRateHigh, NotifyWebhookSilent, NotifyLatencyHigh), first commands, when to pause a queue, when to purge, IP warm-up plan
+description: Runbook for NotifyBacklog, NotifyRecipientBurst, NotifyBounceRateHigh, NotifyWebhookSilent and NotifyLatencyHigh: first commands, pause, purge, IP warm-up
 type: reference
 status: active
 verified: 2026-07-14

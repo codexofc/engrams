@@ -1,6 +1,6 @@
 ---
 name: volume-anomaly-seasonal-thresholds
-description: anomaly rules compare a daily metric to a band built from the same weekday over the previous 8 weeks (median ± 3 MAD), per country or currency, with holiday awareness from dim.holidays and an explicit "no history" state for new series, 12 rules, warn only
+description: Anomaly rules compare a daily metric to a same-weekday band over 8 weeks (median ± 3 MAD) per segment, with holidays and an explicit no-history state
 type: reference
 status: active
 verified: 2026-05-14

@@ -3,7 +3,7 @@
 Every number below was measured on one machine (MacBook Pro M1 Pro, 32 GB) against
 one corpus: 296 markdown notes in French and English, 21 projects, 1 661 paragraphs
 with the default model, plus 4 964 generated questions, 6 625 vectors in total. The
-corpus is private; the method and the tooling are in this repository so anyone can
+corpus is private. The method and the tooling are in this repository so anyone can
 reproduce the protocol on their own notes.
 
 Every table and every chart names the model it was measured with. Unless stated
@@ -82,7 +82,7 @@ Discarded after measurement: bge-m3 (no safetensors weights in its repository),
 static embeddings (20 to 30 points below the transformer on the first sixty
 queries: 58 / 25 / 53 against 75 / 42 / 81 for the default model, text only), and
 the library implementation of the ModernBERT graph (cosine 0.85 with the reference
-because of a hard-coded activation; the graph shipped here reads it from the
+because of a hard-coded activation. The graph shipped here reads it from the
 configuration and reaches 1.000000).
 
 ## Public corpora, replayable by anyone
@@ -97,7 +97,7 @@ target passages, one in three in the other language.
 
 | corpus | notes | size | projects | chunks | index time | queries |
 |---|---|---|---|---|---|---|
-| large, "Halden Freight", a freight-exchange SaaS | 220 | 1.1 MB | 12 in 4 families | 1 320 | 281 s | 24 topic, 24 detail, 12 identifier |
+| large, "Halden Freight", a freight-exchange SaaS | 523 | 2.9 MB | 30 in 7 families | 3 424 | 722 s | 24 topic, 24 detail, 12 identifier |
 | small, "Brume Studio", a game studio | 30 | 140 KB | 3 in 1 family | 112 | 21 s | 12 topic, 12 detail, 6 identifier |
 
 Expected note among the five returned, default model, text only (no indexed
@@ -105,9 +105,9 @@ questions, the identifier bonus changes nothing on these corpora):
 
 | corpus | family | words only | Kept |
 |---|---|---|---|
-| large | topic of a note (24) | 50 % | **92 %** |
-| large | buried detail (24) | 79 % | **100 %** |
-| large | named identifier (12) | 92 % | **100 %** |
+| large | topic of a note (24) | 46 % | **83 %** |
+| large | buried detail (24) | 71 % | **88 %** |
+| large | named identifier (12) | 83 % | **100 %** |
 | small | topic of a note (12) | 75 % | **100 %** |
 | small | buried detail (12) | 100 % | 92 % |
 | small | named identifier (6) | 100 % | 100 % |
@@ -116,23 +116,30 @@ Context cost on the same queries, same protocol as the section below:
 
 | corpus, path to the answer | tokens per query (est.) | expected note reached |
 |---|---|---|
-| large, grep with every word, then the notes in grep order | 17 801 | 41 / 60 |
-| large, grep with the three longest words, then the notes | 5 325 | 35 / 60 |
-| large, `kept search` then `kept read` | 1 583 | 56 / 60 |
-| large, `kept answer`, passages only | 478 | 54 / 60 |
-| large, `kept hook`, every prompt | 245 | 42 / 60 |
+| large, grep with every word, then the notes in grep order | 38 256 | 37 / 60 |
+| large, grep with the three longest words, then the notes | 8 307 | 32 / 60 |
+| large, `kept search` then `kept read` | 1 490 | 52 / 60 |
+| large, `kept answer`, passages only | 495 | 48 / 60 |
+| large, `kept hook`, every prompt | 247 | 39 / 60 |
 | small, grep with the three longest words, then the notes | 1 985 | 23 / 30 |
 | small, `kept search` then `kept read` | 1 074 | 29 / 30 |
 | small, `kept hook`, every prompt | 240 | 24 / 30 |
 
-Reading, with the caution these corpora deserve. They score higher than the private
-one on every family: they were written to be specific, one fact per note, with a
-vocabulary that rarely repeats, which is the format the engine is built for and not
-the state of a memory that grew over two years. On the large one the engine reaches
-the note 56 times out of 60 for 1 583 tokens where the keyword grep reaches it 35
-times for 5 325, a third of the context for a fifth more answers. On the small one
-words nearly suffice (30 notes, 140 KB): the engine still costs half the context of
-the grep and misses one query instead of seven. The private corpus, with its repeats
+Reading, with the caution these corpora deserve. They were written to be specific,
+one fact per note, with a vocabulary that rarely repeats, which is the format the
+engine is built for and not the state of a memory that grew over two years. The 60
+queries of the large corpus were written blind against its first 220 notes, and the
+303 notes added since (four new families, eighteen new projects) act as distractors:
+top 5 on the topic family went from 92 to 83 % and on the buried details from 100 to
+88 %, the identifiers stayed at 100 %, while the words-only baseline lost more (50
+to 46, 79 to 71, 92 to 83 %). On the large one the engine reaches the note 52 times
+out of 60 for 1 490 tokens where the keyword grep reaches it 32 times for 8 307, a
+fifth of the context for a third more answers, and the grep with every word of the
+query costs 38 256 tokens for 37 hits. The 30 bounded hot indexes of that corpus
+weigh 36 391 tokens together, about 1 200 per project, which is what one session
+loads when it opens one project. On the small one words nearly suffice (30 notes,
+140 KB): the engine still costs half the context of the grep and misses one query
+instead of seven. The private corpus, with its repeats
 and its French and English mixed inside one note, is the harder and the more
 realistic of the three, and its numbers are the ones the README leads with.
 
@@ -188,7 +195,7 @@ passage scores above the threshold.
   $0.05 on Sonnet 5. The author's own log is not a usable daily figure: the hook
   fires on every message of a working session, tool notifications included.
 - **Per consultation**: 2 348 tokens against 14 884 for the keyword grep, 12 536
-  saved; against the every-word grep, 31 239 saved.
+  saved, and against the every-word grep, 31 239 saved.
 - **Per session start**: the hot index of the project, 17 408 bytes at most, 2 500
   characters on average on this corpus (about 630 tokens), against 1.7 MB (425 000
   tokens) if a session loaded the notes.
@@ -217,7 +224,7 @@ Sources: [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing),
 [OpenAI](https://developers.openai.com/api/docs/pricing),
 [Google](https://ai.google.dev/gemini-api/docs/pricing). Two remarks that push the
 figures up rather than down. Tokens are estimated at four characters, the rule the
-providers give for English; Anthropic states that its tokenizer from Claude 4.7 on
+providers give for English. Anthropic states that its tokenizer from Claude 4.7 on
 yields about 30 % more tokens for the same text, so the billed savings on those
 models are larger than the table. And output tokens are unchanged by the tool, the
 saving is entirely on input, which is also the part that fills the context window
@@ -248,7 +255,7 @@ chosen.
 
 ### Retrieval signals
 
-Same index for every column; ablations remove signals before ranking
+Same index for every column. Ablations remove signals before ranking
 (`KEPT_NO_QUESTIONS=1`, `KEPT_ID_BONUS=0`, `KEPT_LEXICAL=1`).
 
 | family | words only | text only | + identifier bonus | + indexed questions (default) |
@@ -287,7 +294,7 @@ the reference and benchmark identical at each step:
 <p align="center"><img src="memory.svg" alt="Resident memory of the warm process, step by step, default model" width="820"></p>
 
 An isolated call on the full corpus (load, answer, exit) peaks at 310 MB and takes
-0.21 s; on the two-note root of the model comparison, 315 MB and 0.18 s.
+0.21 s. On the two-note root of the model comparison, 315 MB and 0.18 s.
 
 ### Latency and throughput
 
@@ -316,7 +323,7 @@ One paragraph in six of the corpus (278), embedded in F32 then in Q8_0:
 
 The gap does not grow with length: quantisation errors are zero-mean and cancel in
 the dot product. Dynamic int8 (quantised activations) had cost eight to eleven points
-of recall on the same benchmark; Q8_0 on weights only is a different object.
+of recall on the same benchmark. Q8_0 on weights only is a different object.
 
 ### Tokenizer
 
@@ -359,13 +366,13 @@ through the global attention layers in one piece.
 
 - **Metal, F16.** Five times faster encoding once warm, but 9.4 s of kernel
   compilation per process and thirteen all-NaN vectors on real paragraphs of 100 to
-  350 tokens (layer-norm sum of squares overflows F16). Removed; the encoder now
+  350 tokens (layer-norm sum of squares overflows F16). Removed. The encoder now
   refuses any non-finite vector.
 - **BF16 on CPU.** No matmul in the inference library.
 - **Static embeddings.** 20 to 30 points of recall below the transformer.
-- **The library ModernBERT graph.** Cosine 0.85 with the reference; replaced by a
+- **The library ModernBERT graph.** Cosine 0.85 with the reference, replaced by a
   graph written after the reference implementation, at 1.000000.
-- **bge-m3.** No safetensors weights upstream; multilingual-e5-large covers the same
+- **bge-m3.** No safetensors weights upstream. multilingual-e5-large covers the same
   slot.
 
 ## Reproduce

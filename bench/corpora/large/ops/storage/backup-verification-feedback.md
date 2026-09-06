@@ -1,6 +1,6 @@
 ---
 name: backup-verification-feedback
-description: What a year of restores and drills taught us about verifying backups, checksums are not restores, the inventory lies until exercised, consistency across stores is the hard part, and the five checks every backup line must pass before it counts
+description: What a year of restores taught us about verifying backups: checksums are not restores, the inventory lies until exercised, and five checks per backup line
 type: feedback
 status: active
 verified: 2026-06-04

@@ -1,6 +1,6 @@
 ---
 name: session-model-and-revocation
-description: Une session est une ligne de auth.sessions référencée par le refresh token, la révocation passe par un set Redis auth:revoked lu par l'API à chaque requête, 12 h web, 30 j app conducteur, déconnexion partout en une requête
+description: Une session est une ligne de auth.sessions liée au refresh token; révocation par le set Redis auth:revoked lu à chaque requête, 12 h web, 30 j app conducteur
 type: reference
 status: active
 verified: 2026-05-06

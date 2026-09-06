@@ -1,6 +1,6 @@
 ---
 name: freshness-monitors
-description: Freshness rules compare max(updated_at) of a core table to now, thresholds 15 min for CDC-fed tables, 30 min for batch marts, 26 h for daily, measured every 5 min by dq-runner --schedule, with a quiet-hours rule for tables whose source legitimately stops at night
+description: Freshness rules compare max(updated_at) to now: 15 min for CDC-fed tables, 30 min for marts, 26 h for daily, every 5 min, with quiet hours per table
 type: reference
 status: active
 verified: 2026-05-19

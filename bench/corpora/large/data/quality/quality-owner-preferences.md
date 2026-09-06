@@ -1,6 +1,6 @@
 ---
 name: quality-owner-preferences
-description: How the data engineer who runs data quality works, invariants over plausibility, rules owned by domains, every page rule has a story, pruning is a feature, no rule without a runbook, and the monthly review is the product
+description: How the engineer who runs data quality works: invariants first, rules owned by domains, every page rule has a story, pruning is a feature, not a gate
 type: user
 status: active
 verified: 2026-07-07

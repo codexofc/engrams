@@ -1,6 +1,6 @@
 ---
 name: incident-2025-10-ingest-rebalance-storm
-description: Oct 2025, ingest-svc rebalanced 140 times in 2 hours because one of six members took 45 s per batch under a slow warehouse insert and exceeded max.poll.interval.ms, lag reached 52 min, fixed with static membership and a poll interval sized to the batch, HF-4405
+description: Oct 2025: ingest-svc rebalanced 140 times in 2 h because one slow member exceeded max.poll.interval.ms, lag 52 min, fixed with static membership, HF-4405
 type: project
 status: active
 verified: 2025-11-12

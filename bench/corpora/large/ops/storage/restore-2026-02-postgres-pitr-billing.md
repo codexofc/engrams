@@ -1,6 +1,6 @@
 ---
 name: restore-2026-02-postgres-pitr-billing
-description: Février 2026, une migration de facturation a mis à jour 84 000 lignes de invoice_lines avec une TVA fausse, restauration PITR de la base principale sur un cluster parallèle à T-3 min, extraction des lignes justes, réinjection ciblée, 2 h 50 au total, la base de prod n'a jamais été arrêtée, HF-4610
+description: Février 2026: migration fausse sur 84 000 lignes de invoice_lines, PITR sur un cluster parallèle à T-3 min, réinjection ciblée, 2 h 50, prod jamais arrêtée
 type: project
 status: active
 verified: 2026-03-04

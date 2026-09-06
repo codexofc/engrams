@@ -1,6 +1,6 @@
 ---
 name: mfa-recovery-codes
-description: Dix codes de secours de 10 caractères générés à l'activation TOTP, stockés hachés dans mfa_methods, usage unique, régénération invalide le lot, la réinitialisation MFA par le support exige deux preuves et révoque toutes les sessions
+description: Dix codes de secours de 10 caractères à l'activation TOTP, hachés dans mfa_methods, usage unique; la réinitialisation MFA par le support exige deux preuves
 type: reference
 status: active
 verified: 2026-04-20

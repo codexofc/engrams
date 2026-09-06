@@ -1,6 +1,6 @@
 ---
 name: gpu-vs-cpu-inference-cost
-description: The two GPU nodes (2 300 EUR a month amortised) are justified by OCR alone at 4 minutes per document on CPU versus 6 seconds on GPU, ML inference stays on CPU because gradient boosted models cost 0.4 ms per prediction there, the 2026 numbers and the decision not to buy a third GPU node for the ML team
+description: The two GPU nodes are justified by OCR alone (4 min per document on CPU vs 6 s); ML inference stays on CPU at 0.4 ms per prediction, no third GPU node
 type: project
 status: active
 verified: 2026-05-20
@@ -65,3 +65,7 @@ The `ml` and `ocr` lines of [[per-service-cost-table-q2-2026]] are 8 600 EUR a m
 - A document type that needs a larger model (handwritten CMR fields have been discussed): possibly a node with more memory, again for OCR.
 
 - Batch scoring workloads (scoring all 3 M historical loads with a new model for a backtest) taking more than a day on CPU: the ML team does this twice a year and it takes 6 hours on 16 cores; not yet.
+
+## How the numbers were measured
+
+The OCR figures come from the pipeline's own metrics (`ocr.document_seconds` histogram) over March 2026, split by node label, with the CPU variant run for one week on 8 reserved cores of a pool node against a 5 % sample of the same documents. The inference figures come from a benchmark harness in the `ml-infer` repository (`cargo bench --bench predict`) run on a pool node and on `hf-ocr-02` with the GPU backend enabled, 100 000 predictions each, latencies from the harness, not from production. The costs use the finops rates (21 EUR per requested core-month, 1 150 EUR per GPU node-month amortised) and are in the ticket with the raw output attached, so that the next time someone asks the question the answer is a re-run, not an argument.

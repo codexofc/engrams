@@ -1,6 +1,6 @@
 ---
 name: schema-registry-compatibility-rules
-description: Schemas are JSON Schema documents in the torrent registry at registry.hf.internal, one subject per topic, BACKWARD compatibility enforced by the CI, no field removal without a deprecation cycle, unit in the field name or in x-unit
+description: Schemas are JSON Schema in the torrent registry, one subject per topic, BACKWARD compatibility enforced by the CI, no removal without a 90-day deprecation
 type: reference
 status: active
 verified: 2026-05-08

@@ -1,6 +1,6 @@
 ---
 name: template-review-checklist
-description: Ce que le relecteur vérifie sur un nouveau template ou type d'événement de notification, tiré des erreurs de 2025 et 2026, à appliquer avant d'approuver la MR
+description: Ce que le relecteur vérifie sur un nouveau template ou type d'événement de notification, tiré des erreurs de 2025 et 2026, avant d'approuver la MR
 type: feedback
 status: active
 verified: 2026-05-20

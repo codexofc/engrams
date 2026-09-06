@@ -1,6 +1,6 @@
 ---
 name: offsite-weekly-copy-contract
-description: La copie hors site hebdomadaire est un service du prestataire du datacentre, disques chiffrés emportés chaque mardi vers son second site à 90 km, 52 semaines conservées, cinq buckets dans le périmètre, restauration à la demande sous 48 h contractuelles (4 h mesurées pour un petit bucket), et ce que le contrat ne couvre pas
+description: Copie hors site hebdomadaire par le prestataire du datacentre: disques chiffrés vers un second site à 90 km, 52 semaines, cinq buckets, restauration sous 48 h
 type: reference
 status: active
 verified: 2026-05-27

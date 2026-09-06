@@ -78,10 +78,10 @@ content each time. The newest Claude tokenizer yields about 30 % more tokens for
 same text, so the dollar figures are a floor. Protocol, error bars, sources and the
 other models in [docs/BENCHMARKS.md](docs/BENCHMARKS.md). The corpus above is
 private, so two synthetic ones ship in `bench/corpora/` with their blind queries,
-220 and 30 notes: `scripts/bench-corpus.sh large` replays everything on them (on the
-large one, 92 / 100 / 100 % against 50 / 79 / 92 % for words only, and 1 583 tokens
-per consultation against 5 325 for a keyword grep). These figures assume notes in
-the format `kept check` enforces; a memory imported raw from another tool scores
+523 and 30 notes: `scripts/bench-corpus.sh large` replays everything on them (on the
+large one, 83 / 88 / 100 % against 46 / 71 / 83 % for words only, and 1 490 tokens
+per consultation against 8 307 for a keyword grep). These figures assume notes in
+the format `kept check` enforces. A memory imported raw from another tool scores
 lower until it is converted.
 
 ## Install
@@ -373,7 +373,7 @@ flowchart LR
   L -.-> R
 ```
 
-- **Files are the truth.** The index is derived and disposable; its header records
+- **Files are the truth.** The index is derived and disposable. Its header records
   the model, weights, dimension, pooling and prefixes, and any mismatch rebuilds it
   rather than mixing vectors.
 - **Chunks, not notes.** A single vector for a long note represents its dominant
@@ -381,7 +381,7 @@ flowchart LR
   inside a paragraph, and each chunk carries the note's name and description.
 - **Questions, optionally.** A query is short and interrogative, a paragraph is long
   and declarative. Any command-line LLM can write, once per paragraph, the questions
-  it answers; they are indexed next to it.
+  it answers, and they are indexed next to it.
 - **Learning that cannot drift.** Nothing is learned from the engine's own results.
   Two external signals only: an explicit confirmation, or a note read after a search
   that did not show it. The bonus is capped, decays with a sixty-day half-life, and
@@ -427,9 +427,9 @@ tool when you know the exact word, which is why the engine keeps a lexical signa
 ## Roadmap
 
 Two storage modes, the current file mode and a database mode for teams behind the
-same commands; `kept import` for memories that already exist (Claude Code,
+same commands, then `kept import` for memories that already exist (Claude Code,
 Gemini, Codex, plain folders), with a raw corpus in the benchmark to measure the
-gap; fresh-machine tests on Linux desktops; a lexical channel merged with the vector
+gap, fresh-machine tests on Linux desktops, and a lexical channel merged with the vector
 ranking. Details and what is deliberately not planned in
 [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -442,7 +442,7 @@ ranking. Details and what is deliberately not planned in
 4. **No silent error.** Unknown pooling, mismatched index, non-finite vector,
    truncated paragraph: refused or announced, never absorbed.
 5. **Low level where it runs.** Memory layout, precision and evaluation order are
-   decisions this code makes itself; that is where the 1.8 GB went.
+   decisions this code makes itself. That is where the 1.8 GB went.
 
 ## Privacy and platforms
 

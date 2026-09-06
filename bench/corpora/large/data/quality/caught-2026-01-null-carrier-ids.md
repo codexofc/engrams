@@ -1,6 +1,6 @@
 ---
 name: caught-2026-01-null-carrier-ids
-description: Janvier 2026, la règle loads_assigned_have_carrier a appelé à 09:12 sur 38 chargements assignés sans transporteur dans core.loads, cause un ordre d'événements inversé dans la projection après une augmentation de partitions, corrigé en 50 minutes, aucun tableau de bord faux, HF-4502
+description: Janvier 2026: loads_assigned_have_carrier a appelé sur 38 chargements assignés sans transporteur, événements inversés dans la projection, 50 min, HF-4502
 type: project
 status: active
 verified: 2026-02-03

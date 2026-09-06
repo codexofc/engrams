@@ -1,7 +1,7 @@
 ---
 name: partition-count-decisions
-description: Partition counts come from an allowed list (6, 12, 24, 48, 96), sized for the peak rate divided by 300 msg/s per partition with room for 3 years, driver.positions went 24 to 48 to 96, why counts never go down and what an increase does to key ordering
-type: project
+description: Partition counts come from an allowed list (6 to 96), sized on the 3-year peak rate at 300 msg/s per partition; driver.positions went 24 to 48 to 96
+type: feedback
 status: active
 verified: 2026-05-22
 ---

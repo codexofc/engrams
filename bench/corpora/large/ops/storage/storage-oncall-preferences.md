@@ -1,6 +1,6 @@
 ---
 name: storage-oncall-preferences
-description: Habitudes de l'astreinte stockage, une sauvegarde n'existe que restaurée, trois copies et on sait laquelle survit à quoi, aucune suppression à la main sur les buckets de données, les gros écrits s'annoncent, la capacité se décide dix mois avant, et l'exercice trimestriel n'est pas négociable
+description: Habitudes de l'astreinte stockage: une sauvegarde n'existe que restaurée, trois copies nommées, aucune suppression à la main, les gros écrits s'annoncent
 type: user
 status: active
 verified: 2026-06-30

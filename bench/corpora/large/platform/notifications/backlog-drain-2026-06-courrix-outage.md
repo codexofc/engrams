@@ -1,6 +1,6 @@
 ---
 name: backlog-drain-2026-06-courrix-outage
-description: Juin 2026, panne Courrix de 3 h 10, file email à 410 000, digests mis en pause, drain en 52 minutes à 130 envois par seconde, 18 000 messages périmés abandonnés volontairement, HF-4260
+description: Juin 2026: panne Courrix de 3 h 10, file email à 410 000, digests en pause, drain en 52 min à 130 envois/s, 18 000 messages périmés abandonnés, HF-4260
 type: project
 status: active
 verified: 2026-07-01

@@ -1,6 +1,6 @@
 ---
 name: password-policy-and-argon2
-description: Argon2id 64 MiB, 3 itérations, parallélisme 1, 140 ms par vérification, mot de passe de 12 caractères minimum sans règle de composition, liste de compromission locale de 600 M de hachés, rehash transparent à la connexion
+description: Argon2id 64 MiB, 3 itérations, 140 ms par vérification; 12 caractères minimum sans règle de composition, liste de compromission locale, rehash à la connexion
 type: reference
 status: active
 verified: 2026-03-24

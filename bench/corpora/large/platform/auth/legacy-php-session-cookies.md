@@ -1,6 +1,6 @@
 ---
 name: legacy-php-session-cookies
-description: Jusqu'en octobre 2025 les sessions web étaient des sessions PHP natives dans Redis, cookie PHPSESSID de 24 h glissantes, sans liste de sessions, sans révocation ciblée, sans liaison appareil, remplacées par le modèle de auth-svc
+description: Jusqu'en octobre 2025 les sessions web étaient des sessions PHP natives dans Redis, 24 h glissantes, sans liste ni révocation ciblée ni liaison appareil
 type: reference
 status: archived
 superseded_by: [[session-model-and-revocation]]

@@ -1,6 +1,6 @@
 ---
 name: incident-2025-12-credential-stuffing
-description: Dec 2025, 2.1 M login attempts from 9 000 IPs over 3 days against shipper and dispatcher accounts, 140 accounts entered with reused passwords, no money moved, response and the rules that came out of it, HF-4320
+description: Dec 2025: 2.1 M login attempts from 9 000 IPs over 3 days, 140 accounts entered with reused passwords, no money moved, throttle and MFA followed, HF-4320
 type: project
 status: active
 verified: 2026-01-28

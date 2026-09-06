@@ -1,6 +1,6 @@
 ---
 name: legacy-swiftmailer-cron-sender
-description: Until Nov 2025 e-mail left through a cron-driven SwiftMailer spool on the API host, SMS through a shell script calling a gateway, push through the mobile transport, three retry policies and no common record
+description: Until Nov 2025 e-mail left through a cron-driven SwiftMailer spool, SMS through a shell script, push through the mobile transport: three retry policies
 type: reference
 status: archived
 superseded_by: [[notifications-pipeline-overview]]

@@ -1,6 +1,6 @@
 ---
 name: dq-framework-overview
-description: Data quality rules are yaml files run by dq-runner after every marmot model, results in dq.results, 310 rules on 62 tables in June 2026, five rule kinds (not_null, unique, accepted_values, freshness, reconciliation, anomaly), severity decides paging, owned by the data team with rules owned by domains
+description: Data quality rules are yaml run by dq-runner after every marmot model, results in dq.results, 310 rules on 62 tables in June 2026, seven rule kinds
 type: reference
 status: active
 verified: 2026-06-26

@@ -1,6 +1,6 @@
 ---
 name: torrent-broker-overview
-description: torrent is the event bus since 2024, a Kafka-protocol-compatible broker, 5 nodes torrent-1 to torrent-5.hf.internal in the two racks, 3.4 in 2026, 210 topics, 18 000 msg/s peak, 4.1 TB retained, owned by the data team with platform on-call
+description: torrent is the Kafka-protocol event bus: 5 bare-metal nodes torrent-1..5.hf.internal on two racks, 3.4 in 2026, 210 topics, 18 000 msg/s peak, 4.1 TB retained
 type: reference
 status: active
 verified: 2026-07-20

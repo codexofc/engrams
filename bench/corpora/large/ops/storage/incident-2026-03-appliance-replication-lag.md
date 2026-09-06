@@ -1,6 +1,6 @@
 ---
 name: incident-2026-03-appliance-replication-lag
-description: March 2026, replication from stash-a to stash-b fell 9 hours behind over a weekend after a ClickHouse cold-part rewrite pushed 6 TB through the replication queue, the queue processes buckets in a single FIFO, fixed with per-bucket priority and a bandwidth reservation, no data lost, HF-4615
+description: March 2026: replication stash-a to stash-b fell 9 h behind after a 6 TB cold-part rewrite in a single FIFO queue, fixed with per-bucket priority, HF-4615
 type: project
 status: active
 verified: 2026-04-10

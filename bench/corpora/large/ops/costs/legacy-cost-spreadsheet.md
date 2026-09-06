@@ -1,6 +1,6 @@
 ---
 name: legacy-cost-spreadsheet
-description: Jusqu'en octobre 2025 les coûts d'infrastructure vivaient dans une feuille de calcul partagée tenue par une personne, mise à jour par trimestre, sans répartition par service, avec l'amortissement matériel oublié et l'egress en une ligne, remplacée par finops/costs.yaml et le rapport mensuel
+description: Jusqu'en octobre 2025 les coûts vivaient dans une feuille de calcul trimestrielle sans amortissement ni répartition par service; remplacée par costs.yaml
 type: reference
 status: archived
 superseded_by: [[infra-cost-overview-2026]]

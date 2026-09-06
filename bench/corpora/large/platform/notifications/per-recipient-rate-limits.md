@@ -1,7 +1,7 @@
 ---
 name: per-recipient-rate-limits
-description: Limites par destinataire dans notify-worker, seaux Redis nrl:<canal>:<destinataire>, 5 SMS/h et 20/j, 30 e-mails/h, 60 push/h, les OTP ont leur propre seau, dépassement = suppressed pas failed
-type: reference
+description: Limites par destinataire dans notify-worker (seaux Redis nrl:*): 5 SMS/h et 20/j, 30 e-mails/h, 60 push/h, seau OTP séparé, dépassement = suppressed
+type: project
 status: active
 verified: 2026-03-11
 ---

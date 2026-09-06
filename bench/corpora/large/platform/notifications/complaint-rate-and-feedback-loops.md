@@ -1,6 +1,6 @@
 ---
 name: complaint-rate-and-feedback-loops
-description: Inscriptions aux boucles de rétroaction des grands fournisseurs de boîtes mail, taux de plainte cible sous 0,03 %, en-têtes List-Unsubscribe obligatoires, réputation surveillée par domaine et par IP dédiée
+description: Boucles de rétroaction des grands fournisseurs de boîtes mail, taux de plainte cible sous 0,03 %, List-Unsubscribe obligatoire, réputation par IP dédiée
 type: reference
 status: active
 verified: 2026-05-05

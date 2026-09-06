@@ -1,7 +1,7 @@
 ---
 name: support-impersonation-audit
-description: Le support peut ouvrir une session « en tant que » un utilisateur pour 30 minutes, lecture seule par défaut, écriture avec un motif et un ticket, bandeau visible, tout journalisé dans auth_events avec l'agent, relu chaque mois par échantillon
-type: reference
+description: Le support peut ouvrir une session « en tant que » pour 30 min, lecture seule par défaut, écriture avec ticket, bandeau visible, tout dans auth_events
+type: project
 status: active
 verified: 2026-03-30
 ---

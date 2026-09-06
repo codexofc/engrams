@@ -1,6 +1,6 @@
 ---
 name: topic-naming-and-ownership
-description: Un topic s'appelle <famille>.<domaine>.<événement ou table>, est déclaré dans topics.yaml avec propriétaire, clé, rétention, partitions et schéma, créé par la CI et jamais à la main, auto-création désactivée depuis mars 2025
+description: Un topic s'appelle <famille>.<domaine>.<sujet>, déclaré dans topics.yaml (propriétaire, clé, rétention, partitions, schéma), créé par la CI, jamais à la main
 type: reference
 status: active
 verified: 2026-04-16

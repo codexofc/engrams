@@ -1,6 +1,6 @@
 ---
 name: storage-capacity-plan-2026
-description: Plan de capacité du stockage objet arrêté en avril 2026 (HF-4630), 46 TB sur 60 par appliance et +90 GB par semaine, le froid de l'entrepôt fait deux tiers du total, décision d'ajouter un tiroir de 12 disques par appliance en septembre (+30 TB) plutôt que de réduire la rétention, et la courbe qui a décidé
+description: Plan de capacité arrêté en avril 2026 (HF-4630): 46 TB sur 60 et +90 GB/semaine, le froid fait deux tiers, un tiroir de 12 disques par appliance en septembre
 type: project
 status: active
 verified: 2026-05-27

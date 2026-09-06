@@ -1,6 +1,6 @@
 ---
 name: sms-country-routing-and-unit-costs
-description: SMS routing per destination country (sender id, validity, OTP allowed or not) and Bipline unit costs, 0.034 to 0.11 EUR, Germany and Belgium force a long number, monthly SMS bill about 11 000 EUR
+description: SMS routing per country (sender id, validity, OTP allowed) and Bipline unit costs 0.034 to 0.11 EUR, DE and BE force a long number, about 11 000 EUR a month
 type: reference
 status: active
 verified: 2026-06-02

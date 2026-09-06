@@ -1,6 +1,6 @@
 ---
 name: egress-finding-map-tiles-2025-11
-description: Novembre 2025, l'egress CDN Skyvale était à 7 300 EUR par mois dont 5 800 pour les tuiles de carte de l'outil dispatch, parce qu'un en-tête Cache-Control: no-store posé en 2024 pour un bug rendait chaque tuile non cachable côté navigateur, corrigé en une ligne, −4 200 EUR par mois, HF-4710
+description: Novembre 2025: 5 800 EUR/mois d'egress CDN pour les tuiles à cause d'un Cache-Control: no-store oublié depuis 2024, une ligne, −4 200 EUR/mois, HF-4710
 type: project
 status: active
 verified: 2025-12-19

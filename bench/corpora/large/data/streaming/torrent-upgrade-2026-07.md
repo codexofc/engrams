@@ -1,6 +1,6 @@
 ---
 name: torrent-upgrade-2026-07
-description: torrent 3.1 to 3.4 rolling upgrade over 2026-07-06 and 07-07 (HF-4460), one broker at a time with 40 min of catch-up each, inter-broker protocol bumped a week later, the consumer that broke (an old TypeScript client), and the two features we now have
+description: torrent 3.1 to 3.4 rolling upgrade on 2026-07-06 and 07 (HF-4460), one broker at a time, protocol bumped a week later, one old TypeScript client broke
 type: project
 status: active
 verified: 2026-07-20

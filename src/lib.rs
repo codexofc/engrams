@@ -14,6 +14,7 @@ pub mod hot;
 pub mod index;
 pub mod lifecycle;
 pub mod model;
+pub mod models;
 pub mod modernbert;
 pub mod note;
 pub mod paths;

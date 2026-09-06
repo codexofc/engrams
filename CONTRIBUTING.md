@@ -1,4 +1,4 @@
-# Contributing to engrams
+# Contributing to Engrams
 
 Thanks for considering a contribution. This document is short on purpose: the rules
 below are the ones that keep the project honest, and there are few of them.
@@ -40,7 +40,7 @@ cargo clippy --all-targets -- -D warnings
 cargo test --all-targets
 ```
 
-CI runs exactly these on Linux and macOS.
+CI runs exactly these on Linux and macOS, and measures coverage with `cargo llvm-cov`.
 
 ## Style
 
@@ -68,7 +68,22 @@ environment variables so they run on the same index. See `docs/BENCHMARKS.md`.
 - One change per pull request, with the reasoning in the description.
 - Subject line in the conventional form (`feat(index): …`, `fix(tokenizer): …`).
 - Link the benchmark line or the test that proves the change.
-- Keep the history readable: rebase on `master`, no merge commits in a branch.
+- Keep the history readable: rebase on `develop`, no merge commits in a branch.
+
+## Branches and releases
+
+- `master` holds released code only. Every commit on it is a release or a hotfix,
+  and every release is a tag `vX.Y.Z` on it.
+- `develop` is where pull requests land. Open a branch from it (`feat/…`, `fix/…`,
+  `docs/…`) and target it in the pull request. CI runs on both branches.
+- A release is a pull request from `develop` to `master` that bumps the version in
+  `Cargo.toml`, moves the `Unreleased` section of `CHANGELOG.md` under the new
+  version, and updates the release badge in `README.md`. Once merged, the tag
+  triggers the release workflow: binaries for four targets, release notes taken from
+  the changelog, and the container image on GitHub Packages.
+- The rulesets in `.github/rulesets/` protect both branches and the tags (pull
+  request and green CI before merging into `master`, no force push, no deletion).
+  Import them from the repository settings, or run `scripts/apply-rulesets.sh`.
 
 ## Reporting a bug
 

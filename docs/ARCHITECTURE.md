@@ -81,7 +81,8 @@ show five with the passage that matched.
 ## Warm process
 
 `engram serve` keeps the engine loaded behind a Unix socket and exits after
-`ENGRAM_IDLE` seconds without a request. Protocol: one tab-separated request line,
+`ENGRAM_IDLE` seconds without a request (`never` keeps it resident, `engram status
+--short` shows it in one line). Protocol: one tab-separated request line,
 one reply. Each connection is served in its own thread under a read lock; refreshes
 take the write lock. A client whose binary is newer than the server's makes the
 server stop, so `cargo install` takes effect at the next call. The first search

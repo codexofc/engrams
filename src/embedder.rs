@@ -7,6 +7,7 @@
 //! paragraphs, so it was removed.
 
 use crate::model::{Architecture, ModelConfig};
+use crate::models::Prompts;
 use crate::modernbert::{Config as ModernConfig, ModernBertModel};
 use crate::pooling::{pool, Pooling};
 use crate::tokenizer::AnyTokenizer;
@@ -29,6 +30,7 @@ pub struct Embedder {
     pooling: Pooling,
     device: Device,
     config: ModelConfig,
+    prompts: Prompts,
 }
 
 impl std::fmt::Debug for Embedder {
@@ -60,7 +62,8 @@ impl Embedder {
         }
 
         // Truncation happens inside the tokenizer, markers included.
-        let tokenizer = AnyTokenizer::from_model_dir(dir, config.max_tokens)?;
+        let tokenizer = AnyTokenizer::from_model_dir(dir, config.max_tokens, config.vocab_size)?;
+        let prompts = crate::models::prompts_for(dir);
 
         let weights = dir.join("model.safetensors");
         let (device, dtype) = (Device::Cpu, DType::F32);
@@ -73,13 +76,14 @@ impl Embedder {
             _ => Precision::Q8,
         };
         let model = match config.architecture {
-            Architecture::XlmRoberta => {
+            Architecture::XlmRoberta | Architecture::Bert => {
                 let raw = read_text(dir, "config.json")?;
-                let cfg: XlmConfig = serde_json::from_str(&raw).map_err(|e| format!("config incompatible with XLM-RoBERTa: {e}"))?;
+                let cfg: XlmConfig = serde_json::from_str(&raw).map_err(|e| format!("config incompatible with the BERT graph: {e}"))?;
                 // Q8_0 on the linear layers by default: weights only, F32 activations,
                 // cosine 0.9999 with F32 on real paragraphs. `ENGRAM_PRECISION=f32`
                 // restores full precision.
-                Graph::XlmRoberta(Box::new(XLMRobertaModel::new(&cfg, vb, &weights, precision, &device).map_err(|e| format!("graph: {e}"))?))
+                let bert = config.architecture == Architecture::Bert;
+                Graph::XlmRoberta(Box::new(XLMRobertaModel::new(&cfg, vb, &weights, precision, &device, bert).map_err(|e| format!("graph: {e}"))?))
             }
             Architecture::ModernBert => {
                 let raw = read_text(dir, "config.json")?;
@@ -90,7 +94,27 @@ impl Embedder {
             }
         };
 
-        Ok(Embedder { model, tokenizer, pooling, device, config })
+        Ok(Embedder { model, tokenizer, pooling, device, config, prompts })
+    }
+
+    /// The prefixes this model expects; empty for most.
+    pub fn prompts(&self) -> &Prompts {
+        &self.prompts
+    }
+
+    /// A document text as the model wants to see it.
+    pub fn document_text(&self, text: &str) -> String {
+        format!("{}{text}", self.prompts.document)
+    }
+
+    /// A query text as the model wants to see it.
+    pub fn query_text(&self, text: &str) -> String {
+        format!("{}{text}", self.prompts.query)
+    }
+
+    /// Encodes a query, prefix included.
+    pub fn encode_query(&self, text: &str) -> Result<Vec<f32>, String> {
+        self.encode(&self.query_text(text))
     }
 
     pub fn dim(&self) -> usize {

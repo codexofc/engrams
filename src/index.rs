@@ -18,6 +18,9 @@ pub struct Header {
     pub weights_hash: String,
     pub dim: usize,
     pub pooling: String,
+    /// Prefixes applied to documents and queries, since they change every vector.
+    #[serde(default)]
+    pub prompts: String,
 }
 
 /// One entry: the chunk key and the fingerprint of its note's content.
@@ -168,7 +171,7 @@ impl Index {
         if rest.len() != expected * 4 {
             return Err(format!("inconsistent index: {} bytes of vectors for {} entries of {} dimensions", rest.len(), meta.entries.len(), meta.header.dim));
         }
-        let data: Vec<f32> = rest.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
+        let data: Vec<f32> = rest.as_chunks::<4>().0.iter().map(|c| f32::from_le_bytes(*c)).collect();
         let lookup = meta.entries.iter().enumerate().map(|(row, e)| (e.path.clone(), row)).collect();
         Ok(Index { header: meta.header, entries: meta.entries, data, lookup })
     }

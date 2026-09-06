@@ -1,10 +1,39 @@
 # Changelog
 
-All notable changes to engrams are recorded here. The format follows
+All notable changes to Engrams are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [0.3.0] - 2026-09-06
+
+### Added
+- Model registry with seven checkpoints: `engram models` lists them, `engram models
+  use <alias>` switches, the guided setup and `engram init --model <alias>` accept the
+  same aliases. New choices: multilingual-e5-small, -base and -large, granite-embedding-english-r2,
+  gte-modernbert-base. The e5 prefixes (`query: `, `passage: `) are applied by the
+  engine and recorded in the index header, so a prefix change rebuilds the index.
+- BERT encoders (MiniLM and friends) through the XLM-RoBERTa graph with absolute
+  positions, and a Unigram loader that accepts a `Sequence` normaliser.
+- `ENGRAM_IDLE=never` keeps the warm process resident. `engram config` offers the
+  idle policy as a menu (5 minutes, 30 minutes, 2 hours, never), and `engram status
+  --short` prints one line while the process runs, for a shell prompt or a status bar.
+- `engram tray`: the Engrams mark in the menu bar (macOS) or the system tray, in
+  colour while the warm process runs, with a menu to reindex, open the notes, start
+  or stop the process. `engram tray install` starts it at login. Cargo feature `tray`,
+  on in the macOS release binaries.
+- Container image on GitHub Packages (`ghcr.io/codexofc/engrams`) built from the
+  release binaries for linux/amd64 and linux/arm64.
+- Coverage job in CI, `develop` branch and repository rulesets ready to import.
+
+### Changed
+- Minimum Rust version 1.98. Intel macOS binaries are cross-compiled from the Apple
+  silicon runner.
+- The project is written Engrams in prose, `engram` stays the command.
+
+### Removed
+- bge-m3 from the candidate list: the repository ships no safetensors weights.
 
 ## [0.2.0] - 2026-09-06
 

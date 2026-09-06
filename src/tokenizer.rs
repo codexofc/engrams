@@ -58,7 +58,11 @@ impl Unigram {
         if model["type"] != "Unigram" {
             return Err(format!("unsupported tokenizer model {}, expected Unigram", model["type"]));
         }
-        let charsmap = json["normalizer"]["precompiled_charsmap"].as_str().ok_or("Precompiled normalizer expected")?;
+        // The normaliser is `Precompiled` itself, or a `Sequence` holding one.
+        let charsmap = json["normalizer"]["precompiled_charsmap"]
+            .as_str()
+            .or_else(|| json["normalizer"]["normalizers"].as_array().and_then(|a| a.iter().find_map(|n| n["precompiled_charsmap"].as_str())))
+            .ok_or("Precompiled normalizer expected")?;
         let bytes = base64::decode(charsmap).map_err(|e| format!("charsmap: {e}"))?;
         let normalizer = Precompiled::from(&bytes).map_err(|e| format!("charsmap: {e:?}"))?;
 
@@ -358,10 +362,15 @@ pub enum AnyTokenizer {
 impl AnyTokenizer {
     /// The native SentencePiece model when present, else `tokenizer.json`, which
     /// says whether it is Unigram or byte-level BPE.
-    pub fn from_model_dir(dir: &Path, max_tokens: usize) -> Result<Self, String> {
+    pub fn from_model_dir(dir: &Path, max_tokens: usize, vocab_size: usize) -> Result<Self, String> {
+        // The native reader assumes the fairseq layout of XLM-R, which the model's
+        // vocabulary size betrays; any other layout goes through tokenizer.json.
         let native = dir.join("sentencepiece.bpe.model");
         if native.exists() {
-            return Ok(AnyTokenizer::Unigram(Unigram::from_sentencepiece(&native, max_tokens)?));
+            let t = Unigram::from_sentencepiece(&native, max_tokens)?;
+            if t.vocab_size() == vocab_size || !dir.join("tokenizer.json").exists() {
+                return Ok(AnyTokenizer::Unigram(t));
+            }
         }
         let json = dir.join("tokenizer.json");
         let raw = std::fs::read_to_string(&json).map_err(|e| format!("{}: {e}", json.display()))?;

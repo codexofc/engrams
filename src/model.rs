@@ -7,6 +7,7 @@ use serde_json::Value;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Architecture {
     XlmRoberta,
+    Bert,
     ModernBert,
 }
 
@@ -14,6 +15,7 @@ impl Architecture {
     fn from_name(name: &str) -> Option<Self> {
         match name {
             "XLMRobertaModel" | "XLMRobertaForMaskedLM" => Some(Self::XlmRoberta),
+            "BertModel" | "BertForMaskedLM" => Some(Self::Bert),
             "ModernBertModel" | "ModernBertForMaskedLM" => Some(Self::ModernBert),
             _ => None,
         }
@@ -24,9 +26,10 @@ impl Architecture {
 #[derive(Debug, Clone)]
 pub struct ModelConfig {
     pub architecture: Architecture,
-    /// Tokens the model can encode, sequence markers excluded.
+    /// Tokens the model can encode, sequence markers included.
     pub max_tokens: usize,
     pub hidden_size: usize,
+    pub vocab_size: usize,
 }
 
 impl ModelConfig {
@@ -38,11 +41,13 @@ impl ModelConfig {
             names.iter().filter_map(Value::as_str).find_map(Architecture::from_name).ok_or_else(|| format!("unsupported architecture: {names:?}"))?;
         let positions = v.get("max_position_embeddings").and_then(Value::as_u64).ok_or("config without `max_position_embeddings`")? as usize;
         let hidden_size = v.get("hidden_size").and_then(Value::as_u64).ok_or("config without `hidden_size`")? as usize;
+        let vocab_size = v.get("vocab_size").and_then(Value::as_u64).unwrap_or(0) as usize;
         Ok(ModelConfig {
             architecture,
-            // Two positions go to the start and end markers.
-            max_tokens: positions.saturating_sub(2),
+            // RoBERTa reserves two positions for its padding offset; the others use them all.
+            max_tokens: if architecture == Architecture::XlmRoberta { positions.saturating_sub(2) } else { positions },
             hidden_size,
+            vocab_size,
         })
     }
 

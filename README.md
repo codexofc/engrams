@@ -1,15 +1,17 @@
-<p align="center">
-  <img src="docs/logo.svg" alt="engrams" width="520">
+| query family | words only | Engrams |<p align="center">
+  <img src="docs/logo.svg" alt="Engrams" width="520">
 </p>
 
 <p align="center">
   <a href="https://github.com/codexofc/engrams/actions/workflows/ci.yml"><img src="https://github.com/codexofc/engrams/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
-  <a href="https://github.com/codexofc/engrams/releases"><img src="https://img.shields.io/github/v/release/codexofc/engrams?color=b7410e" alt="release"></a>
+  <a href="https://codecov.io/gh/codexofc/engrams"><img src="https://codecov.io/gh/codexofc/engrams/graph/badge.svg" alt="coverage"></a>
+  <a href="https://github.com/codexofc/engrams/releases/latest"><img src="https://img.shields.io/badge/release-v0.3.0-b7410e.svg" alt="release v0.3.0"></a>
+  <a href="https://github.com/codexofc/engrams/pkgs/container/engrams"><img src="https://img.shields.io/badge/ghcr.io-codexofc%2Fengrams-2b3137.svg" alt="container image"></a>
   <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%20or%20Apache--2.0-blue.svg" alt="license"></a>
-  <img src="https://img.shields.io/badge/rust-1.85%2B-orange.svg" alt="rust 1.85+">
+  <img src="https://img.shields.io/badge/rust-1.98%2B-orange.svg" alt="rust 1.98+">
 </p>
 
-**engrams** gives coding agents a durable, searchable memory made of plain markdown
+**Engrams** gives coding agents a durable, searchable memory made of plain markdown
 files. One binary, no server, no network at search time, no database. A multilingual
 embedding model runs on the CPU in **198 MB** of resident memory and answers in
 **0.10 s**. The notes stay yours: readable by any editor, any agent, any tool, ten
@@ -38,13 +40,21 @@ curl -sSfL https://raw.githubusercontent.com/codexofc/engrams/master/install.sh 
 The script picks the prebuilt binary for your platform (Linux x86_64 and aarch64,
 macOS Apple silicon and Intel) from the [releases](https://github.com/codexofc/engrams/releases),
 installs it in `~/.local/bin`, and starts the guided setup. From source, with Rust
-1.85 or later:
+1.98 or later:
 
 ```sh
 cargo install engrams
 ```
 
 The binary is called `engram`. It needs `curl` once, to download the model.
+
+A container image is published with every release on GitHub Packages, for servers
+and sandboxes. The notes live in a volume mounted on `/notes`, the model in another
+on `/root/.engram`:
+
+```sh
+docker run --rm -v $PWD/notes:/notes -v engrams-models:/root/.engram ghcr.io/codexofc/engrams search "token rotation"
+```
 
 ## Get started
 
@@ -168,7 +178,8 @@ brief. `engram hook` reads Claude Code's hook JSON and prints the passages.
 | `engram secrets` | exit 1 if any note looks like it contains a token, a key or a password (use it as a pre-commit hook) |
 | `engram curation` | a markdown checklist of stale, long, undated or duplicated notes |
 | `engram since 7`, `engram why <name>` | what changed, and where a note comes from (git) |
-| `engram status`, `engram stop` | the warm process, the index, the usage cadence |
+| `engram status`, `engram stop` | the warm process, the index, the usage cadence. `engram status --short` prints one line while the process runs, for a shell prompt or a status bar |
+| `engram tray`, `engram tray install` | the Engrams mark in the menu bar or system tray, lit while the warm process runs, with a menu to reindex, open the notes, start or stop it. `install` starts it at login (macOS binaries ship it, elsewhere `cargo install engrams --features tray` with the GTK development packages) |
 
 ## Notes
 
@@ -206,7 +217,8 @@ wins.
 | `ENGRAM_MODEL` | `~/.engram/models/granite-embedding-278m-multilingual` | model directory |
 | `ENGRAM_PRECISION` | `q8` | `f32` restores full-precision linear layers |
 | `ENGRAM_NO_DAEMON` | unset | never start the warm process |
-| `ENGRAM_IDLE`, `ENGRAM_WATCH` | 300, 30 | idle timeout and background refresh period, seconds |
+| `ENGRAM_IDLE` | 300 | seconds without a request before the warm process exits, or `never` to keep it resident |
+| `ENGRAM_WATCH` | 30 | seconds between background refreshes of the warm process |
 | `ENGRAM_QUESTIONS_CMD` | unset | command that writes the questions a paragraph answers (text on stdin, one per line) |
 | `ENGRAM_QUESTIONS_BATCH` | unlimited / 4 | paragraphs sent per pass (`index` / warm process) |
 | `ENGRAM_ID_BONUS` | 0.04 | lexical bonus per identifier found in a note |
@@ -230,29 +242,38 @@ through the model twice.
 
 ## Models
 
-| model | languages | window | parameters | when |
-|---|---|---|---|---|
-| [granite-embedding-278m-multilingual](https://huggingface.co/ibm-granite/granite-embedding-278m-multilingual) (default) | 100+ | 512 tokens | 278 M | notes in several languages, or a mix |
-| [granite-embedding-small-english-r2](https://huggingface.co/ibm-granite/granite-embedding-small-english-r2) | English | 8192 tokens | 97 M | English notes, long paragraphs, smaller machines |
+| model | alias | languages | window | parameters | license | when |
+|---|---|---|---|---|---|---|
+| [granite-embedding-278m-multilingual](https://huggingface.co/ibm-granite/granite-embedding-278m-multilingual) | `granite-multilingual` (default) | 100+ | 512 tokens | 278 M | Apache-2.0 | notes in several languages, or a mix |
+| [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) | `e5-small` | 100+ | 512 tokens | 118 M | MIT | the small multilingual option, 384 dimensions |
+| [multilingual-e5-base](https://huggingface.co/intfloat/multilingual-e5-base) | `e5-base` | 100+ | 512 tokens | 278 M | MIT | multilingual, mean pooling |
+| [multilingual-e5-large](https://huggingface.co/intfloat/multilingual-e5-large) | `e5-large` | 100+ | 512 tokens | 560 M | MIT | multilingual, 1024 dimensions, the heaviest choice |
+| [granite-embedding-small-english-r2](https://huggingface.co/ibm-granite/granite-embedding-small-english-r2) | `granite-small-en` | English | 8192 tokens | 97 M | Apache-2.0 | English notes, long paragraphs, smaller machines |
+| [granite-embedding-english-r2](https://huggingface.co/ibm-granite/granite-embedding-english-r2) | `granite-en` | English | 8192 tokens | 149 M | Apache-2.0 | English, long context, 768 dimensions |
+| [gte-modernbert-base](https://huggingface.co/Alibaba-NLP/gte-modernbert-base) | `gte-modernbert` | English | 8192 tokens | 149 M | Apache-2.0 | English, strong on public retrieval benchmarks |
 
-Both are Apache-2.0 and run on the CPU with Q8 linear layers by default. Two
+`engram models` lists them with the one in use, `engram models use <alias>` downloads
+and switches (the index is rebuilt at the next `engram index`), and the guided setup
+asks the same question. Any other Hugging Face repository or local directory works
+in place of the alias. The e5 models expect a `query: ` or `passage: ` prefix and
+get it automatically. All run on the CPU with Q8 linear layers by default. Three
 encoder families are implemented: XLM-RoBERTa (SentencePiece Unigram tokenizer,
-read from the native model file) and ModernBERT (byte-level BPE tokenizer, alternating
-global and sliding-window attention, rotary positions, activation read from the
-configuration). Any sentence-embedding checkpoint of those families with `cls` or
+read from the native model file), BERT, and ModernBERT (byte-level BPE tokenizer,
+alternating global and sliding-window attention, rotary positions, activation read
+from the configuration). Any sentence-embedding checkpoint of those families with `cls` or
 `mean` pooling declared in `1_Pooling/config.json` should load; every model change
 must pass the concordance test (cosine above 0.999 with reference vectors) before it
 is served. A plausible wrong vector is the failure mode this project refuses.
 Measured numbers per model are in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
-## Why engrams
+## Why Engrams
 
 Agents accumulate knowledge session after session, then lose it: the notes are
 there, but a keyword search misses half of them, especially when notes mix two
 languages or say the same thing with different words. Sending the notes to a remote
 vector service solves the search and creates a dependency, a bill and a leak.
 
-engrams keeps everything local and measures what it claims. On a private corpus of
+Engrams keeps everything local and measures what it claims. On a private corpus of
 296 bilingual notes with 96 blind queries:
 
 | query family | words only | engrams |

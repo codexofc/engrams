@@ -33,7 +33,7 @@ fn main() {
     println!("{:<12} {:>5} {:>8} {:>8} {:>7} {:>6}  query", "family", "found", "target", "top", "gap", "chars");
     for (family, list) in &cases {
         for case in list {
-            let q = embedder.encode(&case.query).expect("encoding");
+            let q = embedder.encode_query(&case.query).expect("encoding");
             let hits = rank_notes(&q, &chunks, 5);
             let found = hits.iter().any(|h| h.path == case.path);
             let target = chunks.iter().find(|(p, o, _)| *p == case.path && *o == case.ordinal).map(|(_, _, v)| cosine(&q, v)).unwrap_or(f32::NAN);

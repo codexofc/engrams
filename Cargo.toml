@@ -1,8 +1,8 @@
 [package]
 name = "engrams"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.98"
 description = "Local semantic memory for coding agents: markdown notes in, a 200 MB search engine out. No server, no network, no database."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/codexofc/engrams"
@@ -32,8 +32,12 @@ safetensors = "0.4"
 half = "2"
 libc = "0.2"
 regex = "1"
+unicode-normalization = "0.1"
+tray-icon = { version = "0.24", optional = true }
+tao = { version = "0.37", optional = true }
 
 [dev-dependencies]
+# examples share the dev-dependencies
 candle-core = "0.9"
 # Reference implementation for the tokenizer parity test. Never linked into the binary.
 tokenizers = { version = "0.21", default-features = false, features = ["onig"] }
@@ -42,3 +46,7 @@ tokenizers = { version = "0.21", default-features = false, features = ["onig"] }
 opt-level = 3
 lto = true
 strip = true
+
+[features]
+# `engram tray`: a menu bar item showing the warm process. Needs GTK on Linux.
+tray = ["dep:tray-icon", "dep:tao"]

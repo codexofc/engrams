@@ -4,7 +4,7 @@
 use engrams::index::{Header, Index};
 
 fn header() -> Header {
-    Header { model: "model-a".into(), weights_hash: "abc123".into(), dim: 3, pooling: "cls".into() }
+    Header { model: "model-a".into(), weights_hash: "abc123".into(), dim: 3, pooling: "cls".into(), prompts: String::new() }
 }
 
 #[test]

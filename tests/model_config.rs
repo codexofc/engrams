@@ -34,12 +34,21 @@ fn an_unsupported_architecture_is_refused() {
 
 #[test]
 fn a_short_text_is_not_truncated() {
-    let conf = ModelConfig { architecture: Architecture::ModernBert, max_tokens: 8192, hidden_size: 384 };
+    let conf = ModelConfig { architecture: Architecture::ModernBert, max_tokens: 8192, hidden_size: 384, vocab_size: 0 };
     assert!(!conf.would_truncate(1200));
 }
 
 #[test]
 fn a_text_beyond_the_window_is_reported_as_truncated() {
-    let conf = ModelConfig { architecture: Architecture::XlmRoberta, max_tokens: 512, hidden_size: 768 };
+    let conf = ModelConfig { architecture: Architecture::XlmRoberta, max_tokens: 512, hidden_size: 768, vocab_size: 0 };
     assert!(conf.would_truncate(913));
+}
+
+#[test]
+fn recognises_bert_and_keeps_every_position() {
+    let conf = r#"{"architectures":["BertModel"],"max_position_embeddings":512,"hidden_size":384,"vocab_size":250037}"#;
+    let c = ModelConfig::parse(conf).unwrap();
+    assert_eq!(c.architecture, Architecture::Bert);
+    assert_eq!(c.max_tokens, 512);
+    assert_eq!(c.vocab_size, 250037);
 }

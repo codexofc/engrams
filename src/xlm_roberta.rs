@@ -64,9 +64,9 @@ impl LazyTable {
             let start = id as usize * self.hidden * width;
             let row = &data[start..start + self.hidden * width];
             match dtype.as_str() {
-                "BF16" => out.extend(row.chunks_exact(2).map(|c| half::bf16::from_bits(u16::from_le_bytes([c[0], c[1]])).to_f32())),
-                "F16" => out.extend(row.chunks_exact(2).map(|c| half::f16::from_bits(u16::from_le_bytes([c[0], c[1]])).to_f32())),
-                _ => out.extend(row.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))),
+                "BF16" => out.extend(row.as_chunks::<2>().0.iter().map(|c| half::bf16::from_bits(u16::from_le_bytes(*c)).to_f32())),
+                "F16" => out.extend(row.as_chunks::<2>().0.iter().map(|c| half::f16::from_bits(u16::from_le_bytes(*c)).to_f32())),
+                _ => out.extend(row.as_chunks::<4>().0.iter().map(|c| f32::from_le_bytes(*c))),
             }
         }
         Ok(out)
@@ -121,10 +121,12 @@ struct Embeddings {
     token_type: Embedding,
     layer_norm: LayerNorm,
     padding_idx: u32,
+    /// BERT counts positions from zero; RoBERTa from `padding_idx + 1`.
+    bert_positions: bool,
 }
 
 impl Embeddings {
-    fn load(vb: VarBuilder, cfg: &Config, file: Arc<MmapedSafetensors>, device: &Device) -> Result<Self> {
+    fn load(vb: VarBuilder, cfg: &Config, file: Arc<MmapedSafetensors>, device: &Device, bert_positions: bool) -> Result<Self> {
         Ok(Self {
             word: LazyTable {
                 file,
@@ -144,15 +146,21 @@ impl Embeddings {
             token_type: embedding(cfg.type_vocab_size, cfg.hidden_size, vb.pp("token_type_embeddings"))?,
             layer_norm: layer_norm(cfg.hidden_size, cfg.layer_norm_eps, vb.pp("LayerNorm"))?,
             padding_idx: cfg.pad_token_id,
+            bert_positions,
         })
     }
 
     fn forward(&self, input_ids: &Tensor, token_type_ids: &Tensor) -> Result<Tensor> {
         let words = self.word.forward(input_ids)?;
         let mut e = (&words + self.token_type.forward(token_type_ids)?)?;
-        // RoBERTa positions: counted from padding_idx + 1, padding keeps padding_idx.
-        let mask = input_ids.ne(self.padding_idx)?.to_dtype(DType::F32)?;
-        let position_ids = (mask.cumsum(1)? * &mask)?.broadcast_add(&Tensor::new(self.padding_idx as f32, words.device())?)?.to_dtype(DType::U32)?;
+        let position_ids = if self.bert_positions {
+            let (b, n) = input_ids.dims2()?;
+            Tensor::arange(0u32, n as u32, words.device())?.unsqueeze(0)?.repeat((b, 1))?
+        } else {
+            // RoBERTa positions: counted from padding_idx + 1, padding keeps padding_idx.
+            let mask = input_ids.ne(self.padding_idx)?.to_dtype(DType::F32)?;
+            (mask.cumsum(1)? * &mask)?.broadcast_add(&Tensor::new(self.padding_idx as f32, words.device())?)?.to_dtype(DType::U32)?
+        };
         e = e.broadcast_add(&self.position.forward(&position_ids)?)?;
         self.layer_norm.forward(&e)
     }
@@ -249,11 +257,11 @@ pub struct XLMRobertaModel {
 impl XLMRobertaModel {
     /// `weights` is the safetensors file itself: the embedding table is read from
     /// it on demand. `vb` serves the remaining tensors.
-    pub fn new(cfg: &Config, vb: VarBuilder, weights: &Path, precision: Precision, device: &Device) -> Result<Self> {
+    pub fn new(cfg: &Config, vb: VarBuilder, weights: &Path, precision: Precision, device: &Device, bert_positions: bool) -> Result<Self> {
         // SAFETY: the model file is read-only for the lifetime of the process.
         let file = Arc::new(unsafe { MmapedSafetensors::new(weights)? });
         let layers = (0..cfg.num_hidden_layers).map(|i| Layer::new(cfg, vb.pp(format!("encoder.layer.{i}")), precision)).collect::<Result<Vec<_>>>()?;
-        let embeddings = Embeddings::load(vb.pp("embeddings"), cfg, file, device)?;
+        let embeddings = Embeddings::load(vb.pp("embeddings"), cfg, file, device, bert_positions)?;
         Ok(Self { embeddings, layers })
     }
 

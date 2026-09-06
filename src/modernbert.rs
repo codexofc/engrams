@@ -70,9 +70,9 @@ impl LazyTable {
             let start = id as usize * self.hidden * width;
             let row = &data[start..start + self.hidden * width];
             match dtype.as_str() {
-                "BF16" => out.extend(row.chunks_exact(2).map(|c| half::bf16::from_bits(u16::from_le_bytes([c[0], c[1]])).to_f32())),
-                "F16" => out.extend(row.chunks_exact(2).map(|c| half::f16::from_bits(u16::from_le_bytes([c[0], c[1]])).to_f32())),
-                _ => out.extend(row.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))),
+                "BF16" => out.extend(row.as_chunks::<2>().0.iter().map(|c| half::bf16::from_bits(u16::from_le_bytes(*c)).to_f32())),
+                "F16" => out.extend(row.as_chunks::<2>().0.iter().map(|c| half::f16::from_bits(u16::from_le_bytes(*c)).to_f32())),
+                _ => out.extend(row.as_chunks::<4>().0.iter().map(|c| f32::from_le_bytes(*c))),
             }
         }
         Tensor::from_vec(out, (1, ids.len(), self.hidden), &self.device)

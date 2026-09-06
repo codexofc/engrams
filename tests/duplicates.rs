@@ -5,7 +5,7 @@ use engrams::index::{Header, Index};
 use std::collections::HashSet;
 
 fn header() -> Header {
-    Header { model: "t".into(), weights_hash: "0".into(), dim: 3, pooling: "cls".into() }
+    Header { model: "t".into(), weights_hash: "0".into(), dim: 3, pooling: "cls".into(), prompts: String::new() }
 }
 
 #[test]

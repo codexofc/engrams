@@ -15,6 +15,8 @@ use std::collections::HashMap;
 use std::path::Path;
 
 pub struct Bpe {
+    /// Unicode normalisation form applied before splitting, when the model asks for one.
+    nfc: bool,
     vocab: HashMap<String, u32>,
     merges: HashMap<(String, String), usize>,
     ignore_merges: bool,
@@ -74,25 +76,29 @@ impl Bpe {
             merges.entry(pair).or_insert(rank);
         }
         let ignore_merges = model["ignore_merges"].as_bool().unwrap_or(false);
+        let nfc = json["normalizer"]["type"] == "NFC" || json["normalizer"]["normalizers"].as_array().is_some_and(|a| a.iter().any(|n| n["type"] == "NFC"));
 
-        // The split pattern, without its lookahead alternative. Whitespace runs are
-        // handled by `pretokenize`.
-        let pattern = json["pre_tokenizer"]["pretokenizers"]
-            .as_array()
-            .and_then(|a| a.iter().find_map(|p| p["pattern"]["Regex"].as_str()))
-            .or_else(|| json["pre_tokenizer"]["pattern"]["Regex"].as_str())
-            .ok_or("byte-level tokenizer without a split pattern")?;
-        let without_lookahead: Vec<&str> = pattern.split('|').filter(|alt| !alt.contains("(?!")).filter(|alt| *alt != r"\s+").collect();
-        let split = Regex::new(&format!("^(?:{})", without_lookahead.join("|"))).map_err(|e| format!("split pattern: {e}"))?;
+        // The split pattern: explicit in a `Split` pre-tokenizer, else the GPT-2 one when
+        // the byte-level pre-tokenizer says `use_regex`. Its trailing whitespace
+        // alternatives carry a lookahead, so they are dropped here and done by hand.
+        let pre = &json["pre_tokenizer"];
+        let explicit =
+            pre["pretokenizers"].as_array().and_then(|a| a.iter().find_map(|p| p["pattern"]["Regex"].as_str())).or_else(|| pre["pattern"]["Regex"].as_str());
+        let byte_level_regex = pre["use_regex"].as_bool() == Some(true)
+            || pre["pretokenizers"].as_array().is_some_and(|a| a.iter().any(|p| p["type"] == "ByteLevel" && p["use_regex"].as_bool() == Some(true)));
+        let pattern = match explicit {
+            Some(p) => p.to_string(),
+            None if byte_level_regex => r"'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+".to_string(),
+            None => return Err("byte-level tokenizer without a split pattern".into()),
+        };
+        let body = pattern.strip_suffix(r"|\s+(?!\S)|\s+").ok_or("split pattern without the expected whitespace alternatives")?;
+        let split = Regex::new(&format!("^(?:{body})")).map_err(|e| format!("split pattern: {e}"))?;
 
+        // Every added token, special or not, is cut out before the split pattern runs:
+        // ModernBERT tokenizers register runs of spaces this way.
         let mut specials: Vec<(String, u32)> = json["added_tokens"]
             .as_array()
-            .map(|a| {
-                a.iter()
-                    .filter(|t| t["special"].as_bool().unwrap_or(false))
-                    .filter_map(|t| Some((t["content"].as_str()?.to_string(), t["id"].as_u64()? as u32)))
-                    .collect()
-            })
+            .map(|a| a.iter().filter_map(|t| Some((t["content"].as_str()?.to_string(), t["id"].as_u64()? as u32))).collect())
             .unwrap_or_default();
         specials.sort_by_key(|(content, _)| std::cmp::Reverse(content.len()));
         // The template: the first and last special tokens of the single-sequence form.
@@ -104,7 +110,7 @@ impl Bpe {
         let cls = template.first().and_then(special_id).ok_or("template without a leading special token")?;
         let sep = template.last().and_then(special_id).ok_or("template without a trailing special token")?;
 
-        Ok(Bpe { vocab, merges, ignore_merges, byte_char: byte_to_unicode(), split, specials, cls, sep, max_tokens })
+        Ok(Bpe { nfc, vocab, merges, ignore_merges, byte_char: byte_to_unicode(), split, specials, cls, sep, max_tokens })
     }
 
     pub fn vocab_size(&self) -> usize {
@@ -114,8 +120,14 @@ impl Bpe {
     /// Encodes a text: leading special token, the pieces, trailing special token,
     /// cut to the window keeping the trailing token.
     pub fn encode(&self, text: &str) -> Encoding {
+        let normalized: std::borrow::Cow<str> = if self.nfc {
+            use unicode_normalization::UnicodeNormalization;
+            std::borrow::Cow::Owned(text.nfc().collect())
+        } else {
+            std::borrow::Cow::Borrowed(text)
+        };
         let mut ids = vec![self.cls];
-        let mut rest = text;
+        let mut rest: &str = &normalized;
         while !rest.is_empty() {
             let next = self
                 .specials

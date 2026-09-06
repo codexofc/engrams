@@ -9,6 +9,9 @@ use engrams::index::{content_hash, Header, Index};
 use engrams::note::Note;
 use engrams::paths::{self, relative};
 
+#[cfg(feature = "tray")]
+mod tray;
+
 const USAGE: &str = "\
 engram, local semantic memory for coding agents
 
@@ -23,6 +26,8 @@ Setup
                           opencode, gemini, cursor, windsurf, kandev (guided without argument)
   engram config [set <KEY> <VALUE>|unset <KEY>|root <dir>|edit|path]
                           the settings kept in ~/.engram/env (guided without argument)
+  engram models [use <alias|repo>]
+                          the models known to work, and the one in use
 
 Search and read
   engram search <words> [--archives]    five notes at most
@@ -54,15 +59,17 @@ Maintenance
 Integration
   engram hook             Claude Code UserPromptSubmit hook: JSON on stdin, passages on stdout
   engram mcp              MCP server over stdio (search, read, answer, write, append, link, learn)
-  engram serve            warm process on a Unix socket, exits after ENGRAM_IDLE s (300)
-  engram stop | status    stop or inspect the warm process
+  engram serve            warm process on a Unix socket, exits after ENGRAM_IDLE s (300, or never)
+  engram stop | status    stop or inspect the warm process (`status --short`: one line for a prompt)
+  engram tray [install|uninstall]
+                          the mark in the menu bar or system tray, lit while the warm process runs
 
 Environment
   ENGRAM_ROOT             notes directory (default: the one written by `engram init`, else ~/engram)
   ENGRAM_MODEL            model directory (default ~/.engram/models/<model>)
   ENGRAM_PRECISION        q8 (default) or f32 for the linear layers
   ENGRAM_NO_DAEMON        never start the warm process
-  ENGRAM_IDLE, ENGRAM_WATCH   idle timeout and background refresh period of the warm process
+  ENGRAM_IDLE, ENGRAM_WATCH   idle timeout (seconds, or never) and background refresh period of the warm process
   ENGRAM_QUESTIONS_CMD    command writing the questions a paragraph answers (text on stdin, one per line)
   ENGRAM_QUESTIONS_BATCH  paragraphs sent per pass (index: unlimited, warm process: 4)
 ";
@@ -81,6 +88,7 @@ fn main() -> ExitCode {
         Some("setup") if args.len() > 1 => run_setup(&args[1]),
         Some("setup") if ui::tty() => run_wizard(),
         Some("config") => run_config(&args),
+        Some("models") => run_models(&args),
         Some("index") => run_index(),
         Some("search") if args.len() > 1 => run_search(&args),
         Some("answer") if args.len() > 1 => run_answer(&args),
@@ -109,7 +117,8 @@ fn main() -> ExitCode {
             }
             Ok(())
         }
-        Some("status") => run_status(),
+        Some("status") => run_status(args.get(1).is_some_and(|a| a == "--short")),
+        Some("tray") => run_tray(args.get(1).map(String::as_str)),
         Some("version") | Some("--version") | Some("-V") => {
             println!("engram {}", env!("CARGO_PKG_VERSION"));
             Ok(())
@@ -236,6 +245,7 @@ fn open_index(model: &Path, embedder: &Embedder) -> Result<(PathBuf, Index), Str
         weights_hash: weights_fingerprint(model)?,
         dim: embedder.dim(),
         pooling: format!("{:?}", embedder.pooling()).to_lowercase(),
+        prompts: format!("{}|{}", embedder.prompts().query, embedder.prompts().document),
     };
     let path = state_file("index.bin");
     let index = match std::fs::metadata(&path) {
@@ -305,7 +315,7 @@ fn refresh_index(embedder: &Embedder, index: &mut Index, base: &Path, max_genera
             expected.insert(key.clone());
             if !index.is_fresh(&key, fingerprint) {
                 keys.push((key, fingerprint));
-                texts.push(text.clone());
+                texts.push(embedder.document_text(&text));
                 touched = true;
             }
             let hash = content_hash(&text);
@@ -317,7 +327,7 @@ fn refresh_index(embedder: &Embedder, index: &mut Index, base: &Path, max_genera
                         expected.insert(qkey.clone());
                         if !index.is_fresh(&qkey, fingerprint) {
                             keys.push((qkey, fingerprint));
-                            texts.push(q.clone());
+                            texts.push(embedder.document_text(q));
                             touched = true;
                         }
                     }
@@ -348,7 +358,7 @@ fn refresh_index(embedder: &Embedder, index: &mut Index, base: &Path, max_genera
                             let qkey = format!("{path}#{ordinal}?{i}");
                             expected.insert(qkey.clone());
                             keys.push((qkey, *fingerprint));
-                            texts.push(q.clone());
+                            texts.push(embedder.document_text(q));
                         }
                         stats.questions += questions.len();
                         store.insert(*hash, questions);
@@ -462,7 +472,7 @@ impl Engine {
         let mut added = false;
         for p in &self.feedback.pairs {
             if cache.vector(&p.query).is_none() {
-                let v = self.embedder.encode(&p.query)?;
+                let v = self.embedder.encode_query(&p.query)?;
                 cache.try_push(&p.query, 0, &v)?;
                 added = true;
             }
@@ -548,7 +558,7 @@ impl Engine {
         if self.index.is_empty() {
             return Err(format!("no indexable note under {}", self.base.display()));
         }
-        let vector = self.embedder.encode(query)?;
+        let vector = self.embedder.encode_query(query)?;
         let chunks = self.chunks();
         let bonus = self.bonuses(query, &vector, &chunks);
         let mut out = String::new();
@@ -587,7 +597,7 @@ impl Engine {
 
     /// The `n` best passages, bounded to `max_chars` in total.
     fn answer(&self, query: &str, n: usize, max_chars: usize) -> Result<Vec<Passage>, String> {
-        let vector = self.embedder.encode(query)?;
+        let vector = self.embedder.encode_query(query)?;
         let chunks = self.chunks();
         let bonus = self.bonuses(query, &vector, &chunks);
         let mut out = Vec::new();
@@ -685,6 +695,16 @@ fn spawn_daemon() {
     }
 }
 
+/// Seconds without a request before the warm process exits. `never` or `0` keeps it
+/// resident, anything unreadable falls back to five minutes.
+fn idle_limit(raw: Option<&str>) -> Option<u64> {
+    match raw.map(str::trim) {
+        Some("never") | Some("0") => None,
+        Some(v) => Some(v.parse().unwrap_or(300)),
+        None => Some(300),
+    }
+}
+
 /// Warm process: model and index stay loaded, requests arrive on a Unix socket, the
 /// process exits after ENGRAM_IDLE seconds without a request. Each connection is
 /// served in its own thread under a read lock; refreshes take the write lock.
@@ -695,7 +715,7 @@ fn run_serve() -> Result<(), String> {
     let _ = std::fs::remove_file(&path);
     let listener = std::os::unix::net::UnixListener::bind(&path).map_err(|e| format!("socket {}: {e}", path.display()))?;
     listener.set_nonblocking(true).map_err(|e| e.to_string())?;
-    let idle_limit = std::env::var("ENGRAM_IDLE").ok().and_then(|v| v.parse().ok()).map_or(std::time::Duration::from_secs(300), std::time::Duration::from_secs);
+    let idle_limit = idle_limit(std::env::var("ENGRAM_IDLE").ok().as_deref());
     let watch = std::env::var("ENGRAM_WATCH").ok().and_then(|v| v.parse().ok()).map_or(std::time::Duration::from_secs(30), std::time::Duration::from_secs);
     let engine = Arc::new(RwLock::new(Engine::open()?));
     let stamp = exe_stamp();
@@ -722,7 +742,7 @@ fn run_serve() -> Result<(), String> {
             }
             Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                 let idle = started.elapsed().as_secs().saturating_sub(last_activity.load(Ordering::Relaxed));
-                if idle > idle_limit.as_secs() {
+                if idle_limit.is_some_and(|limit| idle > limit) {
                     break;
                 }
                 if last_refresh.elapsed() > watch {
@@ -803,11 +823,12 @@ fn serve_one(
         ["status", ..] => {
             let entries = engine.read().map(|e| e.index.len()).unwrap_or(0);
             format!(
-                "ok\npid\t{}\nuptime_s\t{uptime}\nrequests\t{}\nrefreshes\t{}\nrss_kb\t{}\nvectors\t{entries}\nlast_refresh_s\t{since_refresh}\n",
+                "ok\npid\t{}\nuptime_s\t{uptime}\nrequests\t{}\nrefreshes\t{}\nrss_kb\t{}\nvectors\t{entries}\nlast_refresh_s\t{since_refresh}\nidle\t{}\n",
                 std::process::id(),
                 served.load(Ordering::Relaxed),
                 refreshed.load(Ordering::Relaxed),
-                rss_kb()
+                rss_kb(),
+                idle_limit(std::env::var("ENGRAM_IDLE").ok().as_deref()).map_or("never".to_string(), |s| format!("{s} s"))
             )
         }
         _ => "error\nunknown request\n".to_string(),
@@ -826,7 +847,26 @@ fn rss_kb() -> u64 {
         .unwrap_or(0)
 }
 
-fn run_status() -> Result<(), String> {
+/// `engram tray`: the menu bar item, when the binary was built with the feature.
+#[cfg(feature = "tray")]
+fn run_tray(arg: Option<&str>) -> Result<(), String> {
+    match arg {
+        None => tray::run(),
+        Some("install") => tray::install(),
+        Some("uninstall") => tray::uninstall(),
+        Some(other) => Err(format!("unknown tray command `{other}`: install, uninstall, or nothing to run it")),
+    }
+}
+
+#[cfg(not(feature = "tray"))]
+fn run_tray(_arg: Option<&str>) -> Result<(), String> {
+    Err("this binary was built without the tray: cargo install engrams --features tray".to_string())
+}
+
+/// `engram status`: the warm process, the root, the index and the usage cadence.
+/// `short` prints one line when the process runs and nothing otherwise, for a
+/// shell prompt or a status bar.
+fn run_status(short: bool) -> Result<(), String> {
     use std::io::{Read, Write};
     match std::os::unix::net::UnixStream::connect(socket_path()) {
         Ok(mut s) => {
@@ -835,6 +875,18 @@ fn run_status() -> Result<(), String> {
             let _ = s.shutdown(std::net::Shutdown::Write);
             let mut reply = String::new();
             let _ = s.read_to_string(&mut reply);
+            if short {
+                let field = |k: &str| reply.lines().find_map(|l| l.strip_prefix(k).and_then(|r| r.strip_prefix('\t'))).unwrap_or("0");
+                let up = field("uptime_s").parse::<u64>().unwrap_or(0);
+                println!(
+                    "engrams \u{25cf} up {}h{:02} {} requests {} MB",
+                    up / 3600,
+                    (up % 3600) / 60,
+                    field("requests"),
+                    field("rss_kb").parse::<u64>().unwrap_or(0) / 1024
+                );
+                return Ok(());
+            }
             println!("warm process: running");
             for line in reply.lines().skip(1) {
                 if let Some((k, v)) = line.split_once('\t') {
@@ -843,6 +895,7 @@ fn run_status() -> Result<(), String> {
                 }
             }
         }
+        Err(_) if short => return Ok(()),
         Err(_) => println!("warm process: none (the next search starts one)"),
     }
     println!("root: {}", root().display());
@@ -1035,7 +1088,7 @@ fn nearest_active_note(text: &str, threshold: f32) -> Result<Option<(String, f32
     }
     let Ok(index) = Index::load(&state_file("index.bin")) else { return Ok(None) };
     let embedder = Embedder::load(&model)?;
-    let vector = embedder.encode(text)?;
+    let vector = embedder.encode(&embedder.document_text(text))?;
     let base = root();
     let chunks: Chunks = index
         .iter()
@@ -1440,7 +1493,8 @@ fn run_check() -> Result<(), String> {
         for (path, note) in &corpus {
             let name = note.field("name").unwrap_or_default();
             let description = note.field("description").unwrap_or_default();
-            let cut = split(note.body(), budget).iter().filter(|c| embedder.would_truncate(&c.with_context(name, description))).count();
+            let cut =
+                split(note.body(), budget).iter().filter(|c| embedder.would_truncate(&embedder.document_text(&c.with_context(name, description)))).count();
             if cut > 0 {
                 truncated.push(format!("{path} ({cut} paragraph(s))"));
             }
@@ -1978,11 +2032,14 @@ fn run_init(args: &[String]) -> Result<(), String> {
     if args.iter().any(|a| a == "--no-download") {
         return Ok(());
     }
-    let repo = flag_value(args, "--model").unwrap_or(paths::DEFAULT_MODEL_REPO);
+    let repo = flag_value(args, "--model").map(|m| engrams::models::find(m).map_or(m, |k| k.repo)).unwrap_or(paths::DEFAULT_MODEL_REPO);
     let model = match std::env::var("ENGRAM_MODEL") {
         Ok(m) => PathBuf::from(m),
-        Err(_) => paths::config_dir().join("models").join(repo.rsplit('/').next().unwrap_or(repo)),
+        Err(_) => paths::model_dir_of(repo),
     };
+    if repo != paths::DEFAULT_MODEL_REPO && std::env::var("ENGRAM_MODEL").is_err() {
+        save_env_value("ENGRAM_MODEL", &model.display().to_string())?;
+    }
     download_model(repo, &model)?;
     println!("model: {}", model.display());
     println!("next: write notes under {}/<family>/<project>/, then `engram index`", dir.display());
@@ -2040,20 +2097,62 @@ mod ui {
 
     /// The README mark, rasterised at run time from the same arcs as `docs/logo.svg`
     /// into half-block characters, so the terminal and the page show one logo.
+    /// The mark of docs/logo.svg: (radius, start angle, end angle, stroke width,
+    /// shade) in the SVG's frame, angles in degrees with y pointing down.
+    const ARCS: [(f32, f32, f32, f32, u8); 6] = [
+        (50.0, -158.6, -111.3, 5.0, 0),
+        (50.0, -68.7, -21.4, 5.0, 0),
+        (40.0, 36.9, 143.1, 6.0, 1),
+        (32.0, -161.6, -71.6, 7.0, 2),
+        (32.0, -108.4, -18.4, 7.0, 1),
+        (22.0, 37.9, 142.1, 8.0, 2),
+    ];
+    const DOT: f32 = 9.0;
+    const SPAN: f32 = 124.0;
+    const SHADES: [[u8; 3]; 3] = [[217, 165, 138], [207, 122, 79], [183, 65, 14]];
+
+    /// The shade under a point of the SVG frame, the darkest one when arcs overlap.
+    fn shade_under(px: f32, py: f32) -> Option<u8> {
+        let r = (px * px + py * py).sqrt();
+        let a = py.atan2(px).to_degrees();
+        let mut best = (r <= DOT).then_some(2u8);
+        for (radius, from, to, width, shade) in ARCS {
+            if (r - radius).abs() <= width / 2.0 && a >= from && a <= to {
+                best = Some(best.map_or(shade, |b| b.max(shade)));
+            }
+        }
+        best
+    }
+
+    /// The mark as a square RGBA bitmap, antialiased, for a tray icon. Grey when
+    /// `colour` is false.
+    pub fn logo_rgba(size: usize, colour: bool) -> Vec<u8> {
+        let step = SPAN / size as f32;
+        let mut out = Vec::with_capacity(size * size * 4);
+        for y in 0..size {
+            for x in 0..size {
+                let mut hits = [0u8; 3];
+                for i in 0..4 {
+                    for j in 0..4 {
+                        let px = -SPAN / 2.0 + (x as f32 + (i as f32 + 0.5) / 4.0) * step;
+                        let py = -SPAN / 2.0 + (y as f32 + (j as f32 + 0.5) / 4.0) * step;
+                        if let Some(s) = shade_under(px, py) {
+                            hits[s as usize] += 1;
+                        }
+                    }
+                }
+                let covered: u8 = hits.iter().sum();
+                let shade = (0..3).max_by_key(|&s| hits[s]).unwrap_or(0);
+                let [r, g, b] = if colour { SHADES[shade] } else { [110, 110, 110] };
+                out.extend([r, g, b, (u16::from(covered) * 255 / 16) as u8]);
+            }
+        }
+        out
+    }
+
     pub fn logo(version: &str) {
-        // (radius, start angle, end angle, stroke width, shade) in the SVG's frame,
-        // angles in degrees with y pointing down, as in the SVG.
-        const ARCS: [(f32, f32, f32, f32, u8); 6] = [
-            (50.0, -158.6, -111.3, 5.0, 0),
-            (50.0, -68.7, -21.4, 5.0, 0),
-            (40.0, 36.9, 143.1, 6.0, 1),
-            (32.0, -161.6, -71.6, 7.0, 2),
-            (32.0, -108.4, -18.4, 7.0, 1),
-            (22.0, 37.9, 142.1, 8.0, 2),
-        ];
-        const DOT: f32 = 9.0;
         let (cols, rows) = (40usize, 17usize);
-        let span = 124.0f32;
+        let span = SPAN;
         let step = span / cols as f32;
         // Coverage of a pixel at (x, y): the strongest shade it touches, if any.
         let shade_at = |x: f32, y: f32| -> Option<u8> {
@@ -2138,6 +2237,21 @@ mod ui {
         }
     }
 
+    /// A numbered list of `(label, value)`. Enter keeps `current`, a number picks an
+    /// entry, anything else is taken as a value typed by hand.
+    pub fn choose(prompt: &str, options: &[(&str, &str)], current: &str) -> String {
+        println!("  {prompt}");
+        for (i, (label, value)) in options.iter().enumerate() {
+            let mark = if *value == current { accent("\u{25cf}") } else { " ".to_string() };
+            println!("    {mark} {} {label}", dim(&format!("{}.", i + 1)));
+        }
+        let answer = ask("Choice:", current);
+        match answer.parse::<usize>() {
+            Ok(n) if (1..=options.len()).contains(&n) => options[n - 1].1.to_string(),
+            _ => answer,
+        }
+    }
+
     pub fn confirm(prompt: &str, default: bool) -> bool {
         let hint = if default { "Y/n" } else { "y/N" };
         let answer = ask(prompt, hint).to_lowercase();
@@ -2208,7 +2322,7 @@ const SETTINGS: [(&str, &str, &str); 9] = [
     ("ENGRAM_PRECISION", "q8 or f32 for the linear layers", "q8"),
     ("ENGRAM_QUESTIONS_CMD", "command writing the questions a paragraph answers", "unset"),
     ("ENGRAM_QUESTIONS_BATCH", "paragraphs sent to that command per pass", "unlimited / 4"),
-    ("ENGRAM_IDLE", "seconds before the warm process exits", "300"),
+    ("ENGRAM_IDLE", "seconds before the warm process exits, or never", "300"),
     ("ENGRAM_WATCH", "seconds between background refreshes", "30"),
     ("ENGRAM_ID_BONUS", "lexical bonus per identifier found", "0.04"),
     ("ENGRAM_LEARN", "0 disables the learned bonus", "1"),
@@ -2279,6 +2393,18 @@ fn config_wizard() -> Result<(), String> {
     let saved: std::collections::HashMap<String, String> = env_file_entries().into_iter().collect();
     for (key, what, default) in SETTINGS {
         let current = saved.get(key).cloned().unwrap_or_default();
+        if key == "ENGRAM_IDLE" {
+            let options = [("5 minutes", "300"), ("30 minutes", "1800"), ("2 hours", "7200"), ("never: engrams stays resident", "never")];
+            let value = ui::choose("Warm process: how long to stay up without a request?", &options, if current.is_empty() { default } else { &current });
+            if value != current && (value != default || !current.is_empty()) {
+                save_env_value(key, &value)?;
+                ui::done(&format!("{key} = {value}"));
+            }
+            if value == "never" {
+                ui::note("`engram status --short` prints one line while it runs, for a shell prompt. `engram tray install` puts the mark in the menu bar. `engram stop` ends it.");
+            }
+            continue;
+        }
         let shown = if current.is_empty() { format!("default {default}") } else { current.clone() };
         let answer = ui::ask(&format!("{key} ({what}):"), &shown);
         if answer != shown {
@@ -2359,10 +2485,20 @@ fn run_wizard() -> Result<(), String> {
     println!();
 
     ui::step(2, total, "The embedding model");
-    ui::note("1  multilingual, 512-token window, 278M parameters, 556 MB    (default)");
-    ui::note("2  English, 8192-token window, 97M parameters, 190 MB, faster  (ModernBERT)");
+    for (i, m) in engrams::models::KNOWN.iter().enumerate() {
+        ui::note(&format!(
+            "{}  {:<22} {:<9} {:>5}-token window  {:>4} M  {:>5} MB  {}",
+            i + 1,
+            m.alias,
+            m.languages,
+            m.window,
+            m.params_m,
+            m.download_mb,
+            m.note
+        ));
+    }
     let choice = ui::ask("Which model?", "1");
-    let repo = if choice.trim() == "2" { paths::ALT_MODEL_REPO } else { paths::DEFAULT_MODEL_REPO };
+    let repo = choice.trim().parse::<usize>().ok().and_then(|i| engrams::models::KNOWN.get(i.wrapping_sub(1))).map_or(paths::DEFAULT_MODEL_REPO, |m| m.repo);
     let model = paths::model_dir_of(repo);
     if repo != paths::DEFAULT_MODEL_REPO {
         save_env_value("ENGRAM_MODEL", &model.display().to_string())?;
@@ -2460,4 +2596,74 @@ fn run_wizard() -> Result<(), String> {
     }
     println!();
     Ok(())
+}
+
+/// `engram models`: the known models, with the installed ones marked; `use <alias>`
+/// selects one (downloading it when needed) and remembers it in `~/.engram/env`.
+fn run_models(args: &[String]) -> Result<(), String> {
+    match args.get(1).map(String::as_str) {
+        Some("use") if args.len() > 2 => {
+            let name = &args[2];
+            let (repo, dir) = match engrams::models::find(name) {
+                Some(m) => (m.repo.to_string(), paths::model_dir_of(m.repo)),
+                None if name.contains('/') && !Path::new(name).exists() => (name.clone(), paths::model_dir_of(name)),
+                None => (String::new(), expand_home(name)),
+            };
+            if !dir.join("model.safetensors").exists() {
+                if repo.is_empty() {
+                    return Err(format!("{} has no model.safetensors", dir.display()));
+                }
+                download_model(&repo, &dir)?;
+            }
+            let default = paths::model_dir_of(paths::DEFAULT_MODEL_REPO);
+            let value = if dir == default { String::new() } else { dir.display().to_string() };
+            save_env_value("ENGRAM_MODEL", &value)?;
+            println!("model: {} (the index rebuilds at the next `engram index`)", dir.display());
+            Ok(())
+        }
+        Some("use") => Err("usage: engram models use <alias|repository|directory>".into()),
+        _ => {
+            let current = model_dir();
+            println!("{:<22} {:<18} {:<9} {:>6} {:>7} {:>8}", "alias", "family", "languages", "window", "params", "download");
+            for m in engrams::models::KNOWN.iter() {
+                let dir = paths::model_dir_of(m.repo);
+                let mark = if dir == current {
+                    "current"
+                } else if dir.join("model.safetensors").exists() {
+                    "installed"
+                } else {
+                    ""
+                };
+                println!(
+                    "{:<22} {:<18} {:<9} {:>6} {:>5} M {:>5} MB  {} {}",
+                    m.alias,
+                    m.family,
+                    m.languages,
+                    m.window,
+                    m.params_m,
+                    m.download_mb,
+                    ui::dim(m.note),
+                    ui::ok(mark)
+                );
+                println!("{:<22} {}", "", ui::dim(&format!("{} ({})", m.repo, m.license)));
+            }
+            println!("\ncurrent: {}", current.display());
+            println!("select: engram models use <alias>   any other checkpoint: engram models use <owner/repo>");
+            Ok(())
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::idle_limit;
+
+    #[test]
+    fn the_idle_policy_reads_seconds_never_and_garbage() {
+        assert_eq!(idle_limit(None), Some(300));
+        assert_eq!(idle_limit(Some("1800")), Some(1800));
+        assert_eq!(idle_limit(Some(" never ")), None);
+        assert_eq!(idle_limit(Some("0")), None);
+        assert_eq!(idle_limit(Some("soon")), Some(300));
+    }
 }

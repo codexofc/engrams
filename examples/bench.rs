@@ -95,7 +95,7 @@ fn main() {
     if learn {
         for p in &table.pairs {
             if !past.contains_key(&p.query) {
-                past.insert(p.query.clone(), recenter(&embedder.encode(&p.query).expect("encoding")));
+                past.insert(p.query.clone(), recenter(&embedder.encode_query(&p.query).expect("encoding")));
             }
         }
     }
@@ -116,7 +116,7 @@ fn main() {
         let (mut first, mut top5, mut right_chunk, mut top5_tolerant) = (0usize, 0usize, 0usize, 0usize);
         let mut misses: Vec<&str> = Vec::new();
         for case in list {
-            let v = recenter(&embedder.encode(&case.query).expect("encoding"));
+            let v = recenter(&embedder.encode_query(&case.query).expect("encoding"));
             let mut bonus = engrams::similarity::lexical_bonus(&root, &engrams::similarity::identifiers(&case.query), id_bonus);
             for (p, b) in learned(&v, &case.query, &rank_notes(&v, &chunks, 50)) {
                 *bonus.entry(p).or_insert(0.0) += b;

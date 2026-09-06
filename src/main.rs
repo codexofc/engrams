@@ -13,10 +13,14 @@ const USAGE: &str = "\
 engram, local semantic memory for coding agents
 
 Setup
-  engram init [<dir>] [--model <hf-repo>] [--no-download]
-                          create the notes directory, remember it, download the model
-  engram setup <claude-code|opencode|kandev>
-                          wire the hook and the MCP server into a tool
+  engram init             guided setup: notes directory, model, integrations, first note
+  engram init <dir> [--model <hf-repo>] [--no-download]
+                          the same without questions, for scripts
+  engram setup [<tool>|all]
+                          wire the hook and the MCP server into a tool: claude-code, codex,
+                          opencode, gemini, cursor, windsurf, kandev (guided without argument)
+  engram config [set <KEY> <VALUE>|unset <KEY>|root <dir>|edit|path]
+                          the settings kept in ~/.engram/env (guided without argument)
 
 Search and read
   engram search <words> [--archives]    five notes at most
@@ -68,9 +72,13 @@ fn main() -> ExitCode {
     }
     let args: Vec<String> = std::env::args().skip(1).collect();
     let started = std::time::Instant::now();
+    load_env_file();
     let outcome = match args.first().map(String::as_str) {
+        Some("init") if args.len() == 1 && ui::tty() => run_wizard(),
         Some("init") => run_init(&args),
         Some("setup") if args.len() > 1 => run_setup(&args[1]),
+        Some("setup") if ui::tty() => run_wizard(),
+        Some("config") => run_config(&args),
         Some("index") => run_index(),
         Some("search") if args.len() > 1 => run_search(&args),
         Some("answer") if args.len() > 1 => run_answer(&args),
@@ -103,6 +111,13 @@ fn main() -> ExitCode {
         Some("version") | Some("--version") | Some("-V") => {
             println!("engram {}", env!("CARGO_PKG_VERSION"));
             Ok(())
+        }
+        None | Some("help") | Some("--help") | Some("-h") => {
+            if ui::tty() {
+                ui::logo(env!("CARGO_PKG_VERSION"));
+            }
+            print!("{}", ui::help(USAGE));
+            return ExitCode::SUCCESS;
         }
         _ => {
             eprint!("{USAGE}");
@@ -1811,12 +1826,63 @@ fn write_json_object(path: &Path, obj: &serde_json::Map<String, serde_json::Valu
     std::fs::write(path, text + "\n").map_err(|e| format!("{}: {e}", path.display()))
 }
 
-/// Wires the hook and the MCP server into a tool's configuration.
+/// A tool that can host engrams: how to detect it and how to wire it.
+struct Tool {
+    id: &'static str,
+    name: &'static str,
+    /// Binary in PATH, or configuration directory under HOME.
+    binary: &'static str,
+    dir: &'static str,
+}
+
+const TOOLS: [Tool; 7] = [
+    Tool { id: "claude-code", name: "Claude Code", binary: "claude", dir: ".claude" },
+    Tool { id: "codex", name: "Codex CLI", binary: "codex", dir: ".codex" },
+    Tool { id: "opencode", name: "opencode", binary: "opencode", dir: ".config/opencode" },
+    Tool { id: "gemini", name: "Gemini CLI", binary: "gemini", dir: ".gemini" },
+    Tool { id: "cursor", name: "Cursor", binary: "cursor", dir: ".cursor" },
+    Tool { id: "windsurf", name: "Windsurf", binary: "windsurf", dir: ".codeium/windsurf" },
+    Tool { id: "kandev", name: "Kandev", binary: "kandev", dir: ".kandev" },
+];
+
+impl Tool {
+    fn detected(&self) -> bool {
+        in_path(self.binary) || paths::home().join(self.dir).is_dir()
+    }
+}
+
+fn detected_tools() -> Vec<&'static Tool> {
+    TOOLS.iter().filter(|t| t.detected()).collect()
+}
+
+/// Adds `engram` to a `mcpServers` map in a JSON file, creating the file if needed.
+fn add_mcp_server_json(path: &Path, key: &str, exe: &str) -> Result<(), String> {
+    let mut config = read_json_object(path)?;
+    let servers = config.entry(key).or_insert_with(|| serde_json::json!({}));
+    servers
+        .as_object_mut()
+        .ok_or_else(|| format!("`{key}` is not an object in {}", path.display()))?
+        .insert("engram".into(), serde_json::json!({"command": exe, "args": ["mcp"]}));
+    write_json_object(path, &config)
+}
+
+/// Wires the hook and the MCP server into a tool's configuration. Idempotent.
 fn run_setup(tool: &str) -> Result<(), String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?.to_string_lossy().into_owned();
+    let home = paths::home();
     match tool {
+        "all" => {
+            let found = detected_tools();
+            if found.is_empty() {
+                println!("no supported tool detected on this machine");
+            }
+            for t in found {
+                run_setup(t.id)?;
+            }
+            Ok(())
+        }
         "claude-code" => {
-            let path = paths::home().join(".claude/settings.json");
+            let path = home.join(".claude/settings.json");
             let mut settings = read_json_object(&path)?;
             let hook_cmd = format!("{exe} hook");
             let hooks = settings.entry("hooks").or_insert_with(|| serde_json::json!({}));
@@ -1827,51 +1893,86 @@ fn run_setup(tool: &str) -> Result<(), String> {
                     .ok_or("`UserPromptSubmit` is not an array")?
                     .push(serde_json::json!({"hooks": [{"type": "command", "command": hook_cmd, "timeout": 15}]}));
                 write_json_object(&path, &settings)?;
-                println!("hook added to {}", path.display());
+                println!("Claude Code: hook added to {}", path.display());
             } else {
-                println!("hook already present in {}", path.display());
+                println!("Claude Code: hook already present in {}", path.display());
             }
-            match std::process::Command::new("claude").args(["mcp", "add", "--scope", "user", "engram", "--", &exe, "mcp"]).output() {
-                Ok(o) if o.status.success() => println!("MCP server registered with `claude mcp add`"),
-                _ => println!("register the MCP server yourself:\n  claude mcp add --scope user engram -- {exe} mcp"),
+            let registered = std::process::Command::new("claude").args(["mcp", "get", "engram"]).output().is_ok_and(|o| o.status.success());
+            if registered {
+                println!("Claude Code: MCP server already registered");
+            } else {
+                match std::process::Command::new("claude").args(["mcp", "add", "--scope", "user", "engram", "--", &exe, "mcp"]).output() {
+                    Ok(o) if o.status.success() => println!("Claude Code: MCP server registered"),
+                    _ => println!("Claude Code: register the MCP server yourself:\n  claude mcp add --scope user engram -- {exe} mcp"),
+                }
             }
             Ok(())
         }
+        "codex" => {
+            let path = home.join(".codex/config.toml");
+            let existing = std::fs::read_to_string(&path).unwrap_or_default();
+            if existing.contains("[mcp_servers.engram]") {
+                println!("Codex CLI: MCP server already present in {}", path.display());
+                return Ok(());
+            }
+            std::fs::create_dir_all(home.join(".codex")).map_err(|e| e.to_string())?;
+            let block = format!(
+                "{}{}[mcp_servers.engram]\ncommand = \"{exe}\"\nargs = [\"mcp\"]\n",
+                existing,
+                if existing.is_empty() || existing.ends_with('\n') { "\n" } else { "\n\n" }
+            );
+            std::fs::write(&path, block).map_err(|e| format!("{}: {e}", path.display()))?;
+            println!("Codex CLI: MCP server added to {}", path.display());
+            Ok(())
+        }
         "opencode" => {
-            let path = paths::home().join(".config/opencode/opencode.json");
+            let path = home.join(".config/opencode/opencode.json");
             let mut config = read_json_object(&path)?;
             let mcp = config.entry("mcp").or_insert_with(|| serde_json::json!({}));
             mcp.as_object_mut()
                 .ok_or("`mcp` is not an object")?
                 .insert("engram".into(), serde_json::json!({"type": "local", "command": [exe, "mcp"], "enabled": true}));
             write_json_object(&path, &config)?;
-            println!("MCP server added to {}", path.display());
+            println!("opencode: MCP server added to {}", path.display());
+            Ok(())
+        }
+        "gemini" => {
+            let path = home.join(".gemini/settings.json");
+            add_mcp_server_json(&path, "mcpServers", &exe)?;
+            println!("Gemini CLI: MCP server added to {}", path.display());
+            Ok(())
+        }
+        "cursor" => {
+            let path = home.join(".cursor/mcp.json");
+            add_mcp_server_json(&path, "mcpServers", &exe)?;
+            println!("Cursor: MCP server added to {}", path.display());
+            Ok(())
+        }
+        "windsurf" => {
+            let path = home.join(".codeium/windsurf/mcp_config.json");
+            add_mcp_server_json(&path, "mcpServers", &exe)?;
+            println!("Windsurf: MCP server added to {}", path.display());
             Ok(())
         }
         "kandev" => {
-            println!("Kandev reads MCP servers from its settings (Settings > MCP) or the `update_mcp_config` tool. Add:");
-            println!("{}", serde_json::to_string_pretty(&serde_json::json!({"mcpServers": {"engram": {"command": exe, "args": ["mcp"]}}})).unwrap_or_default());
-            println!("Cards run Claude Code and opencode with the user's configuration, so `engram setup claude-code` and `engram setup opencode` also apply to them.");
+            println!("Kandev: cards run Claude Code and opencode with your user configuration, so those setups apply inside cards.");
+            println!("For Kandev's own MCP settings (Settings > MCP, or the `update_mcp_config` tool), add:");
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({"engram": {"type": "stdio", "command": exe, "args": ["mcp"]}})).unwrap_or_default()
+            );
             Ok(())
         }
-        other => Err(format!("unknown tool `{other}`, expected claude-code, opencode or kandev")),
+        other => Err(format!("unknown tool `{other}`, expected one of {} or all", TOOLS.iter().map(|t| t.id).collect::<Vec<_>>().join(", "))),
     }
 }
 
 /// Creates the notes directory, remembers it, and downloads the model.
 fn run_init(args: &[String]) -> Result<(), String> {
-    let dir = args.get(1).filter(|a| !a.starts_with("--")).map(PathBuf::from).unwrap_or_else(root);
+    let dir = args.get(1).filter(|a| !a.starts_with("--")).map(|a| expand_home(a)).unwrap_or_else(root);
     let dir = if dir.is_absolute() { dir } else { std::env::current_dir().map_err(|e| e.to_string())?.join(dir) };
-    std::fs::create_dir_all(paths::state_dir(&dir)).map_err(|e| format!("{}: {e}", dir.display()))?;
-    let pointer = paths::config_dir().join("root");
-    std::fs::create_dir_all(paths::config_dir()).map_err(|e| e.to_string())?;
-    std::fs::write(&pointer, format!("{}\n", dir.display())).map_err(|e| format!("{}: {e}", pointer.display()))?;
-    let ignore = dir.join(".gitignore");
-    if !ignore.exists() {
-        std::fs::write(&ignore, ".engram/*\n!.engram/questions.json\n!.engram/feedback.json\n").map_err(|e| e.to_string())?;
-    }
-    println!("root: {} (remembered in {})", dir.display(), pointer.display());
-
+    remember_root(&dir)?;
+    println!("root: {} (remembered in {})", dir.display(), paths::config_dir().join("root").display());
     if args.iter().any(|a| a == "--no-download") {
         return Ok(());
     }
@@ -1880,15 +1981,282 @@ fn run_init(args: &[String]) -> Result<(), String> {
         Ok(m) => PathBuf::from(m),
         Err(_) => paths::config_dir().join("models").join(repo.rsplit('/').next().unwrap_or(repo)),
     };
+    download_model(repo, &model)?;
+    println!("model: {}", model.display());
+    println!("next: write notes under {}/<family>/<project>/, then `engram index`", dir.display());
+    Ok(())
+}
+
+/// Creates the root, its state directory and ignore rules, and writes the pointer.
+fn remember_root(dir: &Path) -> Result<(), String> {
+    std::fs::create_dir_all(paths::state_dir(dir)).map_err(|e| format!("{}: {e}", dir.display()))?;
+    std::fs::create_dir_all(paths::config_dir()).map_err(|e| e.to_string())?;
+    std::fs::write(paths::config_dir().join("root"), format!("{}\n", dir.display())).map_err(|e| e.to_string())?;
+    let ignore = dir.join(".gitignore");
+    if !ignore.exists() && !inside_git(dir) {
+        std::fs::write(&ignore, ".engram/*\n!.engram/questions.json\n!.engram/feedback.json\n").map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+fn inside_git(dir: &Path) -> bool {
+    std::process::Command::new("git").args(["rev-parse", "--is-inside-work-tree"]).current_dir(dir).output().is_ok_and(|o| o.status.success())
+}
+
+// ----------------------------------------------------------------------------- interactive setup
+
+/// Terminal helpers: colours when both ends are a terminal, plain text otherwise.
+mod ui {
+    pub fn tty() -> bool {
+        // SAFETY: isatty only reads the descriptor's state.
+        unsafe { libc::isatty(0) == 1 && libc::isatty(1) == 1 }
+    }
+
+    fn wrap(code: &str, s: &str) -> String {
+        if tty() {
+            format!("\x1b[{code}m{s}\x1b[0m")
+        } else {
+            s.to_string()
+        }
+    }
+
+    pub fn accent(s: &str) -> String {
+        wrap("38;2;183;65;14", s)
+    }
+
+    fn accent_dim(s: &str) -> String {
+        wrap("38;2;214;140;104", s)
+    }
+
+    pub fn bold(s: &str) -> String {
+        wrap("1", s)
+    }
+
+    pub fn dim(s: &str) -> String {
+        wrap("2", s)
+    }
+
+    pub fn ok(s: &str) -> String {
+        wrap("38;2;61;125;90", s)
+    }
+
+    /// The mark, drawn with block characters: two rings around the fact itself.
+    pub fn logo(version: &str) {
+        let ring = |s: &str| accent_dim(s);
+        let core = |s: &str| accent(s);
+        println!();
+        println!("      {}", ring("▄▄▄▄▄▄▄▄"));
+        println!("    {}          {}", ring("▄█▀      ▀█▄"), bold("e n g r a m s"));
+        println!("   {}   {}   {}", ring("██"), core("▄██▄"), ring("██"));
+        println!("   {}   {}   {}          {}", ring("██"), core("▀██▀"), ring("██"), dim("local semantic memory for coding agents"));
+        println!("    {}          {}", ring("▀█▄      ▄█▀"), dim(&format!("v{version}")));
+        println!("      {}", ring("▀▀▀▀▀▀▀▀"));
+        println!();
+    }
+
+    pub fn step(n: usize, total: usize, title: &str) {
+        println!("{} {}", dim(&format!("[{n}/{total}]")), bold(title));
+    }
+
+    pub fn done(s: &str) {
+        println!("  {} {s}", ok("✓"));
+    }
+
+    pub fn note(s: &str) {
+        println!("  {}", dim(s));
+    }
+
+    /// Asks a question with a default, returns the answer or the default.
+    pub fn ask(prompt: &str, default: &str) -> String {
+        use std::io::Write;
+        print!("  {} {prompt} {} ", accent("›"), dim(&format!("[{default}]")));
+        let _ = std::io::stdout().flush();
+        let mut line = String::new();
+        let _ = std::io::stdin().read_line(&mut line);
+        let line = line.trim();
+        if line.is_empty() {
+            default.to_string()
+        } else {
+            line.to_string()
+        }
+    }
+
+    pub fn confirm(prompt: &str, default: bool) -> bool {
+        let hint = if default { "Y/n" } else { "y/N" };
+        let answer = ask(prompt, hint).to_lowercase();
+        match answer.as_str() {
+            "y" | "yes" | "o" | "oui" => true,
+            "n" | "no" | "non" => false,
+            _ => default,
+        }
+    }
+
+    /// The usage text with its section titles in bold.
+    pub fn help(usage: &str) -> String {
+        usage
+            .lines()
+            .map(|l| if !l.is_empty() && !l.starts_with(' ') && !l.starts_with("engram,") { bold(l) } else { l.to_string() })
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n"
+    }
+}
+
+/// Values of `~/.engram/env`, one `KEY=VALUE` per line, applied to the environment
+/// when the variable is not already set. Written by `engram config`, editable by hand.
+fn load_env_file() {
+    let Ok(text) = std::fs::read_to_string(paths::config_dir().join("env")) else { return };
+    for line in text.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if let Some((k, v)) = line.split_once('=') {
+            let (k, v) = (k.trim(), v.trim().trim_matches('"'));
+            if !k.is_empty() && std::env::var_os(k).is_none() {
+                std::env::set_var(k, v);
+            }
+        }
+    }
+}
+
+fn env_file_entries() -> Vec<(String, String)> {
+    std::fs::read_to_string(paths::config_dir().join("env"))
+        .unwrap_or_default()
+        .lines()
+        .filter_map(|l| {
+            let l = l.trim();
+            if l.is_empty() || l.starts_with('#') {
+                return None;
+            }
+            let (k, v) = l.split_once('=')?;
+            Some((k.trim().to_string(), v.trim().trim_matches('"').to_string()))
+        })
+        .collect()
+}
+
+fn save_env_value(key: &str, value: &str) -> Result<(), String> {
+    let path = paths::config_dir().join("env");
+    std::fs::create_dir_all(paths::config_dir()).map_err(|e| e.to_string())?;
+    let mut lines: Vec<String> = env_file_entries().into_iter().filter(|(k, _)| k != key).map(|(k, v)| format!("{k}={v}")).collect();
+    if !value.is_empty() {
+        lines.push(format!("{key}={value}"));
+    }
+    std::fs::write(&path, lines.join("\n") + "\n").map_err(|e| format!("{}: {e}", path.display()))
+}
+
+/// The settings the CLI manages, with their meaning and default.
+const SETTINGS: [(&str, &str, &str); 9] = [
+    ("ENGRAM_MODEL", "model directory", "~/.engram/models/<model>"),
+    ("ENGRAM_PRECISION", "q8 or f32 for the linear layers", "q8"),
+    ("ENGRAM_QUESTIONS_CMD", "command writing the questions a paragraph answers", "unset"),
+    ("ENGRAM_QUESTIONS_BATCH", "paragraphs sent to that command per pass", "unlimited / 4"),
+    ("ENGRAM_IDLE", "seconds before the warm process exits", "300"),
+    ("ENGRAM_WATCH", "seconds between background refreshes", "30"),
+    ("ENGRAM_ID_BONUS", "lexical bonus per identifier found", "0.04"),
+    ("ENGRAM_LEARN", "0 disables the learned bonus", "1"),
+    ("ENGRAM_HOOK_MIN", "minimum score for the hook to inject a passage", "0.60"),
+];
+
+/// `engram config`: the root and the settings; `set`, `unset`, `edit`, or an
+/// interactive walk through the settings when no argument is given on a terminal.
+fn run_config(args: &[String]) -> Result<(), String> {
+    match args.get(1).map(String::as_str) {
+        Some("set") if args.len() > 3 => {
+            save_env_value(&args[2], &args[3])?;
+            println!("{}={}", args[2], args[3]);
+            Ok(())
+        }
+        Some("unset") if args.len() > 2 => {
+            save_env_value(&args[2], "")?;
+            println!("{} unset", args[2]);
+            Ok(())
+        }
+        Some("root") if args.len() > 2 => {
+            let dir = expand_home(&args[2]);
+            remember_root(&dir)?;
+            println!("root: {}", dir.display());
+            Ok(())
+        }
+        Some("edit") => {
+            let editor = std::env::var("EDITOR").unwrap_or_else(|_| "vi".into());
+            let path = paths::config_dir().join("env");
+            std::process::Command::new(editor).arg(&path).status().map_err(|e| e.to_string())?;
+            Ok(())
+        }
+        Some("path") => {
+            println!("{}", paths::config_dir().join("env").display());
+            Ok(())
+        }
+        None if ui::tty() => config_wizard(),
+        None => {
+            print_config();
+            Ok(())
+        }
+        Some(other) => Err(format!("unknown config command `{other}`: set <KEY> <VALUE>, unset <KEY>, root <dir>, edit, path")),
+    }
+}
+
+fn print_config() {
+    let saved: std::collections::HashMap<String, String> = env_file_entries().into_iter().collect();
+    println!("root   {}", root().display());
+    println!("model  {}", model_dir().display());
+    println!("env    {}\n", paths::config_dir().join("env").display());
+    for (key, what, default) in SETTINGS {
+        let value = saved.get(key).cloned().or_else(|| std::env::var(key).ok());
+        match value {
+            Some(v) => println!("  {key:<24} {v}"),
+            None => println!("  {key:<24} {}", ui::dim(&format!("(default {default})"))),
+        }
+        println!("  {:<24} {}", "", ui::dim(what));
+    }
+}
+
+fn config_wizard() -> Result<(), String> {
+    ui::logo(env!("CARGO_PKG_VERSION"));
+    print_config();
+    println!();
+    if !ui::confirm("Change a setting?", false) {
+        return Ok(());
+    }
+    let saved: std::collections::HashMap<String, String> = env_file_entries().into_iter().collect();
+    for (key, what, default) in SETTINGS {
+        let current = saved.get(key).cloned().unwrap_or_default();
+        let shown = if current.is_empty() { format!("default {default}") } else { current.clone() };
+        let answer = ui::ask(&format!("{key} ({what}):"), &shown);
+        if answer != shown {
+            let value = if answer.eq_ignore_ascii_case("default") || answer.eq_ignore_ascii_case("unset") { "" } else { answer.as_str() };
+            save_env_value(key, value)?;
+            ui::done(&format!("{key} {}", if value.is_empty() { "reset".to_string() } else { format!("= {value}") }));
+        }
+    }
+    Ok(())
+}
+
+fn expand_home(p: &str) -> PathBuf {
+    match p.strip_prefix("~/") {
+        Some(rest) => paths::home().join(rest),
+        None if p == "~" => paths::home(),
+        None => PathBuf::from(p),
+    }
+}
+
+fn in_path(tool: &str) -> bool {
+    std::env::var_os("PATH").is_some_and(|p| std::env::split_paths(&p).any(|d| d.join(tool).is_file()))
+}
+
+/// Downloads the model files missing from `model`, from the Hugging Face
+/// repository `repo`, with curl's progress bar.
+fn download_model(repo: &str, model: &Path) -> Result<(), String> {
     std::fs::create_dir_all(model.join("1_Pooling")).map_err(|e| e.to_string())?;
     for file in ["config.json", "1_Pooling/config.json", "sentencepiece.bpe.model", "model.safetensors"] {
         let target = model.join(file);
         if std::fs::metadata(&target).is_ok_and(|m| m.len() > 0) {
-            println!("present: {file}");
+            ui::done(&format!("{file} already present"));
             continue;
         }
         let url = format!("https://huggingface.co/{repo}/resolve/main/{file}");
-        println!("downloading {file}");
+        println!("  downloading {file}");
         let status = std::process::Command::new("curl")
             .args(["-L", "--fail", "--progress-bar", "-o"])
             .arg(&target)
@@ -1900,7 +2268,116 @@ fn run_init(args: &[String]) -> Result<(), String> {
             return Err(format!("download failed: {url}"));
         }
     }
-    println!("model: {}", model.display());
-    println!("next: write notes under {}/<family>/<project>/, then `engram index`", dir.display());
+    Ok(())
+}
+
+/// The guided setup: where the notes live, the model, every tool found on the
+/// machine, the optional questions command, a first note. Enter accepts a default.
+fn run_wizard() -> Result<(), String> {
+    ui::logo(env!("CARGO_PKG_VERSION"));
+    let total = 5;
+
+    ui::step(1, total, "Your notes");
+    let dir = expand_home(&ui::ask("Directory for your notes:", &root().display().to_string()));
+    let dir = if dir.is_absolute() { dir } else { std::env::current_dir().map_err(|e| e.to_string())?.join(dir) };
+    remember_root(&dir)?;
+    ui::done(&format!("root {} (remembered in ~/.engram/root)", dir.display()));
+    if !inside_git(&dir) && ui::confirm("Turn it into a git repository (notes are worth backing up)?", true) {
+        let _ = std::process::Command::new("git").args(["init", "-q"]).current_dir(&dir).status();
+        ui::done("git repository initialised");
+    }
+    println!();
+
+    ui::step(2, total, "The embedding model");
+    let model = model_dir();
+    if model.join("model.safetensors").exists() {
+        ui::done(&format!("model present in {}", model.display()));
+    } else {
+        ui::note(&format!("{} (Apache-2.0, 556 MB, downloaded once into {})", paths::DEFAULT_MODEL_REPO, model.display()));
+        if ui::confirm("Download it now?", true) {
+            download_model(paths::DEFAULT_MODEL_REPO, &model)?;
+            ui::done("model ready");
+        } else {
+            ui::note("skipped: `engram init <dir>` downloads it later; until then search is lexical");
+        }
+    }
+    println!();
+
+    ui::step(3, total, "Tools on this machine");
+    let found = detected_tools();
+    let mut wired = Vec::new();
+    if found.is_empty() {
+        ui::note("no supported tool detected (Claude Code, Codex CLI, opencode, Gemini CLI, Cursor, Windsurf, Kandev)");
+        ui::note("the CLI and `engram mcp` work on their own; `engram setup <tool>` wires one later");
+    }
+    for t in found {
+        let what = match t.id {
+            "claude-code" => "prompt hook + MCP server",
+            "kandev" => "print the MCP snippet",
+            _ => "MCP server",
+        };
+        if ui::confirm(&format!("{} found. Wire engrams ({what})?", t.name), true) {
+            run_setup(t.id)?;
+            wired.push(t.name);
+        }
+    }
+    println!();
+
+    ui::step(4, total, "Indexed questions (optional)");
+    ui::note("A command that reads a prompt on stdin and prints lines lets engrams index, once per paragraph,");
+    ui::note("the questions it answers. On the benchmark it lifts buried details from 58 % to 75 %.");
+    let suggestion = if in_path("ollama") {
+        "ollama run qwen2.5:3b"
+    } else if in_path("claude") {
+        "claude -p"
+    } else if in_path("codex") {
+        "codex exec"
+    } else {
+        ""
+    };
+    let cmd = ui::ask("Command (Enter or `skip` to skip):", if suggestion.is_empty() { "skip" } else { suggestion });
+    let refused = ["skip", "n", "no", "non", "y", "yes", "oui", ""];
+    if !refused.contains(&cmd.to_lowercase().as_str()) && cmd.split_whitespace().next().is_some_and(in_path) {
+        save_env_value("ENGRAM_QUESTIONS_CMD", &cmd)?;
+        std::env::set_var("ENGRAM_QUESTIONS_CMD", &cmd);
+        ui::done(&format!("ENGRAM_QUESTIONS_CMD saved in ~/.engram/env: {cmd}"));
+    } else if !refused.contains(&cmd.to_lowercase().as_str()) {
+        ui::note(&format!(
+            "`{}` is not in PATH, skipped; set it later with `engram config set ENGRAM_QUESTIONS_CMD \"...\"`",
+            cmd.split_whitespace().next().unwrap_or("")
+        ));
+    } else {
+        ui::note("skipped");
+    }
+    println!();
+
+    ui::step(5, total, "First note");
+    let has_notes = !engrams::hot::notes_of(&dir).is_empty();
+    if !has_notes && ui::confirm("Write an example note showing the format?", true) {
+        let body = "One durable fact per file. The frontmatter carries the name (equal to the file name), a one-line description, a type (user, feedback, project, reference), a status and the date of the last verification.\n\nParagraphs are the unit of indexing: keep one idea per paragraph. Link related notes with [[wiki-links]]. When a fact becomes false, replace it with `engram supersede`, never delete it.\n\nTry: `engram search \"how do I write a note\"`.\n";
+        create_note(&NewNote {
+            project: "getting-started/engrams",
+            name: "how-to-write-a-note",
+            kind: "reference",
+            description: "The shape of a note: one fact per file, a flat frontmatter, paragraphs as the unit of search",
+            depends_on: None,
+            source: None,
+            body,
+            force: true,
+        })?;
+        ui::done("getting-started/engrams/how-to-write-a-note.md");
+    }
+    if model_dir().join("model.safetensors").exists() && ui::confirm("Index now?", true) {
+        run_index()?;
+    }
+    println!();
+    println!("  {}", ui::bold("Done."));
+    println!("  {}", ui::dim("search   engram search <words>"));
+    println!("  {}", ui::dim("write    engram write <family/project> <name> --type <t> --description <d>"));
+    println!("  {}", ui::dim("config   engram config          help   engram"));
+    if !wired.is_empty() {
+        println!("  {}", ui::dim(&format!("wired: {}. Restart those tools to pick up the change.", wired.join(", "))));
+    }
+    println!();
     Ok(())
 }

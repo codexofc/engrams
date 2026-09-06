@@ -15,8 +15,10 @@ parameter multilingual embedding model runs on the CPU in **198 MB** of resident
 memory and answers in **0.10 s**. The notes stay yours: readable by any editor, any
 agent, any tool, ten years from now.
 
-It plugs into **Claude Code** (a prompt hook and an MCP server), **opencode** (MCP),
-**Kandev** (MCP), and anything that can run a command.
+It plugs into **Claude Code** (a prompt hook and an MCP server), **Codex CLI**,
+**opencode**, **Gemini CLI**, **Cursor**, **Windsurf** and **Kandev** (MCP), and
+anything that can run a command. `engram init` finds the tools installed on the
+machine and wires them.
 
 ```
 $ engram search "how are the databases isolated between agents"
@@ -101,28 +103,59 @@ flowchart LR
 
 ## Install
 
-Prebuilt binaries for Linux (x86_64, aarch64) and macOS (Apple silicon, Intel) are on
-the [releases page](https://github.com/codexofc/engrams/releases). Or build from
-source with Rust 1.85 or later:
+One line, then answer a few questions:
 
 ```sh
-cargo install engrams          # from crates.io
-# or
+curl -sSfL https://raw.githubusercontent.com/codexofc/engrams/master/install.sh | sh
+```
+
+The script picks the prebuilt binary for your platform (Linux x86_64 and aarch64,
+macOS Apple silicon and Intel) from the [releases](https://github.com/codexofc/engrams/releases),
+installs it in `~/.local/bin`, and starts the guided setup. Prefer building from
+source? Rust 1.85 or later:
+
+```sh
+cargo install engrams                       # from crates.io
 git clone https://github.com/codexofc/engrams && cd engrams && cargo install --path .
 ```
 
 The binary is called `engram`. It needs `curl` once, to download the model.
 
-## Initialise
+## Guided setup
 
 ```sh
-engram init ~/notes
+engram init
 ```
 
-This creates the notes directory, remembers it in `~/.engram/root`, adds a
-`.gitignore` for the derived files, and downloads the model
-([granite-embedding-278m-multilingual](https://huggingface.co/ibm-granite/granite-embedding-278m-multilingual),
-Apache-2.0, 556 MB) into `~/.engram/models/`. Then write notes and index them:
+<p align="center"><img src="docs/wizard.svg" alt="engram init, the guided setup" width="720"></p>
+
+Five steps, each with a default that Enter accepts:
+
+1. **Your notes.** The directory, remembered in `~/.engram/root`, with an ignore
+   rule for the derived files and a git repository if you want one.
+2. **The model.** [granite-embedding-278m-multilingual](https://huggingface.co/ibm-granite/granite-embedding-278m-multilingual)
+   (Apache-2.0, 556 MB), downloaded once into `~/.engram/models/`.
+3. **Tools on this machine.** engrams looks for Claude Code, Codex CLI, opencode,
+   Gemini CLI, Cursor, Windsurf and Kandev, and offers to wire each one it finds:
+   the prompt hook and the MCP server for Claude Code, the MCP server for the others.
+4. **Indexed questions**, optional: a local LLM command that writes, once per
+   paragraph, the questions it answers. Skippable, and settable later.
+5. **A first note**, then the first index.
+
+Everything the wizard does is also a plain command, for scripts and for later:
+
+```sh
+engram init ~/notes --no-download     # directory only
+engram setup claude-code              # or codex, opencode, gemini, cursor, windsurf, kandev, all
+engram config                         # show the settings, or walk through them on a terminal
+engram config set ENGRAM_QUESTIONS_CMD "ollama run qwen2.5:3b"
+engram config root ~/other-notes
+```
+
+Settings live in `~/.engram/env`, one `KEY=VALUE` per line, read at every start;
+an environment variable of the same name wins.
+
+Then write notes and index them:
 
 ```sh
 mkdir -p ~/notes/work/backend
@@ -204,6 +237,18 @@ engram setup opencode
 
 This adds a local MCP server named `engram` to `~/.config/opencode/opencode.json`.
 opencode reads `CLAUDE.md` and `AGENTS.md`, so the instruction block above applies.
+
+### Codex CLI, Gemini CLI, Cursor, Windsurf
+
+```sh
+engram setup codex      # ~/.codex/config.toml, [mcp_servers.engram]
+engram setup gemini     # ~/.gemini/settings.json, mcpServers
+engram setup cursor     # ~/.cursor/mcp.json, mcpServers
+engram setup windsurf   # ~/.codeium/windsurf/mcp_config.json, mcpServers
+```
+
+Each one registers `engram mcp` as a local MCP server. Codex reads `AGENTS.md`,
+so the instruction block above belongs there for it.
 
 ### Kandev
 

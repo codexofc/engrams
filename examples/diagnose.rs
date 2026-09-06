@@ -52,7 +52,7 @@ fn main() {
                 "{family:<12} {:>5} {target:>8.3} {top:>8.3} {:>7.3} {target_len:>6}  {}",
                 if found { "yes" } else { "NO" },
                 top - target,
-                &case.query.chars().take(52).collect::<String>()
+                case.query.chars().take(52).collect::<String>()
             );
         }
     }

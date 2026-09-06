@@ -6,6 +6,11 @@ All notable changes to Engrams are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+- A Homebrew tap (`brew install codexofc/tap/engram`), a recorded demo of the guided
+  setup (docs/demo.gif, from docs/demo.tape), and the context cost chart
+  (docs/context-cost.svg) drawn by `examples/charts.rs`.
+
 ## [0.4.1] - 2026-09-06
 
 ### Added

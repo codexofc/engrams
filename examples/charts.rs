@@ -176,9 +176,42 @@ fn efficiency_svg() -> String {
     s
 }
 
+/// What reaches the agent's context to reach the note, per query, from
+/// `examples/tokens.rs` on the reference corpus. Typed in like the rest.
+const CONTEXT: &[(&str, u32, u32, &str)] = &[
+    ("grep, every word of the query, then the notes in grep order", 33587, 35, "#6f7a84"),
+    ("grep, the three longest words, then the notes in grep order", 14884, 36, "#6f7a84"),
+    ("engram search, then engram read of the note it returned", 2348, 78, "#b7410e"),
+    ("engram answer, the passages only", 518, 70, "#b7410e"),
+    ("engram hook, what every prompt receives", 266, 57, "#b7410e"),
+];
+
+fn context_svg() -> String {
+    let (w, bar_h, gap) = (820u32, 18u32, 14u32);
+    let h = 90 + CONTEXT.len() as u32 * (bar_h + gap) + 40;
+    let mut s = head(
+        w,
+        h,
+        "What reaches the agent's context to reach the note, per query",
+        "Same 96 blind queries, the real binary and a real grep, tokens estimated at four characters. In brackets, how often the expected note is reached.",
+    );
+    let (x0, scale) = (20.0f32, 760.0 / 36000.0);
+    for (i, (label, tokens, reached, colour)) in CONTEXT.iter().enumerate() {
+        let y = 70 + i as u32 * (bar_h + gap);
+        let width = *tokens as f32 * scale;
+        s += &format!("  <text x=\"{x0}\" y=\"{}\" fill=\"#485864\" font-size=\"11\">{label} <tspan fill=\"{MUTED}\">({reached} / 96)</tspan></text>\n", y - 4);
+        s += &format!("  <rect x=\"{x0}\" y=\"{y}\" width=\"{width:.1}\" height=\"{bar_h}\" rx=\"2\" fill=\"{colour}\"/>\n");
+        s += &format!("  <text x=\"{}\" y=\"{}\" fill=\"{INK}\" font-size=\"12\" font-weight=\"600\">{} tokens</text>\n", x0 + width + 8.0, y + 13, tokens);
+    }
+    s += &format!("  <text x=\"20\" y=\"{}\" fill=\"{MUTED}\" font-size=\"11\">Grey: an agent with a notes folder and grep. Rust: the same agent with Engrams. Default model, every signal on.</text>\n", h - 14);
+    s += "</svg>\n";
+    s
+}
+
 fn main() {
     std::fs::write("docs/models-quality.svg", quality_svg()).expect("docs/models-quality.svg");
     std::fs::write("docs/models-efficiency.svg", efficiency_svg()).expect("docs/models-efficiency.svg");
+    std::fs::write("docs/context-cost.svg", context_svg()).expect("docs/context-cost.svg");
     for m in MODELS.iter().filter(|m| measured(m)) {
         println!(
             "{:<22} {:>3} {:>3} {:>3} {:>3}  overall {:.0} %  {} MB  {:.2} s",

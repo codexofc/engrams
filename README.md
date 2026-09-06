@@ -58,6 +58,8 @@ estimated at four characters:
 | **a consultation**: the agent decides to look something up before a task | Claude Code greps the notes with one to three keywords, then reads whole files. Measured with the three longest words of the query: **14 900 tokens**, the right note reached 36 times out of 96. With every word of the query: 33 600 tokens, 35 times | `search` then `read` of the note it returned: **2 350 tokens**, the right note 78 times out of 96. `answer` alone, passages to cite: 520 tokens, 70 times |
 | **a session start**: the hot index of the project, loaded by Claude Code | the notes of the project, or an index that grows with them | one generated `MEMORY.md`, **17 KB at most**, 2 500 characters on average here (about 630 tokens) |
 
+<p align="center"><img src="docs/context-cost.svg" alt="What reaches the agent's context to reach the note, per query" width="820"></p>
+
 So one consultation saves **12 500 input tokens** against the keyword grep, 31 000
 against the every-word grep, and the hook costs a quarter of a thousand per prompt.
 At the list prices of September 2026, per thousand consultations:
@@ -70,9 +72,8 @@ At the list prices of September 2026, per thousand consultations:
 | Claude Sonnet 5, GPT-5.6 Terra, Gemini 3.1 Pro ($2) | $30 | $5 | **$25** | $62 |
 | Gemini 3.8 Flash ($0.75) | $11 | $2 | **$9** | $23 |
 
-Scale: on the author's machine, 446 prompts went through the hook in the last
-twenty-four hours, 119 000 tokens in all, $0.60 on Claude Opus 5. List prices of the
-input token, no caching or batch discount, because the notes an agent reads are new
+Scale: at a hundred prompts a day, the hook costs 27 000 tokens, $0.13 on Claude
+Opus 5. List prices of the input token, no caching or batch discount, because the notes an agent reads are new
 content each time. The newest Claude tokenizer yields about 30 % more tokens for the
 same text, so the dollar figures are a floor. Protocol, error bars, sources and the
 other models in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
@@ -85,8 +86,9 @@ curl -sSfL https://raw.githubusercontent.com/codexofc/engrams/master/install.sh 
 
 The script picks the prebuilt binary for your platform (Linux x86_64 and aarch64,
 macOS Apple silicon and Intel) from the [releases](https://github.com/codexofc/engrams/releases),
-installs it in `~/.local/bin`, and starts the guided setup. From source, with Rust
-1.98 or later: `cargo install engrams --features tray`. The binary is called
+installs it in `~/.local/bin`, and starts the guided setup. On macOS and Linux with
+Homebrew: `brew install codexofc/tap/engram`. From source, with Rust 1.98 or later:
+`cargo install engrams --features tray`. The binary is called
 `engram`. It needs `curl` once, to download the model.
 
 For servers and sandboxes, a container image is published with every release. The
@@ -102,7 +104,7 @@ docker run --rm -v $PWD/notes:/notes -v engrams-models:/root/.engram ghcr.io/cod
 engram init
 ```
 
-<p align="center"><img src="docs/wizard.png" alt="engram init, the guided setup" width="720"></p>
+<p align="center"><img src="docs/demo.gif" alt="engram init, the guided setup, then a first search" width="760"></p>
 
 Five steps, each with a default that Enter accepts:
 
@@ -297,7 +299,7 @@ engram index        # generates once per paragraph, cached in .engram/questions.
 ```
 
 The cache is keyed by paragraph fingerprint and worth versioning: a whole-corpus
-generation takes about an hour of model calls, an unchanged paragraph never goes
+generation takes about an hour and a half of model calls, an unchanged paragraph never goes
 through the model twice. On the benchmark the questions lift buried details from
 58 % to 75 %.
 

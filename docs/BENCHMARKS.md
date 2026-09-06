@@ -126,9 +126,10 @@ passage scores above the threshold.
 
 ### Scale
 
-- **Per prompt**: 266 tokens through the hook. On the author's machine, 446 prompts
-  went through it in the last twenty-four hours: 119 000 tokens a day, $0.60 on
-  Claude Opus 5, $0.24 on Sonnet 5.
+- **Per prompt**: 266 tokens through the hook, two passages of 700 characters at
+  most or nothing. At a hundred prompts a day, 27 000 tokens, $0.13 on Claude Opus 5,
+  $0.05 on Sonnet 5. The author's own log is not a usable daily figure: the hook
+  fires on every message of a working session, tool notifications included.
 - **Per consultation**: 2 348 tokens against 14 884 for the keyword grep, 12 536
   saved; against the every-word grep, 31 239 saved.
 - **Per session start**: the hot index of the project, 17 408 bytes at most, 2 500

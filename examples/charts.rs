@@ -161,7 +161,8 @@ fn efficiency_svg() -> String {
             "  <circle cx=\"{x}\" cy=\"{y}\" r=\"{r:.1}\" fill=\"{}\" fill-opacity=\"0.85\" stroke=\"#ffffff\" stroke-width=\"2\"/>\n",
             colour(m.family)
         );
-        s += &format!("  <polyline points=\"{},{y} {},{ly} {},{ly}\" fill=\"none\" stroke=\"{MUTED}\" stroke-width=\"0.8\"/>\n", x + r, x1 + 20.0, column - 6.0);
+        s +=
+            &format!("  <polyline points=\"{},{y} {},{ly} {},{ly}\" fill=\"none\" stroke=\"{MUTED}\" stroke-width=\"0.8\"/>\n", x + r, x1 + 20.0, column - 6.0);
         s += &format!(
             "  <text x=\"{column}\" y=\"{}\" fill=\"{INK}\" font-size=\"11\">{} <tspan fill=\"{MUTED}\">{:.0} %, {} MB, {:.2} s</tspan></text>\n",
             ly + 4.0,

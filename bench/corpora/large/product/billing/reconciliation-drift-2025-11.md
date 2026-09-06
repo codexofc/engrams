@@ -1,6 +1,6 @@
 ---
 name: reconciliation-drift-2025-11
-description: Incident of November 2025 where Payla swapped gross_amount and net_amount columns in the settlement CSV, 6 days of net matching, 41 k EUR of phantom mismatches, and the header-order guard added
+description: November 2025 incident: Payla swapped gross and net columns, 6 days of false mismatches, header-name reading and sum checks added
 type: project
 status: active
 verified: 2025-12-15

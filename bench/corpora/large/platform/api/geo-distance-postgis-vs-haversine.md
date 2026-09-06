@@ -15,8 +15,11 @@ verified: 2026-04-09
 ## After
 
 - Extension `postgis` (3.4) enabled on the primary. The CloudNativePG image already had it, no operator change.
+
 - Column `loads.pickup_geog geography(Point, 4326)`, generated: `GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(pickup_lng, pickup_lat), 4326)::geography) STORED`. The old columns stay, the mobile app still writes them.
+
 - `CREATE INDEX CONCURRENTLY idx_loads_pickup_geog ON loads USING gist (pickup_geog);`
+
 - Query: `WHERE l.status = ANY(:statuses) AND ST_DWithin(l.pickup_geog, ST_MakePoint(:lng, :lat)::geography, :radius_m)`, ordered by `ST_Distance` for the first 200 then paginated by cursor. The order clause uses the same expression so the planner can use the index for the filter and sort the small candidate set in memory.
 
 Measured on prod in March 2026: p95 22 ms, p99 60 ms. Index size 140 MB.

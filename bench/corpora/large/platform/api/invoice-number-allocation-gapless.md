@@ -1,5 +1,5 @@
 ---
-name: invoice-numbering-sequence
+name: invoice-number-allocation-gapless
 description: Invoice numbers are gapless per legal entity and year (HF-FR-2026-000123), allocated from the invoice_counters table with a row lock inside the same transaction that persists the invoice
 type: reference
 status: active

@@ -1,6 +1,6 @@
 ---
 name: price-suggestion-model-v1
-description: The v1 price suggestion was a linear model per distance band on 9 features with an absolute EUR target, MAPE 13.1 %, retired in January 2026 for the gradient boosted v2
+description: The v1 price suggestion, a linear model per distance band with an absolute EUR target, MAPE 13.1 %, retired January 2026
 type: project
 status: archived
 superseded_by: [[price-suggestion-model-v2]]

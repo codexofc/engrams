@@ -85,6 +85,63 @@ the library implementation of the ModernBERT graph (cosine 0.85 with the referen
 because of a hard-coded activation; the graph shipped here reads it from the
 configuration and reaches 1.000000).
 
+## Public corpora, replayable by anyone
+
+The reference corpus above is private. Two synthetic corpora in `bench/corpora/`
+let anyone replay the protocol end to end: `scripts/bench-corpus.sh large` (or
+`small`) copies the corpus, indexes it, runs the benchmark with and without the
+lexical signals, then the context cost measurement. Both are the engineering memory
+of a fictional company, bilingual, with identifiers, incidents, runbooks and long
+notes whose facts sit in their second half. The queries were written blind from the
+target passages, one in three in the other language.
+
+| corpus | notes | size | projects | chunks | index time | queries |
+|---|---|---|---|---|---|---|
+| large, "Halden Freight", a freight-exchange SaaS | 220 | 1.1 MB | 12 in 4 families | 1 320 | 281 s | 24 topic, 24 detail, 12 identifier |
+| small, "Brume Studio", a game studio | 30 | 140 KB | 3 in 1 family | 112 | 21 s | 12 topic, 12 detail, 6 identifier |
+
+Expected note among the five returned, default model, text only (no indexed
+questions, the identifier bonus changes nothing on these corpora):
+
+| corpus | family | words only | Engrams |
+|---|---|---|---|
+| large | topic of a note (24) | 50 % | **92 %** |
+| large | buried detail (24) | 79 % | **100 %** |
+| large | named identifier (12) | 92 % | **100 %** |
+| small | topic of a note (12) | 75 % | **100 %** |
+| small | buried detail (12) | 100 % | 92 % |
+| small | named identifier (6) | 100 % | 100 % |
+
+Context cost on the same queries, same protocol as the section below:
+
+| corpus, path to the answer | tokens per query (est.) | expected note reached |
+|---|---|---|
+| large, grep with every word, then the notes in grep order | 17 801 | 41 / 60 |
+| large, grep with the three longest words, then the notes | 5 325 | 35 / 60 |
+| large, `engram search` then `engram read` | 1 583 | 56 / 60 |
+| large, `engram answer`, passages only | 478 | 54 / 60 |
+| large, `engram hook`, every prompt | 245 | 42 / 60 |
+| small, grep with the three longest words, then the notes | 1 985 | 23 / 30 |
+| small, `engram search` then `engram read` | 1 074 | 29 / 30 |
+| small, `engram hook`, every prompt | 240 | 24 / 30 |
+
+Reading, with the caution these corpora deserve. They score higher than the private
+one on every family: they were written to be specific, one fact per note, with a
+vocabulary that rarely repeats, which is the format the engine is built for and not
+the state of a memory that grew over two years. On the large one the engine reaches
+the note 56 times out of 60 for 1 583 tokens where the keyword grep reaches it 35
+times for 5 325, a third of the context for a fifth more answers. On the small one
+words nearly suffice (30 notes, 140 KB): the engine still costs half the context of
+the grep and misses one query instead of seven. The private corpus, with its repeats
+and its French and English mixed inside one note, is the harder and the more
+realistic of the three, and its numbers are the ones the README leads with.
+
+Every figure in this document assumes notes in the format `engram check`
+enforces: a name, a one-line description, paragraphs as the unit of meaning. A
+memory imported raw from another tool, without descriptions and with several facts
+per file, will score below these tables until it is converted, which is what the
+planned `engram import` is for.
+
 ## Context cost: what reaches the model
 
 The reason to run a memory engine next to an agent is not only to find the note, it

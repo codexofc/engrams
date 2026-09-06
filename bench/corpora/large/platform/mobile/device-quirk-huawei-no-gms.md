@@ -13,15 +13,21 @@ Telemetry (November 2025): 140 active devices out of 3 400 Android are Huawei or
 ## What does not work on them
 
 - Play Store: they cannot install or update the app from the store.
+
 - FCM: no push at all, neither silent sync triggers nor alerts.
+
 - Google Maps SDK: the map view is blank.
+
 - Play Integrity: not available, and we do not require it (see below).
 
 ## What we do (HF-1310)
 
 - A direct APK download page (`https://app.halden.example/driver/android`) with the same signed build as the store, updated by the release job. The app checks `min-version` like the others and the update banner links to that page instead of the store when `GoogleApiAvailability` reports services missing. Sideloading a 60 MB APK over mobile data is not great, but it works.
+
 - Sync: the 15 min timer in [[offline-sync-architecture]] is the only trigger. We shortened it to 5 min when GMS is absent. Battery impact measured at about 2 % per 8 h shift, acceptable.
+
 - Alerts: replaced by an in-app inbox polled with the sync. Assignments reach these drivers up to 5 minutes late, and their dispatchers were told.
+
 - Map: the app uses the tile-based map widget (same as the web front's map library, MapLibre) instead of the Google Maps plugin when GMS is absent. It was already the fallback for the iOS build variant used in testing, so the cost was small.
 
 ## What we decided not to do

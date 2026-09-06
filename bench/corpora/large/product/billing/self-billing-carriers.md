@@ -1,6 +1,6 @@
 ---
 name: self-billing-carriers
-description: Self-billing (autofacturation) lets Halden Freight issue the carrier's invoice on its behalf, requires a signed mandate per carrier, and pays out weekly on Wednesdays with a 2.5 % early-payment option
+description: Self-billing lets us invoice on the carrier's behalf with a signed mandate, Wednesday payouts, 2.5 % early-payout option, 48 h contest
 type: project
 status: active
 verified: 2026-07-08
@@ -36,3 +36,23 @@ Juin 2026 : 71 % des chargements livrés sont en autofacturation, 4 130 transpor
 
 - La Pologne exige que la procédure d'acceptation de chaque facture d'autofacturation soit décrite dans le mandat. Notre mandat PL a été réécrit en mars 2026 avec une acceptation tacite sous 48 h, alignée sur le délai de contestation.
 - Un transporteur qui perd son numéro de TVA en cours de mois : les factures déjà émises restent valides (même logique que [[reverse-charge-intra-eu]]), les suivantes sont bloquées et le compte passe en revue.
+
+## Contestation et acceptation tacite
+
+Le chargeur a 48 h après la livraison déclarée pour contester (POD manquant, marchandise endommagée, retard facturable). Sans contestation, la facture d'autofacturation est émise et le transporteur est payé au prochain reversement. Une contestation ouvre un litige dans le back-office (`/backoffice/disputes`) et suspend l'émission ; 2,3 % des chargements en autofacturation sont contestés, et 70 % des litiges se règlent en moins de 5 jours par une réduction convenue, qui devient le montant facturé.
+
+Le transporteur, lui, accepte tacitement la facture émise en son nom sous 48 h après réception de l'email (`selfbilling.invoice_issued`), sauf refus explicite par le lien « contester cette facture ». Le refus est rare (0,4 %) et porte presque toujours sur un montant de péage ou d'attente non prévu dans l'enchère. Le mandat PL exige la trace de cette acceptation : `self_billing_invoices.accepted_at` et `acceptance_mode` (`tacit`, `explicit`) sont remplis pour toutes les entités, pas seulement PL.
+
+## Frais d'attente et suppléments après enchère
+
+Un transporteur peut demander un supplément après livraison (attente au chargement de plus de 2 h, palettes supplémentaires, second passage). Il le déclare dans l'app dans les 24 h, le chargeur a 48 h pour accepter ou refuser, et le supplément accepté est une ligne de plus sur la facture d'autofacturation, avec sa propre TVA. Les suppléments représentent 3,1 % du montant facturé en autofacturation en juin 2026, dont 60 % d'attente. Un supplément refusé peut être escaladé au support, qui tranche avec les positions GPS (l'équipe data expose la durée d'arrêt sur site).
+
+## Ce que l'autofacturation change dans la comptabilité
+
+- Le chiffre d'affaires de Halden Freight ne comprend pas le montant du transport ; on encaisse pour le compte du transporteur. La facture 1 (transport) est comptabilisée en compte de tiers, seules les factures 2 et 3 sont notre chiffre d'affaires. Le mart facture de l'entrepôt porte `is_self_billing` pour cette raison.
+- Les reversements sont des paiements de dettes fournisseurs, pas des charges. L'export comptable allemand les code en compte 1600, l'export FEC en 401.
+- La TVA de la facture 1 est celle du transporteur : elle apparaît dans nos exports comme TVA collectée pour compte de tiers, ligne à part, que les cabinets des trois pays ont validée en 2025.
+
+## Chiffres de délai de paiement transporteur
+
+Avant l'autofacturation (2024) : délai médian entre livraison et paiement du transporteur de 41 jours. Avec : 6 jours (livraison le lundi, validation mercredi, reversement le mercredi suivant), et 0 jour pour les 18 % en paiement anticipé. C'est l'argument commercial principal auprès des petites flottes, et la raison pour laquelle le risque de crédit chargeur est assumé.

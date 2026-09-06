@@ -1,6 +1,6 @@
 ---
 name: dunning-schedule
-description: The five-step dunning ladder (J+3 reminder to J+45 account suspension), which steps are automatic, and the 2 500 EUR threshold that routes an account to a human collector
+description: The five-step dunning ladder from J+3 reminder to J+45 suspension, the 50 EUR floor and the 2 500 EUR human-collector route
 type: reference
 status: active
 verified: 2026-05-27

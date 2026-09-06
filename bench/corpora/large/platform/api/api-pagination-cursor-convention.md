@@ -15,7 +15,9 @@ Every collection endpoint (`GET /v2/loads`, `/v2/bids`, `/v2/invoices`, `/v2/car
 Query parameters:
 
 - `limit`: 1 to 200, default 50. Above 200 you get a 422 with code `limit_too_large`.
+
 - `after`: opaque cursor from the previous response. Clients must not parse it.
+
 - `sort` is not accepted anymore on cursor-paginated endpoints. Order is fixed per endpoint and documented in the OpenAPI description, usually `created_at DESC, id DESC`.
 
 Response:

@@ -23,12 +23,15 @@ So the root cause was on both sides: the server took too long to complete, and t
 App 4.7 (released 2026-01-21):
 
 - `DocumentUploader` persists the document id it received at step 1 in the `document_uploads` table with the file path and the current step. A retry resumes from the current step, never restarts.
+
 - Timeout on `complete` raised to 30 s. It is not a user-facing wait, the upload runs in the background isolate.
+
 - If `complete` returns 409 `document_already_attached`, treat as success.
 
 API (HF-1456, deployed 2026-01-12, before the app):
 
 - `POST /v2/documents/{id}/complete` is idempotent: a second call on an `AVAILABLE` row returns 200 with the same body. It used to return 409.
+
 - The SHA-256 check is now done asynchronously by a Messenger handler for files over 2 MB, so `complete` answers in under 300 ms. A mismatch marks the row `CORRUPT` and notifies the driver to retake the photo, which has happened 4 times since.
 
 ## Cleanup

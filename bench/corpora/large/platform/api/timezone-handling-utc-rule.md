@@ -36,4 +36,4 @@ The migration from `pickup_date` to the window columns is the one that caused [[
 
 - The DST switch: a window from 01:30 to 02:30 on the last Sunday of March in Paris is 0 minutes or 120 minutes long depending on which way you compute it. `TimezoneResolver::window()` has a test for both switches, keep it.
 
-- The invoice year boundary, see [[invoice-numbering-sequence]].
+- The invoice year boundary, see [[invoice-number-allocation-gapless]].

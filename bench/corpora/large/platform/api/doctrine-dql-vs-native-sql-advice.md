@@ -26,12 +26,14 @@ Attention au `addJoinedEntityFromClassMetadata` : il faut sélectionner toutes l
 
 Reporting, exports, tout ce qui retourne des lignes agrégées que personne ne va modifier. `App\Reporting\*` n'a pas le droit d'importer `EntityManagerInterface`, il reçoit `Doctrine\DBAL\Connection`. PHPStan le vérifie (`ReportingNoOrmRule`).
 
-Aussi pour les écritures en masse : `INSERT ... ON CONFLICT` de l'allocateur de numéros de facture ([[invoice-numbering-sequence]]), le backfill par lots. Passer par `persist()` pour 50 000 lignes, c'est 50 000 entités dans l'`UnitOfWork` et un `flush()` qui prend 30 secondes et 800 Mo. Si on doit vraiment persister beaucoup d'entités, `flush()` puis `clear()` tous les 500.
+Aussi pour les écritures en masse : `INSERT ... ON CONFLICT` de l'allocateur de numéros de facture ([[invoice-number-allocation-gapless]]), le backfill par lots. Passer par `persist()` pour 50 000 lignes, c'est 50 000 entités dans l'`UnitOfWork` et un `flush()` qui prend 30 secondes et 800 Mo. Si on doit vraiment persister beaucoup d'entités, `flush()` puis `clear()` tous les 500.
 
 ## Ce qu'on ne fait pas
 
 - Pas d'`EXTRA_LAZY` sur les collections sans savoir ce qu'il coûte, voir [[n-plus-one-loads-list-fix]].
+
 - Pas de fonctions DQL custom pour émuler PostgreSQL. On en avait 6 (`JSON_GET_TEXT`, `TSMATCH`, ...), toutes retirées en HF-1301. Le SQL natif est plus lisible que `TSMATCH(l.tsv, :q) = TRUE`.
+
 - Pas de `Query::getResult()` sans `setMaxResults()` sur une table de plus de 100 000 lignes. Il n'y a pas de garde-fou automatique, c'est en revue.
 
 ## Comment choisir en 10 secondes

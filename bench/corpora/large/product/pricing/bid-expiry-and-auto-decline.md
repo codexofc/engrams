@@ -1,7 +1,7 @@
 ---
 name: bid-expiry-and-auto-decline
-description: A bid expires with its load's bidding window, the ExpireBidding job runs every minute with a 90 s tolerance, and a carrier's bid is auto-declined when they win another load with an overlapping pickup window
-type: reference
+description: Bids expire with the load window via ExpireBidding every minute, and a carrier's overlapping bids are auto-declined on award
+type: project
 status: active
 verified: 2026-02-18
 ---

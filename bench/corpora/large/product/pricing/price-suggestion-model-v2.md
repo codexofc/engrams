@@ -1,6 +1,6 @@
 ---
 name: price-suggestion-model-v2
-description: The v2 price suggestion is a gradient boosted model on 31 features served by pricing-svc, MAPE 9.8 % on awarded price against 13.1 % for v1, retrained weekly on Sunday night, with a per-cluster fallback to the median
+description: v2 price suggestion: gradient boosted, 31 features, MAPE 9.8 % against 13.1 % for v1, weekly retrain, blend with cluster median
 type: project
 status: active
 verified: 2026-06-30
@@ -46,3 +46,27 @@ Sunday 02:00, on the last 180 days of awarded loads, about 900 000 rows. Trainin
 
 - Excluding the surcharges from the target relies on the stored breakdown of each bid, which carriers can edit; about 4 % of bids have an inconsistent breakdown and are dropped from training.
 - The shipper award ratio feature leaks a little (a shipper who always accepts the cheapest bid lowers the target and the feature together). Measured leakage effect under 0.3 points of MAPE, accepted for now.
+
+## Blend with the cluster median, exact rule
+
+The quote's base price is `w * model + (1 - w) * median` with `w` by confidence: `high` 0.4, `medium` 0.5, `low` 0.6, and `1.0` when the cluster has no median at all (fewer than 3 awarded loads in 90 days, 9 % of clusters, 0.8 % of loads). The weights were chosen on the backtest by grid over {0.2, 0.4, 0.5, 0.6, 0.8}; the differences between neighbouring weights are under 0.2 points of MAPE, so the exact values are not precious and nobody should spend a week on them again.
+
+The blend is applied on the per-km price in log space, then multiplied by distance, then floored (1.05 EUR/km under 150 km, 180 EUR absolute), then surcharges are added. The floor is applied after the blend on purpose: on very short lanes the model predicts a per-km price that is realistic for a 300 km trip and absurd for 40 km.
+
+## Explanation shown to shippers and carriers
+
+Three factors, computed by the contribution of feature groups to the prediction relative to the cluster median: distance band and vehicle, lane balance, timing (day of week, hours to pickup). Rendered as a sentence: "Suggestion above the usual price for this lane: few carriers positioned near the origin, pickup on a Monday." The wording comes from `explanations.yaml`, 18 templates, translated into 5 languages. Carriers rate the explanation useful 71 % of the time (thumbs on the quote panel, 40 000 votes since March).
+
+## Retrain history that matters
+
+- 2026-01-18: first v2 in production, MAPE 10.6 %.
+- 2026-02-08: added `imbalance_ratio` and the active-carriers feature, MAPE 10.0 %.
+- 2026-03-15: training set filtered to `breakdown_consistent` bids, MAPE 9.9 %, and the p99 error halved (the inconsistent breakdowns were mostly outliers).
+- 2026-04-12: automatic promotion refused, holdout MAPE 11.8 %: the warehouse had a half-empty last week after an ingestion delay. Manual promotion skipped, previous model kept.
+- 2026-05-24: same refusal, same cause; the ML team's backtest now guards on rows per day.
+- 2026-06-14: MAPE 9.8 %, current.
+
+## What would make us retire it
+
+- If the cluster median alone got within 0.5 points of the model on medium clusters, the model would only be worth keeping for low clusters, and a simpler nearest-neighbour cluster average might do. Checked at each monthly review; the gap is 2.3 points in June.
+- If the pricing team stops being able to explain a quote to a shipper in one sentence. That was the reason v1 lasted so long ([[price-suggestion-model-v1]]).

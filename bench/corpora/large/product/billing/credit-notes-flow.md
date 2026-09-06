@@ -1,6 +1,6 @@
 ---
 name: credit-notes-flow
-description: Credit notes are the only way to correct an issued invoice, they reference the original via credit_notes.invoice_id, partial credit is allowed, and a credit note over 5 000 EUR needs a finance approval
+description: Credit notes are the only correction of an issued invoice, partial credit allowed, finance approval above 5 000 EUR, never automatic
 type: project
 status: active
 verified: 2026-04-17

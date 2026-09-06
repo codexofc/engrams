@@ -1,7 +1,7 @@
 ---
 name: document-storage-s3-presigned
 description: PODs, CMRs and carrier documents live in an S3-compatible bucket per environment, uploaded by clients through presigned PUT URLs (15 min), read through presigned GET (5 min), never proxied by the API
-type: reference
+type: project
 status: active
 verified: 2026-03-11
 ---
@@ -13,8 +13,11 @@ Bucket per environment on the object storage of the cluster (`hf-documents-prod`
 ## Upload flow
 
 1. Client calls `POST /v2/loads/{id}/documents` with `{ "kind": "POD", "content_type": "image/jpeg", "size": 812331, "sha256": "..." }`.
+
 2. API creates a `documents` row in state `PENDING` with a v7 UUID, and returns a presigned `PUT` URL valid 15 minutes, restricted to that content type and a `Content-Length` range (size ± 0 bytes, we require the exact size).
+
 3. Client PUTs the bytes directly to storage.
+
 4. Client calls `POST /v2/documents/{id}/complete`. The API does a `HEAD` on the object, checks size and (for files under 20 MB) downloads and checks the SHA-256, then moves the row to `AVAILABLE` and emits `document.available` to the outbox (see [[webhook-delivery-outbox]]).
 
 Rows stuck in `PENDING` for more than 1 hour are deleted by `app:documents:purge-pending` along with the object if it exists.
@@ -32,7 +35,9 @@ The first version streamed uploads through php-fpm. A 12 MB POD photo held a php
 ## Retention
 
 - POD, CMR, delivery notes: 10 years (legal, transport documents).
+
 - Carrier insurance and licence documents: until 2 years after expiry.
+
 - Load photos that are not PODs: 24 months.
 
 Retention is enforced by a lifecycle rule on the bucket per key prefix, plus the `documents.retain_until` column for the API side. A `documents` row is never deleted before its object.

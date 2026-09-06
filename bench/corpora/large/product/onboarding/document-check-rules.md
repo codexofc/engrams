@@ -1,6 +1,6 @@
 ---
 name: document-check-rules
-description: Accepted document formats (PDF, JPEG, PNG, HEIC converted, 15 MB max), the automatic rejections (screenshots, expired, cropped, mismatched company name), and the 3 attempt limit before a human call
+description: Accepted document formats and sizes, the automatic rejections (screenshot, expired, cropped, name mismatch), 3 attempts then a call
 type: reference
 status: active
 verified: 2026-04-09
@@ -19,9 +19,13 @@ Règles appliquées à tout document envoyé par un transporteur (`carrier_docum
 `DocumentPreChecker` tourne à l'envoi, avant tout examen humain, et rejette avec un code précis :
 
 - `document.screenshot` : l'image a les dimensions exactes d'un écran de téléphone connu et une barre d'état en haut. Les captures d'écran d'un document sont refusées parce qu'on ne peut pas vérifier qu'elles ne sont pas retouchées ; 6 % des envois.
+
 - `document.expired` : la date d'expiration lue (OCR) est passée. Le transporteur peut contester si l'OCR a mal lu, ce qui arrive sur 2 % des lectures.
+
 - `document.cropped` : moins de 3 des 4 coins du document sont visibles. Un document coupé cache souvent le nom de l'assuré ou la date.
+
 - `document.company_mismatch` : le nom de société lu ne correspond pas à celui du compte (distance de Levenshtein normalisée au-dessus de 0,35 après suppression des formes juridiques). Le seuil a été monté de 0,25 à 0,35 en février 2026 parce que « Transports Duhamel et Fils SARL » contre « DUHAMEL TRANSPORTS » était rejeté.
+
 - `document.wrong_type` : une licence envoyée dans la case assurance, détecté par classification d'image (précision 96 % sur l'échantillon de validation d'avril 2026).
 
 ## Limite de tentatives

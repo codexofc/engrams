@@ -45,5 +45,7 @@ Le `terminationGracePeriodSeconds` du Deployment est à 90 s, et `messenger:cons
 ## Pièges connus
 
 - Un handler qui fait `$em->flush()` puis publie un message : si le message est consommé avant que la transaction soit commitée (oui, ça arrive, RabbitMQ est rapide), le consumer ne voit pas la ligne. Solution : `DoctrineTransactionMiddleware` est activé sur les bus et le `DoctrineTransportMiddleware` reporte l'envoi après commit. Voir [[webhook-delivery-outbox]] pour la version robuste.
+
 - `messenger:consume` avec `--time-limit` et un `sleep` long dans un handler : la limite ne s'applique qu'entre deux messages.
+
 - Les messages sérialisés contiennent les UUIDs, jamais les entités. Sérialiser une entité Doctrine dans un message, ça marche en dev et ça casse au premier changement de classe.

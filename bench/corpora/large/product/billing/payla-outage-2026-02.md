@@ -1,6 +1,6 @@
 ---
 name: payla-outage-2026-02
-description: Payla API outage of 2026-02-17 (11:40 to 16:05 CET), 3 100 debits not submitted before cut-off, what we did, and the circuit breaker plus deferred batch added afterwards
+description: Payla outage of 2026-02-17, 3 112 debits missed the cut-off, and the circuit breaker plus three-pass debit batch added after
 type: project
 status: active
 verified: 2026-03-03
@@ -9,11 +9,17 @@ verified: 2026-03-03
 ## Timeline
 
 - 2026-02-17 11:40 CET: `PaylaClient` starts returning `503` on every endpoint. Alert `payla_error_rate > 20 %` fires at 11:46.
+
 - 11:50: Payla status page acknowledges a database failover problem on their side, no ETA.
+
 - 12:10: card checkouts are failing with the generic message `payment.unavailable`. We flip the flag `billing.card_checkout_enabled` off so shippers see a proper message (`payment.temporarily_unavailable`) and can post loads on invoice terms instead. Flags convention in the product common notes.
+
 - 15:00: the SEPA debit batch runs as scheduled, every `POST /v2/debits` fails, the batch marks 3 112 debits `submission_failed` and stops. Nobody notices immediately because the batch job's own alert only fires when the job crashes, not when every item fails.
+
 - 16:05: Payla recovers. Our webhook backlog drains in about 12 minutes (Payla replays the events it could not deliver, which produced the duplicate storm mentioned in [[payla-webhook-idempotency]]).
+
 - 16:20: we discover the 3 112 failed debits. The Payla cut-off for same-day submission is 16:00, so they can only go out the next day, which delays settlement by one business day for 2 480 shippers.
+
 - 17:30: manual re-submission via `billing:payla:resubmit-debits --date 2026-02-17`, all accepted. Settled 2026-02-20 instead of 2026-02-19.
 
 Financial impact: about 1.9 M EUR of collections delayed by one day, no loss. Support received 61 tickets, mostly shippers asking why the debit was not on their statement.

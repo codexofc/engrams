@@ -1,6 +1,6 @@
 ---
 name: currency-rounding-pln-czk
-description: Bids are in EUR, PLN or CZK, VAT is computed per invoice not per line, rounding is half-even on the total, and the NBP and CNB daily rates are frozen at issue for the local-currency VAT amount
+description: PLN and CZK invoices: VAT rounded half-even on the total not per line, NBP and CNB previous-day rates frozen at issue
 type: project
 status: active
 verified: 2026-06-11

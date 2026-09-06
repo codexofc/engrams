@@ -1,0 +1,38 @@
+{
+  "note": [
+    {"path": "studio/tools/ci-cache-misses-lesson.md", "ordinal": 0, "query": "pourquoi la CI a doublé de durée alors que rien n'avait changé, cache évincé"},
+    {"path": "studio/common/naming-assets.md", "ordinal": 0, "query": "règles de nommage des fichiers sources d'assets appliquées à l'import"},
+    {"path": "studio/engine/shader-compile-cache.md", "ordinal": 0, "query": "temps de compilation des variantes de shaders au lancement sur la cible basse"},
+    {"path": "studio/common/meeting-conventions.md", "ordinal": 0, "query": "comment le studio organise ses réunions"},
+    {"path": "studio/common/milestone-process.md", "ordinal": 0, "query": "how a six week development cycle is structured, scope freeze week"},
+    {"path": "studio/tools/ci-pipeline-layout.md", "ordinal": 0, "query": "les différentes files de la CI, code, assets, playtest, et leurs durées"},
+    {"path": "studio/engine/physics-fixed-step.md", "ordinal": 0, "query": "why the simulation runs at a constant tick and drops time after a hitch"},
+    {"path": "studio/engine/build-times-incremental.md", "ordinal": 0, "query": "how long a small gameplay edit took to recompile before the crate split"},
+    {"path": "studio/common/studio-glossary.md", "ordinal": 0, "query": "vocabulaire commun du studio, quel mot anglais dans les identifiants"},
+    {"path": "studio/common/playtest-feedback-loop.md", "ordinal": 0, "query": "ce qu'on récolte pendant une session de test externe, télémétrie et observation"},
+    {"path": "studio/engine/crash-triage-lesson.md", "ordinal": 0, "query": "how crash reports got minidumps and input replays after the april test"},
+    {"path": "studio/tools/level-editor-undo.md", "ordinal": 0, "query": "fonctionnement de l'annulation dans l'éditeur de niveaux, pile de commandes"}
+  ],
+  "detail": [
+    {"path": "studio/tools/texture-compression-settings.md", "ordinal": 2, "query": "why the pipeline refuses the cheaper texture format for albedos, banding"},
+    {"path": "studio/engine/ecs-scheduler.md", "ordinal": 3, "query": "accès en écriture aux composants et allocations par image dans un système"},
+    {"path": "studio/tools/asset-pipeline-overview.md", "ordinal": 2, "query": "how long does a full asset rebuild take on CI and per stage"},
+    {"path": "studio/tools/tools-team-preferences.md", "ordinal": 1, "query": "does the pipeline auto resize or convert a bad source asset"},
+    {"path": "studio/engine/shader-compile-cache.md", "ordinal": 3, "query": "what happens when a shader include changes, full recompile"},
+    {"path": "studio/engine/shader-compile-cache.md", "ordinal": 2, "query": "taille du cache de shaders par plateforme et variantes manquantes par session"},
+    {"path": "studio/common/commit-and-review-rules.md", "ordinal": 2, "query": "est-ce que les commits sont écrasés à la fusion d'une merge request"},
+    {"path": "studio/tools/localization-pipeline.md", "ordinal": 3, "query": "où sont écrits les dialogues du jeu, outil séparé ou fichiers d'UI"},
+    {"path": "studio/tools/asset-pipeline-overview.md", "ordinal": 3, "query": "brumepipe why command, what does it print"},
+    {"path": "studio/common/commit-and-review-rules.md", "ordinal": 1, "query": "quels changements demandent deux relecteurs au lieu d'un"},
+    {"path": "studio/engine/asset-streaming-budget.md", "ordinal": 2, "query": "dans quel ordre le streaming libère la mémoire, textures puis meshes"},
+    {"path": "studio/common/bug-severity-scale.md", "ordinal": 2, "query": "how many bugs per severity in the april milestone and the three worst"}
+  ],
+  "identifiant": [
+    {"path": "studio/tools/asset-pipeline-overview.md", "ordinal": 0, "query": "assets/out paquets par chunk"},
+    {"path": "studio/engine/platform-abstraction-layer.md", "ordinal": 0, "query": "givre-platform crate traits"},
+    {"path": "studio/tools/localization-pipeline.md", "ordinal": 0, "query": "strings/fr.toml format des clés"},
+    {"path": "studio/tools/localization-pipeline.md", "ordinal": 2, "query": "BR-410 German text overflow"},
+    {"path": "studio/tools/asset-import-failures-2026.md", "ordinal": 1, "query": "texture.unknown_suffix erreur import"},
+    {"path": "studio/engine/memory-arena-allocators.md", "ordinal": 1, "query": "CountingAlloc per system allocations"}
+  ]
+}

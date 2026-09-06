@@ -11,7 +11,9 @@ verified: 2026-06-02
 ## Three suites, three directories
 
 - `tests/Unit`: no container, no database, no clock. Pure PHP. Runs in about 20 s. Must stay under 30 s or the pre-push hook becomes annoying and people disable it.
+
 - `tests/Integration`: booted kernel, real PostgreSQL 16 (the CI service container, same major as prod), real Redis. Repository queries, Messenger handlers, anything with SQL.
+
 - `tests/Api`: `WebTestCase`, HTTP in and JSON out, asserts on status code and body. This is where the error envelope and pagination contracts are tested.
 
 No SQLite. We had SQLite for unit-ish repository tests until 2024 and every PostgreSQL-specific query (`@@`, `ON CONFLICT`, row comparisons, `timestamptz`) was untestable. If a test needs SQL it needs PostgreSQL.
@@ -21,6 +23,7 @@ No SQLite. We had SQLite for unit-ish repository tests until 2024 and every Post
 `App\Tests\DatabaseTestCase` wraps each test in a transaction and rolls it back in `tearDown()`. This is 10x faster than truncating tables. Two caveats:
 
 - Anything that commits explicitly (the invoice number allocator, the outbox) escapes the rollback. Those tests extend `CommittingDatabaseTestCase` which truncates the specific tables it declares in `protected static array $tables`.
+
 - `CREATE INDEX CONCURRENTLY` is not testable inside a transaction, so migrations are tested by the `migrations-up-to-date` CI job against a restored dump, not by PHPUnit. See [[doctrine-migration-workflow]].
 
 ## Fixtures: builders, not Alice
@@ -40,6 +43,9 @@ CI target is 11 minutes for the full pipeline on a PR: lint 1 min, unit 30 s, in
 ## Assertions we have and you should use
 
 - `assertMaxQueries()` from [[n-plus-one-loads-list-fix]].
+
 - `assertErrorEnvelope($response, 409, 'load-not-biddable')`.
+
 - `assertMessageDispatched(GenerateInvoicePdf::class)` on the in-memory transport, all transports are `in-memory://` in the `test` env.
+
 - `assertEventuallyEquals()` for the two tests that involve a real worker process. Polls up to 3 s. Use rarely.

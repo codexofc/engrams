@@ -36,7 +36,9 @@ We tried real-time updates in version 1 (a Messenger handler on each `DELIVERED`
 ## Known distortions
 
 - A carrier who only takes short urban loads has an easier on-time component. Product accepted this.
+
 - Timezones: `delivery_window_end` is stored in UTC, the tolerance is computed in UTC. Fine, since both sides are instants. See [[timezone-handling-utc-rule]].
+
 - Loads cancelled by the shipper are excluded from every component. A cancelled load does not count against anyone.
 
 ## Next

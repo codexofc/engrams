@@ -1,6 +1,6 @@
 ---
 name: fuel-surcharge-index
-description: The fuel surcharge is a monthly percentage derived from the CNR diesel index with a 1.42 EUR/L reference, 0.35 elasticity, published on the 3rd, and frozen per quote
+description: Monthly fuel surcharge from the diesel index with a 1.42 EUR/L reference and 0.35 elasticity, published on the 3rd, frozen per quote
 type: reference
 status: active
 verified: 2026-04-07
@@ -20,7 +20,7 @@ Result rounded to 0.1 point, clamped to [-5, +25]. April 2026 values: FR +4.3 %,
 
 ## Why monthly and not weekly
 
-Carriers plan their pricing per month and shippers budget per month. A weekly index in 2024 caused bids on the same lane to differ by 2 % between Monday and Friday for no reason a shipper could see, and support spent time explaining it. Monthly with a publication on the 3rd is what the industry contracts use (the French indexation clause references the monthly CNR series).
+Carriers plan their pricing per month and shippers budget per month. A weekly index in 2024 caused bids on the same lane to differ by 2 % between Monday and Friday for no reason a shipper could see, and support spent time explaining it. Monthly with a publication on the 3rd is what the industry contracts use (the French indexation clause references the monthly national series).
 
 ## Frozen per quote
 

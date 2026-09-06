@@ -33,5 +33,7 @@ Since driver app 4.6 the header is built from a list in `lib/api/features.dart`.
 ## Things that are not versioned
 
 - Webhook payloads have their own `schema_version` field inside the JSON, see [[webhook-delivery-outbox]].
+
 - Error envelope shape, see [[api-error-envelope-convention]].
+
 - Authentication, see [[jwt-auth-and-refresh-tokens]].

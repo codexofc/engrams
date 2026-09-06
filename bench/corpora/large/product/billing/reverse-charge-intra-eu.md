@@ -1,6 +1,6 @@
 ---
 name: reverse-charge-intra-eu
-description: Reverse charge mentions per entity, the VIES cache TTL of 72 h, and the rule that a VAT number invalidated after issue never retroactively changes an invoice
+description: Reverse charge mentions per entity, the 72 h VIES cache, and why a VAT number invalidated later never changes an issued invoice
 type: reference
 status: active
 verified: 2026-02-09

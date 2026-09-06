@@ -59,7 +59,11 @@ and writes the badge of the README to the `badges` branch at every push to `mast
 ## Benchmarks
 
 `examples/bench.rs` reads a JSON file of queries (`ENGRAM_BENCH`, default
-`<root>/.engram/bench-queries.json`) and reports each family separately. Write
+`<root>/.engram/bench-queries.json`) and reports each family separately. Two public corpora
+live under `bench/corpora/` (a large one, 220 notes, and a small one, 30 notes, both
+synthetic, bilingual, with their blind queries): `scripts/bench-corpus.sh large` replays
+the benchmark and the context cost measurement on a copy. A change to ranking must
+be measured on them, and on your own notes if you have some. Write
 queries blind, seeing only the target passage (`examples/draw_targets.rs` produces
 the skeleton). Keep families apart; never merge them into one score. Ablations are
 environment variables so they run on the same index. See `docs/BENCHMARKS.md`.

@@ -1,6 +1,6 @@
 ---
 name: late-payment-interest-fr
-description: French late-payment interest is ECB refinancing rate plus 10 points, plus a fixed 40 EUR recovery indemnity per invoice, computed daily from due date and added as a line on the next invoice
+description: French late interest is ECB rate plus 10 points plus a 40 EUR indemnity per invoice, accrued daily, billed on the next invoice
 type: reference
 status: active
 verified: 2026-01-30

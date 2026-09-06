@@ -19,8 +19,11 @@ Sur la semaine, `SELECT load_id, count(*) FROM bids WHERE status = 'ACCEPTED' GR
 `BidAcceptanceService::accept(Bid $bid)` faisait, dans une transaction :
 
 1. `$load = $bid->getLoad()` (déjà chargé, pas de lock)
+
 2. `if ($load->getStatus() !== LoadStatus::BIDDING) throw`
+
 3. `$bid->setStatus(ACCEPTED)`, `$load->setStatus(DISPATCHED)`, `$load->setCarrier(...)`
+
 4. `flush()`
 
 Deux transactions passent l'étape 2 en même temps, chacune écrit sa version. Sous `READ COMMITTED` (notre défaut), la seconde écrase la première sans erreur. Doctrine ne fait pas de version optimiste sans `#[Version]`, et `Load` n'en avait pas.

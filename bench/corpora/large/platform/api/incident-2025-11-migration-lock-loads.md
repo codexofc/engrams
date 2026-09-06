@@ -57,3 +57,26 @@ La migration avait été testée sur staging, où `loads` a 80 000 lignes : 4 se
 ## Lien avec la suite
 
 Cet incident est la raison de la règle "estimation dans la PR" et de la commande de backfill. Il est aussi la raison pour laquelle [[audit-log-table-partitioning]] a été fait en trois déploiements au lieu d'un.
+
+## Ce qu'on aurait fait en deux minutes avec la bonne fiche
+
+La fiche d'astreinte "verrou long sur une table" a été écrite après cet incident, et elle tient en trois commandes.
+
+Trouver qui bloque :
+
+```sql
+SELECT blocked.pid AS blocked_pid, blocking.pid AS blocking_pid,
+       now() - blocking.xact_start AS blocking_age,
+       left(blocking.query, 80) AS blocking_query
+FROM pg_stat_activity blocked
+JOIN pg_stat_activity blocking ON blocking.pid = ANY(pg_blocking_pids(blocked.pid))
+ORDER BY blocking_age DESC LIMIT 5;
+```
+
+Le 6 novembre, ça aurait montré un seul `blocking_pid` avec la migration et 200 `blocked_pid` derrière. Décider : si le bloqueur est une migration ou un backfill, on l'annule, parce que les migrations sont écrites pour être rejouées et que le rollback d'un `UPDATE` de 3 minutes prend moins de temps que ce qu'il reste à faire, presque toujours. `SELECT pg_cancel_backend(<pid>);` d'abord, `pg_terminate_backend` si le premier n'a pas d'effet en 10 secondes.
+
+Vérifier que la file se vide : `SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock';` doit tomber à zéro en quelques secondes. Si ça ne tombe pas, il y a un second bloqueur, on recommence.
+
+Ce qu'on a mesuré après coup sur staging avec une copie de la table de prod (le lendemain, pour savoir) : le rollback de l'`UPDATE` après 3 minutes d'exécution a pris 1 minute 50. On aurait perdu 5 minutes au lieu de 14. L'annulation n'a pas de risque pour les données, c'est PostgreSQL qui garantit ça, et l'hésitation venait uniquement de ne pas l'avoir déjà fait une fois. La fiche dit explicitement : "annuler est sûr, attendre ne l'est pas".
+
+Le point qui n'est pas dans la fiche mais dans la tête de ceux qui étaient là : le readiness probe qui répondait 200 pendant tout l'incident a été discuté deux fois depuis, et la position n'a pas changé. Un probe qui touche `loads` aurait retiré tous les pods du Service, et le résultat pour l'utilisateur aurait été des 503 de l'ingress au lieu de 503 de l'API, sans que rien ne se débloque plus vite. Le probe mesure la capacité du pod à répondre, pas la santé de la base, et il y a une alerte pour la base.

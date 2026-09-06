@@ -1,6 +1,6 @@
 ---
 name: dunning-tone-feedback
-description: Lesson from the December 2025 dunning rewrite, a firm reminder that names the failed debit reason and offers a payment date field collects 23 % faster than a generic one
+description: A firm reminder that names the failed debit cause and offers a payment date field collects 23 % faster than a generic one
 type: feedback
 status: active
 verified: 2026-01-22

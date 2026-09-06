@@ -33,7 +33,9 @@ Le mobile ne lit que `Retry-After`. Il suspend la synchronisation pendant ce dé
 ## Ce qui n'est pas limité
 
 - Les webhooks sortants (c'est nous qui appelons).
+
 - `POST /v2/tracking/positions` du mobile : on a essayé de le mettre dans le quota `driver` et les remontées GPS de 60 chauffeurs saturaient le quota de leur organisation en une minute. Il a son propre limiteur, 1 position par 10 s par chauffeur, appliqué côté serveur en ignorant silencieusement les positions trop proches (200 avec `accepted: false`), pas en 429.
+
 - Le rôle `support`.
 
 ## Exemptions

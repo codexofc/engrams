@@ -19,8 +19,11 @@ The server never puts business data in the alert payload beyond the load referen
 ## Token lifecycle
 
 - The app registers its token on every start and every token refresh callback with `PUT /internal/mobile/devices/{installation_id}` (`installation_id` is a UUID generated at first launch and stored in the keychain, survives reinstall on iOS, not on Android).
+
 - Server table `device_tokens (installation_id, user_id, platform, token, app_version, last_seen_at)`. One row per installation, the token is overwritten.
+
 - Tokens not seen for 60 days are deleted nightly. A token rejected by FCM with `UNREGISTERED` or by APNs with 410 is deleted immediately.
+
 - One driver can have one active device (see the sync note), so in practice one token per user, but the schema allows more because support staff use the app on two phones.
 
 ## Delivery on the API side
@@ -32,7 +35,9 @@ Since HF-1640 (the invoice e-mail incident) every push has an idempotency key `p
 ## Measured
 
 - Delivery latency for alert messages: p50 1.2 s, p95 6 s (Android), p95 20 s (iOS, because APNs coalesces).
+
 - Silent messages on Android: 92 % delivered within 30 s when the device is not in Doze. Under Doze, the high-priority data message still wakes the app but the quota is about 10 per day, which is why the 15 min timer fallback exists.
+
 - Silent messages on iOS: 60 % delivered within 5 min, 25 % never (device in Low Power Mode or app killed by the user). Not a bug, an OS policy. This is why iOS drivers see more "pull to refresh".
 
 ## Testing

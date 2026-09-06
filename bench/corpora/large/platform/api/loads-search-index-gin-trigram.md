@@ -44,7 +44,9 @@ LIMIT 50
 ## Mesures (prod, mars 2026, 2,2 M lignes après archivage)
 
 - p50 : 18 ms, p95 : 95 ms, p99 : 240 ms.
+
 - Taille de `idx_loads_tsv` : 310 Mo. `idx_loads_reference_trgm` : 88 Mo.
+
 - Coût en écriture : l'`INSERT` dans `loads` est passé de 0,9 ms à 1,6 ms en moyenne. Acceptable, on fait environ 4 000 insertions par heure en pointe.
 
 Les stats de la table sont sensibles, voir [[incident-2026-02-loads-search-timeout]].

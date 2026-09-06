@@ -13,7 +13,9 @@ Agreed with product and the integrations team in HF-1095 (October 2025), after t
 ## Announcing
 
 - The response of a deprecated endpoint carries `Deprecation: true` and `Sunset: <HTTP date>` at least 6 months in the future, plus `Link: <https://docs.halden.example/changelog/...>; rel="deprecation"`.
+
 - A deprecated field inside a response is not signalled by header (too noisy). It is marked `deprecated: true` in the OpenAPI document and listed in the changelog. It keeps being returned until the sunset date.
+
 - The changelog page and an e-mail to every organisation that called the endpoint in the last 30 days. The list comes from the `api_route_calls_by_org` metric aggregated by the data platform, not from the API itself.
 
 ## Removing
@@ -21,7 +23,9 @@ Agreed with product and the integrations team in HF-1095 (October 2025), after t
 An endpoint is removed when all of this is true:
 
 - Sunset date passed.
+
 - Fewer than 100 calls per day over the last 30 days.
+
 - Those calls come from fewer than 3 distinct organisations, each contacted at least twice.
 
 If the conditions are not met at sunset, the sunset is extended by 3 months and the header updated. We did this once for `GET /v1/loads` (the Belgian integrator again, see [[rate-limiting-per-carrier]]).

@@ -1,6 +1,6 @@
 ---
 name: onboarding-funnel-old-figures
-description: Carrier activation funnel figures for Q3 and Q4 2025 (first award 27.9 %), kept for comparison, replaced by the Q1 2026 measurement
+description: Carrier activation funnel for H2 2025 (first award 27.9 %), kept for comparison with the Q1 2026 measurement
 type: project
 status: archived
 superseded_by: [[activation-funnel-q1-2026]]

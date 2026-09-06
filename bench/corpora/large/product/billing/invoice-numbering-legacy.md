@@ -1,6 +1,6 @@
 ---
 name: invoice-numbering-legacy
-description: Old global INV- counter shared by all entities, retired in November 2025 by HF-2211 because it broke French and German gap-free rules
+description: Old global INV- counter shared by all entities, retired by HF-2211 in November 2025 for breaking gap-free rules
 type: project
 status: archived
 superseded_by: [[invoice-numbering-sequence]]

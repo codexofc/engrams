@@ -1,6 +1,6 @@
 ---
 name: vat-oss-not-applicable
-description: Why the EU One-Stop-Shop (OSS) does not apply to Halden Freight, the question every new accountant asks, and the two-line answer to give
+description: Why the EU One-Stop-Shop does not apply to Halden Freight (B2B only) and the two-line answer to give every new accountant
 type: feedback
 status: active
 verified: 2025-11-25

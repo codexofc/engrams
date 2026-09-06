@@ -1,6 +1,6 @@
 ---
 name: vat-rules-by-country
-description: VAT applied on Halden Freight commissions per shipper country, standard rates table, place-of-supply rule for B2B transport services, and the CH and GB special cases
+description: VAT on commissions per shipper country, standard rates table, B2B place-of-supply rule, CH, GB, MC and XI special cases
 type: reference
 status: active
 verified: 2026-06-20
@@ -39,3 +39,34 @@ Rates are configuration, not code: table `vat_rates` (`country`, `rate`, `valid_
 ## Where the rate is frozen
 
 An invoice stores `vat_rate`, `vat_amount_cents` and `vat_rule` (`local`, `reverse_charge`, `out_of_scope`) at issue time. Re-rendering a PDF (see [[invoice-pdf-rendering]]) never re-resolves VAT. If a rule was wrong, the fix is a credit note plus a new invoice, never an update of the stored fields.
+
+## Self-billing invoices and the carrier side
+
+When Halden Freight issues an invoice on behalf of a carrier ([[self-billing-carriers]]), the supplier is the carrier, so `VatResolver` is called with `supplierCountry = carrier.country` and `customerCountry = shipper.country`. A Polish carrier delivering for a French shipper produces a reverse-charge invoice with the Polish mention, even though the document is rendered by our FR entity. The resolver takes an explicit `SupplyParties` argument since HF-2260; before that it read the entity country implicitly and produced 14 wrong self-billing invoices for PL carriers in one week.
+
+The carrier's VAT status also matters: a Polish sole trader under the `zwolniony` exemption (turnover below 200 000 PLN) invoices without VAT and the mention is `zw.` with the legal basis (art. 113 ust. 1). We store `carrier_accounts.vat_regime` with values `standard`, `exempt_small_business`, `not_registered`, and `VatResolver` refuses to issue a self-billing invoice for `not_registered`.
+
+## Rate change procedure
+
+A rate change (the last real one for us was the Dutch entity opening, not a change of an existing rate) follows four steps, in this order:
+
+1. Insert the new row in `vat_rates` with `valid_from` set to the legal date, at least 7 days ahead. The back office refuses a `valid_from` in the past.
+2. `billing:vat:preview --country PL --date 2026-07-01` renders 20 sample invoices with the new rate and posts the PDFs to the billing channel for the accountant.
+3. On the legal date, invoices resolve the new rate automatically by `issue_date`. Credit notes for invoices issued before keep the old rate, from the stored `vat_rate`.
+4. The month-close export ([[billing-runbook-month-close]]) groups lines by rate, so a month with two rates for the same country produces two blocks, which the JPK and the German ledger export both accept.
+
+## Tests that guard this
+
+`VatResolverTest` has 64 cases in June 2026. The ones people forget exist:
+
+- `monacoIsFrance()` and `northernIrelandIsGbForServices()`.
+- `viesUnavailableBeyond72hBillsLocalVat()`, the HF-1980 rule.
+- `issuedInvoiceKeepsItsVatRule()`, shared with [[reverse-charge-intra-eu]].
+- `selfBillingUsesCarrierAsSupplier()` and `exemptSmallBusinessCarrierHasNoVat()`.
+- `rateChangeMidMonthProducesTwoExportBlocks()`, which runs the export on a synthetic month.
+
+A change to `VatResolver` without a new test case is refused in review; the accountant reads the test names in the release note, which is the only piece of code they read.
+
+## When in doubt
+
+The VAT rule of a specific invoice is answered by `billing:vat:explain --invoice HF-FR-2026-000123`, which prints the parties, the stored rule, the VIES reference and the rate row that applied. Support has it as a back-office button. If the explanation looks wrong, the fix is a credit note ([[credit-notes-flow]]), and the resolver gets a new test case with the invoice's parties; do not argue with the stored rule on an issued invoice.

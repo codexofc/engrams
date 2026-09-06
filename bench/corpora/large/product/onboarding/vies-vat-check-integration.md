@@ -1,6 +1,6 @@
 ---
 name: vies-vat-check-integration
-description: Company verification calls VIES through ViesClient with a 4 s timeout and a 72 h cache, falls back to national registries for FR (SIRENE), PL (KRS and CEIDG) and RO, and treats VIES unavailable as pending rather than rejected
+description: Company check through ViesClient with 4 s timeout and 72 h cache, national registry fallbacks, VIES down means pending not rejected
 type: project
 status: active
 verified: 2026-03-11

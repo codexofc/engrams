@@ -1,6 +1,6 @@
 ---
 name: payla-webhook-idempotency
-description: Payla webhooks are deduplicated on event_id in payla_events, processed with a 24 h replay window, and out-of-order debit.settled before debit.submitted is handled by state merging
+description: Payla webhooks deduplicated on event_id in payla_events, async processing, and a state lattice that absorbs out-of-order events
 type: project
 status: active
 verified: 2026-04-02

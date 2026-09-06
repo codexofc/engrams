@@ -1,6 +1,6 @@
 ---
 name: billing-cutoff-timezone
-description: The 1 January 2026 incident where the PL sequence reset at midnight UTC instead of Europe/Warsaw, 37 invoices numbered in the wrong year, and the rule that every billing cutoff is evaluated in the entity timezone
+description: New Year 2026 incident: PL sequence reset at midnight UTC, 37 invoices in the wrong year, every billing cutoff now in entity timezone
 type: project
 status: active
 verified: 2026-01-09

@@ -32,6 +32,8 @@ Defined as a Symfony Workflow (`state_machine` type) named `load` in `config/pac
 | `accept_bid` | BIDDING | DISPATCHED | shipper, or system for auto-accept |
 | `withdraw_carrier` | DISPATCHED | OPEN or BIDDING (depends on remaining bids) | carrier admin, penalized in the rating |
 
+## Transitions (driver, system and support)
+
 | Transition | From | To | Who |
 |---|---|---|---|
 | `pickup` | DISPATCHED | IN_TRANSIT | driver |

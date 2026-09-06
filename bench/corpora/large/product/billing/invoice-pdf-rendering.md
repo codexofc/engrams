@@ -1,6 +1,6 @@
 ---
 name: invoice-pdf-rendering
-description: Invoice PDFs are rendered once at issue by the render-svc worker from a frozen JSON snapshot, stored in the invoices bucket under entity/year/number.pdf, and re-rendered only from the snapshot
+description: Invoice PDFs rendered once by render-svc from a frozen JSON snapshot, stored per entity/year/number, re-rendered only from the snapshot
 type: project
 status: active
 verified: 2026-03-30

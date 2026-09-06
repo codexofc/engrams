@@ -13,9 +13,13 @@ Done in two PRs over two weeks, deployed 2026-02-19.
 ## What broke or warned
 
 - **Implicitly nullable parameters** (`function f(Foo $x = null)`) are deprecated in 8.4. 212 signatures. Fixed with Rector's `ExplicitNullableParamTypeRector`, reviewed the diff by eye in about an hour because Rector also wanted to touch unrelated things. The PR was `chore(php): explicit nullable types`, merged first, on PHP 8.3, so the upgrade PR itself stayed small.
+
 - `DOMDocument`, `DOMElement` and friends moved to `Dom\` namespace in 8.4 with the old classes kept as aliases. Nothing to do, but PHPStan 1.12 complained until we bumped to 2.0.
+
 - `E_STRICT` constant removed. One `error_reporting(E_ALL & ~E_STRICT)` in a legacy script, deleted.
+
 - The `pdo_pgsql` driver in 8.4 changed how it reports `SQLSTATE` on connection loss, which broke one test asserting on the exception message. Assert on `SQLSTATE` code instead.
+
 - `mbstring` functions with `null` input: our `PiiScrubber` passed `null` in one branch and 8.4 throws. Found by the integration suite.
 
 ## What we measured
@@ -27,8 +31,11 @@ Not a reason to upgrade on its own. The reason was the support window: 8.3 gets 
 ## What we did not adopt yet
 
 - **Property hooks**. Tempting for entities (`public string $reference { set => strtoupper($value); }`), but Doctrine 3.3 did not support hooked properties on mapped fields at the time, and the lazy-loading proxies choke on them. Revisit when Doctrine ORM says it is fine. Tracked as HF-1471.
+
 - **Asymmetric visibility** (`public private(set)`). Same Doctrine question. Would remove a lot of getters.
+
 - `array_find()` and friends: allowed, no rule against them.
+
 - `new` without parentheses in chains: allowed, php-cs-fixer 3.65 handles it.
 
 ## Image

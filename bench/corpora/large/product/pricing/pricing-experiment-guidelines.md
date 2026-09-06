@@ -1,6 +1,6 @@
 ---
 name: pricing-experiment-guidelines
-description: How pricing experiments are run, randomise on the unit that receives the treatment, six weeks minimum, initial open bids only, pre-registered metrics in the ticket, and the two metrics that must always be paired
+description: How pricing experiments run: randomise on the treated unit, six weeks minimum, initial bids only, pre-registered paired metrics
 type: feedback
 status: active
 verified: 2026-04-22

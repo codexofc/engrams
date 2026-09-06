@@ -14,7 +14,9 @@ Les endpoints de collection de l'API v1 paginaient avec `page` (à partir de 1) 
 Problèmes rencontrés qui ont mené au remplacement :
 
 - `OFFSET 40000` sur `bids` prenait 1,2 s en prod dès qu'un transporteur avec beaucoup d'historique paginait jusqu'au bout (le client mobile d'un transporteur belge faisait exactement ça toutes les 15 minutes).
+
 - Le `COUNT(*)` pour `meta.total` doublait le coût de chaque page.
+
 - Insertion entre deux pages = doublons ou trous côté client. Le mobile compensait avec un `Set` d'identifiants, ce qui masquait le problème sans le résoudre.
 
 Le remplacement est décrit dans [[api-pagination-cursor-convention]]. Les endpoints v1 répondent encore avec offset jusqu'à la fin de la période de dépréciation, voir [[api-deprecation-policy]].

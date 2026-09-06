@@ -1,6 +1,6 @@
 ---
 name: carrier-verification-steps
-description: A carrier account goes through five verification steps (identity, company, transport licence, insurance, bank) tracked in carrier_verifications, can bid after step 3, gets paid after step 5, and the whole thing takes a median of 2.3 days
+description: Five carrier verification steps (identity, company, licence, insurance, bank), bidding after step 3, payouts after step 5
 type: reference
 status: active
 verified: 2026-06-04
@@ -35,3 +35,40 @@ Licence and insurance have expiry dates. `ExpireCarrierVerifications` runs daily
 - 1 940 carrier sign-ups, 1 210 reached step 3 (62 %), 980 reached step 5 (51 %).
 - Median time from sign-up to step 3: 2.3 days; p90 9 days. Almost all of the p90 is waiting for the carrier to upload something, not our review time (median review time in the queue: 4 hours).
 - Funnel details and evolution in [[activation-funnel-q1-2026]].
+
+## Order and dependencies in code
+
+`VerificationOrchestrator` runs after every document upload, every webhook (Verifid, Payla) and every registry retry. It evaluates the five steps in order but does not require them in order: step 2 can be `auto_passed` while step 1 is `pending`. The only hard dependencies are enforced at the capability level, not at the step level:
+
+- `can_bid = step3 in (auto_passed, manual_passed) AND step1 != rejected`
+- `can_be_awarded(load) = can_bid AND (load.declared_value <= 20000 EUR OR step4 passed AND insurance_cover >= declared_value)`
+- `can_receive_payouts = step5 passed AND NOT payout_hold`
+
+These three booleans are materialised on `carrier_accounts` by the orchestrator and read everywhere else; no other service re-derives them from the steps. A change in the rules is one place.
+
+## Re-verification triggers
+
+A passed step can go back to `pending` when:
+
+- the underlying document expires (steps 3 and 4, daily job),
+- the IBAN changes (step 5, with the 5-day payout hold described in [[carrier-fraud-patterns]]),
+- the company's VAT number changes or VIES turns `invalid` at a billing re-check (step 2; billing shares the cache with us and posts `CompanyVatInvalidated`),
+- the carrier changes its legal name (step 2 and, by name mismatch, steps 3 and 4).
+
+A step back to `pending` after having been passed keeps the capabilities for 7 days (`grace_until`) so that a carrier with a load in progress is not blocked mid-trip, except for a VIES `invalid`, which blocks bidding immediately because billing cannot issue self-billing invoices for it.
+
+## What the carrier sees
+
+The onboarding home shows the five steps as a checklist with the state and, for `pending`, whether the ball is in their court ("send your licence") or ours ("we are checking, no action needed"). This distinction was added in November 2025 after support measured that 30 % of "where is my verification" tickets were carriers waiting for something we were waiting for them to do.
+
+Estimated times shown: "usually under 4 hours" for a manual review during business hours, "next business day" otherwise, computed from the queue's current median ([[manual-review-queue]]) rounded up.
+
+## Figures by step, May 2026, for the record
+
+| Step | Auto-pass | Manual pass | Rejected | Median time in queue |
+|---|---|---|---|---|
+| 1 identity | 91 % | 5 % | 4 % | 3 h |
+| 2 company | 84 % | 13 % | 3 % | 4 h |
+| 3 licence | 62 % | 31 % | 7 % | 4 h |
+| 4 insurance | 48 % | 44 % | 8 % | 5 h |
+| 5 bank | 97 % | 2 % | 1 % | n/a (penny transfer, 1 business day) |

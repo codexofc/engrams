@@ -1,6 +1,6 @@
 ---
 name: reconciliation-nightly-job
-description: Runbook for the 07:45 reconciliation job that matches Payla settlements and bank statements against payments, the three match tiers, and how to clear the unmatched queue
+description: Runbook for the 07:45 reconciliation job: Payla settlements and bank statements, three match tiers, clearing the unmatched queue
 type: reference
 status: active
 verified: 2026-06-02
@@ -37,3 +37,28 @@ Unknown IBAN with a plausible amount: usually a shipper paying from a new bank a
 - `billing:reconcile:unmatch --payment-id 8812345` undoes a wrong match and puts both lines back in the queue.
 
 The job is idempotent per day; running it twice does not double-match because matches are keyed on the settlement line id.
+
+## Multi-currency lines
+
+Since the PLN and CZK invoices ([[currency-rounding-pln-czk]]), a settlement line and a payment may be in different currencies: a CZK invoice debited in EUR through Payla conversion. Tier 1 compares in the settlement currency using the Payla-reported `converted_amount` and `fx_rate` columns, with a tolerance of 0.5 % to absorb the difference between the Payla rate at submission and at settlement. The FX difference is written to `payments.fx_difference_cents` and booked by finance monthly; over the first half of 2026 it netted to a loss of 1 840 EUR on 2.1 M EUR of CZK collections.
+
+## Bank statement quirks per entity
+
+- FR: CAMT.053 from the bank arrives at 06:40, one file per account. The remittance text is truncated to 140 characters by the bank, which cuts a list of more than 6 invoice numbers; tier 2 therefore only tries subsets up to 6.
+- DE: the statement carries the `EndToEndId` of SEPA debits, which is our `payla_reference`, so DE debits match on tier 1 even without the Payla report. Useful when the Payla CSV is late.
+- PL: the bank sends MT940, not CAMT; `Mt940Importer` converts it. Polish remittance texts often carry the invoice number without dashes (`HFPL2026000123`); the regex has a dash-optional variant for PL only.
+- NL: no quirks so far, three months of history.
+
+## What finance does with a duplicate candidate
+
+`duplicate_candidate` means two settlement lines match the same payment (a Payla replay of a settlement line after a correction, 5 to 10 a month). The back office shows both with the Payla `line_id` and the analyst keeps the later one; the earlier is marked `superseded`. The importer cannot decide alone because in 2 cases of 60 the earlier line was the right one (Payla corrected a fee, then reverted).
+
+## Metrics
+
+- `billing.reconciliation.matched_ratio` per tier, daily. Alert if tier 1 drops below 95 % (it means the Payla file is incomplete or the format changed, see [[reconciliation-drift-2025-11]]).
+- `billing.reconciliation.unmatched_open` with the age distribution; the monthly close blocks above 0.5 % of the month's collections.
+- Runtime: 4 minutes for a normal day (35 000 lines), 22 minutes on the first business day of the month.
+
+## Who watches it
+
+The billing on-duty engineer checks the 08:15 summary message (`matched by tier`, `unmatched`, `runtime`) every morning; finance opens the queue at 09:00. If the summary is missing, the job did not run, and `billing:reconcile --date <yesterday>` by hand is the first action, before any investigation: finance needs the queue more than we need the root cause at 08:20. The root cause is found after, and it has been the Payla file twice, the bank SFTP once, and a deploy at 07:40 once (deploys are now refused between 07:30 and 08:30 by the deploy tool).

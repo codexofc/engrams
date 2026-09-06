@@ -7,6 +7,9 @@ All notable changes to Engrams are recorded here. The format follows
 ## [Unreleased]
 
 ### Added
+- Two public synthetic corpora under `bench/corpora/` (220 and 30 notes, bilingual,
+  with blind queries) and `scripts/bench-corpus.sh` to replay the benchmark and the
+  context cost on them. Their results are in docs/BENCHMARKS.md.
 - A Homebrew tap (`brew install codexofc/tap/engram`), a recorded demo of the guided
   setup (docs/demo.gif, from docs/demo.tape), and the context cost chart
   (docs/context-cost.svg) drawn by `examples/charts.rs`.

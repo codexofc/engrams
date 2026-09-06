@@ -13,7 +13,9 @@ verified: 2025-12-18
 Le profiler Symfony sur `GET /v2/loads?limit=50` en staging : 161 requêtes SQL, 340 ms. Le toolbar Doctrine signalait 3 requêtes répétées 50 fois :
 
 1. `SELECT ... FROM shippers WHERE id = ?` (lazy load de `Load::$shipper` au moment de sérialiser `shipper.name`)
+
 2. `SELECT ... FROM addresses WHERE id = ?` (idem pour `pickupAddress`)
+
 3. `SELECT count(*) FROM bids WHERE load_id = ?` (le sérialiseur appelait `$load->getBids()->count()`, et comme la collection est `EXTRA_LAZY`, Doctrine fait un `COUNT` par appel)
 
 Personne ne l'avait vu parce qu'en dev la base a 30 chargements et que 90 requêtes de 0,3 ms, ça ne se voit pas.

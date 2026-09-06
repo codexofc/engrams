@@ -13,6 +13,7 @@ Déployé le 2026-01-22. Environ 6 jours de travail répartis sur 3 semaines, un
 ## Préparation qui a payé
 
 - Toutes les dépréciations 6.4 traitées en amont sur trois PR séparées (`deprecation-contracts` à zéro dans les logs de test, vérifié par `SYMFONY_DEPRECATIONS_HELPER=max[self]=0`). C'est ce qui a rendu l'upgrade lui-même mécanique.
+
 - Les Forms Symfony avaient déjà été retirés de l'API en 2025 (tout passe par `#[MapRequestPayload]` et des DTO readonly). Ça a évité le gros des changements de signatures.
 
 ## Ce qui a demandé du travail

@@ -1,6 +1,6 @@
 ---
 name: experiment-min-bid-floor
-description: Experiment HF-2290 on a minimum bid floor at 70 % of the suggestion, rejected because it cut bids on low-confidence lanes by 19 % and the floor was wrong more often than the carriers
+description: HF-2290: a 70 % minimum bid floor was rejected, it cut bids 19 % on low-confidence lanes and was wrong more often than carriers
 type: project
 status: active
 verified: 2025-12-18

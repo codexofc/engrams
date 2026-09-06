@@ -11,10 +11,15 @@ verified: 2026-02-20
 ## Timeline (UTC)
 
 - 06:52 `ApiLatencyP99High` fires for route `api_loads_search`. p99 went from 210 ms to over 10 s.
+
 - 06:58 On-call (backend) confirms 504s from ingress, `php-fpm` slow log full of `LoadSearchRepository::search`.
+
 - 07:05 Dispatch board on the web front shows spinner, dispatchers escalate on the support channel. About 30 shippers affected, all of them using the free-text search.
+
 - 07:14 `EXPLAIN ANALYZE` on the captured query: `Seq Scan on loads` with `rows=4123000`, filter on `status IN ('OPEN','BIDDING')` and `tsv @@ to_tsquery(...)`. The GIN index `idx_loads_tsv` is not used.
+
 - 07:21 `ANALYZE loads;` run by hand on the primary. Took 41 s. Plans flip back to `Bitmap Index Scan on idx_loads_tsv`. p99 back under 300 ms at 07:24.
+
 - 07:40 Incident closed. Total user-visible degradation: 48 minutes.
 
 ## Root cause
@@ -28,12 +33,15 @@ The bigger factor: `n_distinct` for `status` was fine, but the `most_common_vals
 ## Fixes
 
 1. HF-1512: `app:loads:archive` now runs `ANALYZE loads` at the end of each run, and batches deletes in chunks of 50 000 with a 2 s pause. Merged 2026-02-18.
+
 2. HF-1513: per-table autovacuum settings on `loads`, `bids`, `load_events`:
    ```sql
    ALTER TABLE loads SET (autovacuum_analyze_scale_factor = 0.02, autovacuum_vacuum_scale_factor = 0.05);
    ```
    Applied via migration `Version20260218101500`.
+
 3. HF-1514: `statement_timeout = '8s'` on the `api` role, so a bad plan produces a 500 with a clear error instead of a 504 after 60 s at the ingress. The mobile app already retries on 5xx with backoff.
+
 4. Dashboard panel "Seq scans per table" added to the PostgreSQL dashboard, from `pg_stat_user_tables.seq_scan` rate.
 
 ## What we did not do

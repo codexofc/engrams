@@ -1,12 +1,12 @@
 ---
 name: invoice-numbering-sequence
-description: Invoice numbers are per legal entity and per year, allocated by invoice_sequences with SELECT FOR UPDATE, gaps forbidden, format HF-FR-2026-000123
+description: Invoice numbers per legal entity and year from invoice_sequences with SELECT FOR UPDATE, no gaps, format HF-FR-2026-000123
 type: reference
 status: active
 verified: 2026-03-14
 ---
 
-Le numéro de facture est allou par la table `invoice_sequences` (colonnes `legal_entity_id`, `fiscal_year`, `last_value`), une ligne par entité juridique et par année. L'allocation se fait dans la même transaction que l'insertion de la facture, avec `SELECT ... FOR UPDATE` sur la ligne de séquence. Pas de séquence Postgres native : une séquence Postgres n'est pas transactionnelle et laisse des trous au moindre rollback, ce qui est interdit en France (CGI art. 242 nonies A) et en Allemagne (GoBD).
+Le numéro de facture est alloué par la table `invoice_sequences` (colonnes `legal_entity_id`, `fiscal_year`, `last_value`), une ligne par entité juridique et par année. L'allocation se fait dans la même transaction que l'insertion de la facture, avec `SELECT ... FOR UPDATE` sur la ligne de séquence. Pas de séquence Postgres native : une séquence Postgres n'est pas transactionnelle et laisse des trous au moindre rollback, ce qui est interdit en France (CGI art. 242 nonies A) et en Allemagne (GoBD).
 
 Format : `HF-<pays de l'entité>-<année>-<compteur sur 6 chiffres>`. Exemples : `HF-FR-2026-000123`, `HF-DE-2026-004410`, `HF-PL-2026-000007`. Le compteur repart à 1 chaque 1er janvier à 00:00 dans le fuseau de l'entité (Europe/Paris pour FR, Europe/Warsaw pour PL). Voir [[billing-cutoff-timezone]] pour l'incident qui a fixé cette règle.
 

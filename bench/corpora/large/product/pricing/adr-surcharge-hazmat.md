@@ -1,6 +1,6 @@
 ---
 name: adr-surcharge-hazmat
-description: ADR (dangerous goods) surcharge by class, 15 % for classes 3, 8 and 9, 25 % for 2, 4, 5 and 6, 35 % for 1 and 7, requires a carrier ADR certificate on file and blocks bidding otherwise
+description: ADR surcharge by class (15, 25 or 35 %), limited quantities exempt, and a valid ADR certificate required to bid
 type: reference
 status: active
 verified: 2026-03-19

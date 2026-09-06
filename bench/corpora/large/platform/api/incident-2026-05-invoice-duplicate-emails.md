@@ -25,8 +25,11 @@ Les e-mails unitaires (acceptation d'offre, etc.) passent par le même handler e
 Clé d'idempotence côté fournisseur et côté nous :
 
 - `notification_deliveries` reçoit une colonne `idempotency_key text UNIQUE` = `sha256(type + recipient + subject_id)`. Pour une facture : `invoice-email:<shipper_uuid>:<invoice_uuid>`.
+
 - Le handler insère la ligne en `SENDING` **avant** d'appeler le mailer, dans une transaction commitée. Si l'`INSERT` viole l'unique, le message a déjà été traité (ou est en cours) : on sort sans rien envoyer.
+
 - L'appel au mailer passe l'en-tête `X-Idempotency-Key` que le fournisseur supporte (on ne le savait pas, c'est dans leur doc depuis 2024). Ils dédupliquent sur 24 h.
+
 - Après envoi, `UPDATE ... SET status = 'SENT'`. Si le processus meurt entre les deux, la ligne reste en `SENDING` et un sweep horaire la passe en `UNKNOWN` sans réessayer : mieux vaut un e-mail manquant qu'un doublon, le chargeur a de toute façon la facture dans l'interface.
 
 Le même schéma a été appliqué aux push et aux SMS dans la foulée, parce qu'un SMS en double coûte de l'argent.

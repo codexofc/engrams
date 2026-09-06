@@ -1,6 +1,6 @@
 ---
 name: sepa-direct-debit-mandates
-description: SEPA B2B mandates are signed in-app, stored with Payla as the creditor, pre-notified 2 days before debit, and a mandate lapses after 36 months without use
+description: SEPA B2B mandates signed in-app with Payla as creditor, J-2 pre-notification, 36-month dormancy, failure codes and actions
 type: reference
 status: active
 verified: 2026-05-19

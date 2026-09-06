@@ -1,7 +1,7 @@
 ---
 name: postgres-connection-pool-pgbouncer
 description: halden-api goes through PgBouncer in transaction mode (pool 60, max_client_conn 2000), which forbids prepared statements, LISTEN and session-level SET
-type: reference
+type: project
 status: active
 verified: 2026-06-11
 ---
@@ -13,7 +13,9 @@ Depuis HF-980 (septembre 2025), l'API ne parle plus directement au primaire. Un 
 Chiffres actuels :
 
 - `default_pool_size = 60` par base, `max_client_conn = 2000`.
+
 - `server_idle_timeout = 120`, `server_lifetime = 3600`.
+
 - Le primaire a `max_connections = 200`, dont 60 réservés au pool API, 20 aux workers Messenger (pool séparé `pgbouncer-workers`), 10 aux migrations et au reste pour les humains et les exporters.
 
 Avant PgBouncer : 45 pods `php-fpm` avec 12 workers chacun = 540 connexions potentielles, et on a touché `max_connections` deux fois en août 2025 pendant les pics du matin (7 h 30, quand les transporteurs ouvrent l'app).
@@ -21,9 +23,13 @@ Avant PgBouncer : 45 pods `php-fpm` avec 12 workers chacun = 540 connexions pote
 ## Ce que le mode transaction interdit
 
 - **Prepared statements côté serveur**. `PDO::ATTR_EMULATE_PREPARES => true` est forcé dans `config/packages/doctrine.yaml`. Doctrine DBAL 4 avec pdo_pgsql accepte ça sans problème, mais un `dbal.connection` custom qui oublie l'option produit `prepared statement "pdo_stmt_00000001" does not exist`. Ça nous est arrivé sur le worker d'export comptable.
+
 - **`SET` de session**. `SET lock_timeout` dans une migration doit passer par `DATABASE_URL_MIGRATIONS` (connexion directe). `SET LOCAL` dans une transaction est correct.
+
 - **`LISTEN/NOTIFY`**. Le worker de notifications temps réel a sa propre connexion directe, `DATABASE_URL_LISTEN`, une seule par pod, voir [[webhook-delivery-outbox]].
+
 - **Advisory locks de session**. `pg_advisory_lock()` est interdit, `pg_advisory_xact_lock()` est le seul autorisé. PHPStan a une règle qui cherche la chaîne.
+
 - **`search_path`** par session : tout est dans `public`, on ne change pas.
 
 ## Diagnostic

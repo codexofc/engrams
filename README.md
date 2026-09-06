@@ -76,7 +76,13 @@ Scale: at a hundred prompts a day, the hook costs 27 000 tokens, $0.13 on Claude
 Opus 5. List prices of the input token, no caching or batch discount, because the notes an agent reads are new
 content each time. The newest Claude tokenizer yields about 30 % more tokens for the
 same text, so the dollar figures are a floor. Protocol, error bars, sources and the
-other models in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+other models in [docs/BENCHMARKS.md](docs/BENCHMARKS.md). The corpus above is
+private, so two synthetic ones ship in `bench/corpora/` with their blind queries,
+220 and 30 notes: `scripts/bench-corpus.sh large` replays everything on them (on the
+large one, 92 / 100 / 100 % against 50 / 79 / 92 % for words only, and 1 583 tokens
+per consultation against 5 325 for a keyword grep). These figures assume notes in
+the format `engram check` enforces; a memory imported raw from another tool scores
+lower until it is converted.
 
 ## Install
 

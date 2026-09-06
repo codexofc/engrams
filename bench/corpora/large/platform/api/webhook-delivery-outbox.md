@@ -13,8 +13,11 @@ Livrés en HF-1240 (janvier 2026) pour remplacer l'envoi direct depuis les handl
 ## Principe
 
 1. Le code métier fait son changement et, dans la même transaction, insère une ligne dans `sys_outbox`. Il n'appelle jamais HTTP.
+
 2. Un trigger `AFTER INSERT` sur `sys_outbox` fait `NOTIFY outbox_new`.
+
 3. Un worker (`app:outbox:relay`, un seul pod, `DATABASE_URL_LISTEN` en direct sans PgBouncer) écoute, lit les lignes `status = 'PENDING'` par lot de 100 avec `FOR UPDATE SKIP LOCKED`, les envoie, et met à jour le statut.
+
 4. Un CronJob toutes les minutes lance le même relay en mode `--sweep` pour rattraper ce que le `NOTIFY` aurait manqué (redémarrage du worker, notification perdue).
 
 ## Table
@@ -43,8 +46,11 @@ Une ligne par abonnement et par événement. Un chargeur avec trois webhooks con
 `POST` vers l'URL de l'abonnement, corps = `payload`, en-têtes :
 
 - `X-Halden-Event: load.dispatched`
+
 - `X-Halden-Delivery: <id de la ligne>` (le destinataire déduplique là-dessus)
+
 - `X-Halden-Timestamp: <unix seconds>`
+
 - `X-Halden-Signature: sha256=<hex>` = HMAC-SHA256 du `<timestamp>.<corps>` avec le secret de l'abonnement (32 octets aléatoires, montré une fois à la création, stocké chiffré avec `sodium_crypto_secretbox` et la clé `APP_WEBHOOK_SECRET_KEY`).
 
 Timeout 10 s. Un 2xx = `DELIVERED`. Autre chose = `FAILED`, `attempts + 1`, `next_attempt_at = now() + backoff`. Backoff : 30 s, 2 min, 10 min, 30 min, 1 h, 4 h, 12 h. Après 7 tentatives (environ 18 h), `DEAD` et un e-mail à l'admin de l'organisation. Un abonnement avec 50 `DEAD` sur 7 jours est désactivé automatiquement (`subscriptions.disabled_reason = 'too_many_failures'`).
@@ -70,5 +76,25 @@ Latence entre commit et livraison : p50 180 ms, p95 900 ms grâce au `NOTIFY`. S
 ## Pièges rencontrés
 
 - Le trigger `NOTIFY` dans une transaction longue ne part qu'au commit, ce qui est ce qu'on veut, mais la première version du worker faisait un `SELECT` immédiatement à la réception et parfois ne voyait rien : la notification est émise au commit, mais la visibilité de la ligne pour une autre connexion peut suivre de quelques millisecondes. Le worker attend maintenant 50 ms après une notification avant de lire.
+
 - `SKIP LOCKED` avec deux relays en parallèle fonctionne, mais un seul pod suffit et deux pods compliquent le débogage. Un seul pod, `strategy: Recreate`.
+
 - Voir [[messenger-transports-and-retries]] pour la distinction avec les messages internes : l'outbox ne sert qu'aux clients externes.
+
+## Abonnements, vérification de signature et rejeu
+
+Un abonnement se crée par `POST /v2/webhooks/subscriptions` avec `url`, `events[]` (liste parmi `load.published`, `load.dispatched`, `load.in_transit`, `load.delivered`, `load.cancelled`, `bid.placed`, `bid.accepted`, `bid.rejected`, `document.available`, `invoice.finalized`), et `payload_version`. La réponse contient le secret une seule fois. `GET /v2/webhooks/subscriptions/{id}/deliveries?status=DEAD` liste les livraisons mortes avec `last_error`, ce qui est la première chose que le support regarde quand un intégrateur dit "je ne reçois rien".
+
+La vérification côté destinataire, telle qu'elle est dans la documentation publique (pseudo-code, l'implémentation de référence en PHP et en Python est dans le dépôt de documentation) :
+
+```
+expected = hex(hmac_sha256(secret, timestamp + "." + raw_body))
+reject if abs(now - timestamp) > 300
+reject if not constant_time_equal(expected, signature_without_prefix)
+```
+
+Les 300 secondes de tolérance sur l'horodatage sont là contre le rejeu d'une capture. Deux intégrateurs ont eu des rejets à cause d'une horloge serveur décalée de plus de 5 minutes, ce qui a été l'occasion de leur signaler le problème d'horloge.
+
+Le rejeu : `bin/console app:outbox:replay --subscription=<uuid> --since="2026-03-01T00:00:00Z" --events=load.dispatched --dry-run`. Il recrée des lignes `PENDING` à partir de `load_events` (pas des anciennes lignes de l'outbox, qui ont pu être purgées) avec un nouvel identifiant de livraison, ce qui veut dire que le destinataire recevra des `X-Halden-Delivery` différents pour des événements déjà reçus. C'est documenté : la déduplication chez le destinataire doit se faire sur `event_id` du corps, pas sur l'en-tête de livraison, quand un rejeu a été demandé. Le rejeu est plafonné à 10 000 lignes par exécution, et il a servi trois fois, à chaque fois après qu'un intégrateur a perdu sa base.
+
+Un point qui a surpris : un abonnement désactivé pour `too_many_failures` n'est pas réactivé automatiquement quand l'URL répond de nouveau. L'intégrateur doit le réactiver depuis l'interface, et il reçoit un e-mail avec le lien. La réactivation automatique avait été implémentée dans la première version et a produit une boucle avec un destinataire qui répondait 200 à l'endpoint de test et 500 à tout le reste.

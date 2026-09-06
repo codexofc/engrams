@@ -1,7 +1,7 @@
 ---
 name: toll-cost-tables
-description: Toll estimates come from the toll_segments table (per country, vehicle class and Euro emission class), refreshed quarterly, applied on the routed itinerary, with the German Maut CO2 component added in December 2023 handled as a separate column
-type: reference
+description: Toll estimates from toll_segments per country, vehicle and Euro class, quarterly refresh, German CO2 component as a separate column
+type: project
 status: active
 verified: 2026-01-15
 ---

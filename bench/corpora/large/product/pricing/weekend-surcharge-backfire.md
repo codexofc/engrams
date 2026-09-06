@@ -1,6 +1,6 @@
 ---
 name: weekend-surcharge-backfire
-description: Incident of 2025-09-13 where cascading percentage surcharges compounded a weekend ADR frigo quote to +71 %, 3 400 inflated quotes in a weekend, and the switch to surcharges applied on the base price only
+description: Incident of 2025-09-13: cascading percentage surcharges compounded a quote to +71 %, 3 400 inflated quotes, surcharges now on base only
 type: project
 status: active
 verified: 2025-10-06

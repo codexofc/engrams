@@ -1,6 +1,6 @@
 ---
 name: bid-ranking-score
-description: Bids shown to shippers are ranked by a score of 0.55 price, 0.25 carrier reliability, 0.15 ETA fit and 0.05 recency, computed in bid-svc BidRanker, with price normalised against the lowest open bid
+description: Bids ranked by 0.55 price, 0.25 reliability, 0.15 ETA fit, 0.05 recency in BidRanker, price normalised on the lowest open bid
 type: reference
 status: active
 verified: 2026-02-24

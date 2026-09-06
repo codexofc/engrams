@@ -1,6 +1,6 @@
 ---
 name: pricing-lane-clusters
-description: Lanes are clustered into 2 140 origin-destination clusters at NUTS-3 granularity with a distance band, each cluster carries a confidence level based on the number of awarded loads in the last 90 days, and the base price is the cluster median per km
+description: 2 140 lane clusters at NUTS-3 with distance band and vehicle type, confidence from 90-day awarded loads, base price is the median per km
 type: project
 status: active
 verified: 2026-05-22

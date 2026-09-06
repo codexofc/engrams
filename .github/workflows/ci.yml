@@ -35,6 +35,8 @@ jobs:
     name: coverage
     needs: check
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
@@ -43,11 +45,32 @@ jobs:
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: Swatinem/rust-cache@v2
       - run: cargo llvm-cov --all-targets --lcov --output-path lcov.info
-      - uses: codecov/codecov-action@v5
+      - run: cargo llvm-cov report --json --summary-only --output-path coverage-summary.json
+      - uses: actions/upload-artifact@v4
         with:
-          files: lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
+          name: coverage
+          path: |
+            lcov.info
+            coverage-summary.json
+      # The badge is a shields.io endpoint file kept on the `badges` branch, one
+      # commit rewritten at every push to master: no third-party account, no secret.
+      - name: Publish the coverage badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pct=$(jq -r '.data[0].totals.lines.percent' coverage-summary.json)
+          rounded=$(printf '%.0f' "$pct")
+          if [ "$rounded" -ge 85 ]; then colour=brightgreen
+          elif [ "$rounded" -ge 70 ]; then colour=green
+          elif [ "$rounded" -ge 50 ]; then colour=yellow
+          else colour=orange; fi
+          mkdir badge && cd badge
+          printf '{"schemaVersion":1,"label":"coverage","message":"%s%%","color":"%s"}\n' "$rounded" "$colour" > coverage.json
+          git init -q -b badges
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" add coverage.json
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "coverage ${rounded}% at ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}" badges
 
   build:
     name: release build (${{ matrix.target }})

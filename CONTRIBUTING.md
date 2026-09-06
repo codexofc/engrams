@@ -40,7 +40,8 @@ cargo clippy --all-targets -- -D warnings
 cargo test --all-targets
 ```
 
-CI runs exactly these on Linux and macOS, and measures coverage with `cargo llvm-cov`.
+CI runs exactly these on Linux and macOS, measures line coverage with `cargo llvm-cov`,
+and writes the badge of the README to the `badges` branch at every push to `master`.
 
 ## Style
 

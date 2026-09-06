@@ -105,6 +105,43 @@ alone decide. The passages of `engram answer` cite the expected note in 70 cases
 of 96 for about five hundred tokens, and the search-then-read path, which brings the
 whole note in, stays under 2 400.
 
+### What it costs at list prices
+
+The difference is input tokens, and input tokens have a price. The table applies the
+list prices of the three main providers as published on 2026-09-06 to the three
+paths above, per thousand questions. Prices per million input tokens, standard
+tier, no prompt caching and no batch discount: the notes an agent reads to answer a
+question are new content each time, which a cache does not cover, and the questions
+of a working session are not a batch.
+
+| model | input price / MTok | grep path (33 587 tokens) | search and read (2 348) | passages only (518) | saved, search and read | saved, passages only |
+|---|---|---|---|---|---|---|
+| Claude Fable 5.1 | $10 | $335.9 | $23.5 | $5.2 | $312.4 | $330.7 |
+| GPT-6 Astra | $10 | $335.9 | $23.5 | $5.2 | $312.4 | $330.7 |
+| Claude Opus 5 | $5 | $167.9 | $11.7 | $2.6 | $156.2 | $165.3 |
+| GPT-5.5 | $5 | $167.9 | $11.7 | $2.6 | $156.2 | $165.3 |
+| GPT-5.6 Sol | $4 | $134.3 | $9.4 | $2.1 | $124.9 | $132.2 |
+| Claude Sonnet 5 | $2 | $67.2 | $4.7 | $1.0 | $62.5 | $66.2 |
+| GPT-5.6 Terra | $2 | $67.2 | $4.7 | $1.0 | $62.5 | $66.2 |
+| Gemini 3.1 Pro Preview | $2 (prompts up to 200k) | $67.2 | $4.7 | $1.0 | $62.5 | $66.2 |
+| Gemini 3.8 Flash | $0.75 (until 2026-12-31) | $25.2 | $1.8 | $0.4 | $23.4 | $24.8 |
+
+Sources: [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing),
+[OpenAI](https://developers.openai.com/api/docs/pricing),
+[Google](https://ai.google.dev/gemini-api/docs/pricing). Two remarks that push the
+figures up rather than down. Tokens are estimated at four characters, the rule the
+providers give for English; Anthropic states that its tokenizer from Claude 4.7 on
+yields about 30 % more tokens for the same text, so the billed savings on those
+models are larger than the table. And output tokens are unchanged by the tool, the
+saving is entirely on input, which is also the part that fills the context window
+and degrades the answers when it grows.
+
+At the author's measured cadence, 161 searches a day through the hook and the
+agents, the grep path would cost 5.4 million input tokens a day and Engrams 0.38
+million (or 0.08 with the passages alone): on Claude Opus 5, $27 a day against
+$1.9, on Claude Sonnet 5 or Gemini 3.1 Pro $11 against $0.8. The engine itself
+costs nothing per query: it runs on the CPU of the machine, 198 MB resident.
+
 The hot index a session loads at start is bounded too: 17 408 bytes per project, so
 at most about 4 400 tokens, where the notes of a project would be far more. On this
 corpus, 20 projects:

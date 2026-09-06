@@ -6,6 +6,11 @@ All notable changes to Engrams are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- The context cost is aligned on the list prices of Anthropic, OpenAI and Google as
+  published on 2026-09-06, per thousand questions, in the README and in
+  docs/BENCHMARKS.md.
+
 ## [0.4.0] - 2026-09-06
 
 ### Added

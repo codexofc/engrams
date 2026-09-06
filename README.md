@@ -50,7 +50,23 @@ Engrams keeps everything local and measures what it claims, on a private corpus 
 The first line is the recall a coding agent gets. The second is what it costs it in
 context: with grep, an agent reads whole notes in an order that words alone decide;
 with Engrams it reads five lines and the right note, or only the passages that
-answer. Protocol, error bars and the other models in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+answer. That is **31 000 input tokens saved per question**, 33 000 when the passages
+suffice, and at the list prices of September 2026 it reads as follows, per thousand
+questions:
+
+| model, input price per million tokens | grep path | Engrams, search and read | Engrams, passages only | saved |
+|---|---|---|---|---|
+| Claude Fable 5.1, GPT-6 Astra ($10) | $336 | $23 | $5 | **$312** |
+| Claude Opus 5, GPT-5.5 ($5) | $168 | $12 | $2.6 | **$156** |
+| GPT-5.6 Sol ($4) | $134 | $9 | $2 | **$125** |
+| Claude Sonnet 5, GPT-5.6 Terra, Gemini 3.1 Pro ($2) | $67 | $5 | $1 | **$62** |
+| Gemini 3.8 Flash ($0.75) | $25 | $2 | $0.4 | **$23** |
+
+List prices of the input token, no caching or batch discount, tokens estimated at
+four characters: the notes an agent reads are new content each time, which caching
+does not cover, and the newest Claude tokenizer yields about 30 % more tokens for the
+same text, so the dollar figures are a floor. Protocol, error bars, sources and the
+other models in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 ## Install
 

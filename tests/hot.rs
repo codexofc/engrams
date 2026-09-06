@@ -1,10 +1,10 @@
 //! The hot index: strata by type, archived notes excluded and counted, compaction
 //! under the bound, shared section of the family.
-use engrams::hot::{projects, render, BOUND};
+use souvenance::hot::{projects, render, BOUND};
 use std::path::PathBuf;
 
 fn corpus(name: &str) -> PathBuf {
-    let base = std::env::temp_dir().join(format!("engram-hot-{name}-{}", std::process::id()));
+    let base = std::env::temp_dir().join(format!("souvenance-hot-{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(base.join("fam/proj")).unwrap();
     std::fs::create_dir_all(base.join("fam/common")).unwrap();

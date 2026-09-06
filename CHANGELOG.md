@@ -1,16 +1,30 @@
 # Changelog
 
-All notable changes to Engrams are recorded here. The format follows
+All notable changes to Souvenance are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-06
+
+### Changed
+- The project is renamed Souvenance, the binary `souvenance`, the settings
+  `SOUVENANCE_*`, the directories `~/.souvenance` and `<root>/.souvenance`. A company
+  named Engram sells a memory layer for AI, and DeepSeek published an architecture of
+  that name, so the old name pointed elsewhere. The repository redirects from the old
+  address. Existing installations rename `~/.engram` and `<root>/.engram` by hand and
+  replace the prefix in `~/.souvenance/env`.
+
 ### Added
+- docs/ROADMAP.md: two storage modes (files today, a self-hosted database for
+  teams), `souvenance import`, more machines, retrieval work, and what is not planned.
+- A README section on how the engine compares with Engram the company, hosted memory
+  services and grep.
 - Two public synthetic corpora under `bench/corpora/` (220 and 30 notes, bilingual,
   with blind queries) and `scripts/bench-corpus.sh` to replay the benchmark and the
   context cost on them. Their results are in docs/BENCHMARKS.md.
-- A Homebrew tap (`brew install codexofc/tap/engram`), a recorded demo of the guided
+- A Homebrew tap (`brew install codexofc/tap/souvenance`), a recorded demo of the guided
   setup (docs/demo.gif, from docs/demo.tape), and the context cost chart
   (docs/context-cost.svg) drawn by `examples/charts.rs`.
 
@@ -34,8 +48,8 @@ All notable changes to Engrams are recorded here. The format follows
 - `examples/tokens.rs` measures what reaches the model's context to answer the
   benchmark queries, grep against the engine, and the size of the hot index against
   its unbounded equivalent. On the reference corpus: 33 600 tokens per question with
-  grep, reaching the note 35 times out of 96, against 2 350 with `engram search` and
-  `engram read` (78 out of 96) and 520 with `engram answer` alone (70 out of 96).
+  grep, reaching the note 35 times out of 96, against 2 350 with `souvenance search` and
+  `souvenance read` (78 out of 96) and 520 with `souvenance answer` alone (70 out of 96).
 
 ## [0.3.1] - 2026-09-06
 
@@ -53,21 +67,21 @@ All notable changes to Engrams are recorded here. The format follows
 ## [0.3.0] - 2026-09-06
 
 ### Added
-- Model registry with seven checkpoints: `engram models` lists them, `engram models
-  use <alias>` switches, the guided setup and `engram init --model <alias>` accept the
+- Model registry with seven checkpoints: `souvenance models` lists them, `souvenance models
+  use <alias>` switches, the guided setup and `souvenance init --model <alias>` accept the
   same aliases. New choices: multilingual-e5-small, -base and -large, granite-embedding-english-r2,
   gte-modernbert-base. The e5 prefixes (`query: `, `passage: `) are applied by the
   engine and recorded in the index header, so a prefix change rebuilds the index.
 - BERT encoders (MiniLM and friends) through the XLM-RoBERTa graph with absolute
   positions, and a Unigram loader that accepts a `Sequence` normaliser.
-- `ENGRAM_IDLE=never` keeps the warm process resident. `engram config` offers the
-  idle policy as a menu (5 minutes, 30 minutes, 2 hours, never), and `engram status
+- `SOUVENANCE_IDLE=never` keeps the warm process resident. `souvenance config` offers the
+  idle policy as a menu (5 minutes, 30 minutes, 2 hours, never), and `souvenance status
   --short` prints one line while the process runs, for a shell prompt or a status bar.
-- `engram tray`: the Engrams mark in the menu bar (macOS) or the system tray, in
+- `souvenance tray`: the Souvenance mark in the menu bar (macOS) or the system tray, in
   colour while the warm process runs, with a menu to reindex, open the notes, start
-  or stop the process. `engram tray install` starts it at login. Cargo feature `tray`,
+  or stop the process. `souvenance tray install` starts it at login. Cargo feature `tray`,
   on in the macOS release binaries.
-- Container image on GitHub Packages (`ghcr.io/codexofc/engrams`) built from the
+- Container image on GitHub Packages (`ghcr.io/codexofc/souvenance`) built from the
   release binaries for linux/amd64 and linux/arm64.
 - Coverage job in CI, `develop` branch and repository rulesets ready to import.
 - Seven models measured on the same corpus, in quality per query family and in
@@ -84,7 +98,7 @@ All notable changes to Engrams are recorded here. The format follows
 ### Changed
 - Minimum Rust version 1.98. Intel macOS binaries are cross-compiled from the Apple
   silicon runner.
-- The project is written Engrams in prose, `engram` stays the command.
+- The project is written Souvenance in prose, `souvenance` stays the command.
 
 ### Removed
 - bge-m3 from the candidate list: the repository ships no safetensors weights.
@@ -98,11 +112,11 @@ All notable changes to Engrams are recorded here. The format follows
   reference corpus, text only: 83 / 54 / 100 / 72 % against 83 / 58 / 75 / 81 %
   for the multilingual model, 0.43 s and 285 MB per isolated search.
 - Byte-level BPE tokenizer, identical to the reference crate on a 2 000-text corpus.
-- Model choice in the guided setup and `engram init --model <repo>`: multilingual
+- Model choice in the guided setup and `souvenance init --model <repo>`: multilingual
   512-token window (default) or English 8192-token window.
 - Tool detection in the guided setup: Claude Code, Codex CLI, opencode, Gemini CLI,
-  Cursor, Windsurf, Kandev, with `engram setup <tool|all>`.
-- `engram config` to list, set, unset and edit the settings kept in `~/.engram/env`.
+  Cursor, Windsurf, Kandev, with `souvenance setup <tool|all>`.
+- `souvenance config` to list, set, unset and edit the settings kept in `~/.souvenance/env`.
 - Terminal logo rasterised from the README mark, coloured help, `install.sh`.
 - Issue and pull request templates, this changelog.
 
@@ -118,6 +132,6 @@ All notable changes to Engrams are recorded here. The format follows
   process, Claude Code hook, MCP server over stdio, life-cycle commands, secret
   scanner, curation report, benchmark tooling.
 
-[Unreleased]: https://github.com/codexofc/engrams/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/codexofc/engrams/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/codexofc/engrams/releases/tag/v0.1.0
+[Unreleased]: https://github.com/codexofc/souvenance/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/codexofc/souvenance/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/codexofc/souvenance/releases/tag/v0.1.0

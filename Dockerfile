@@ -3,8 +3,8 @@
 FROM debian:bookworm-slim
 ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl procps git && rm -rf /var/lib/apt/lists/*
-COPY dist/${TARGETARCH}/engram /usr/local/bin/engram
-ENV ENGRAM_ROOT=/notes
-VOLUME ["/notes", "/root/.engram"]
-ENTRYPOINT ["engram"]
+COPY dist/${TARGETARCH}/souvenance /usr/local/bin/souvenance
+ENV SOUVENANCE_ROOT=/notes
+VOLUME ["/notes", "/root/.souvenance"]
+ENTRYPOINT ["souvenance"]
 CMD ["help"]

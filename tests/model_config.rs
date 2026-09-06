@@ -1,6 +1,6 @@
 //! The configuration decides which architecture to load and where the window ends.
 
-use engrams::model::{Architecture, ModelConfig};
+use souvenance::model::{Architecture, ModelConfig};
 
 const XLMR: &str = r#"{"architectures":["XLMRobertaModel"],"max_position_embeddings":514,"hidden_size":768}"#;
 

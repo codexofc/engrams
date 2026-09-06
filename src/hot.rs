@@ -166,7 +166,7 @@ pub fn render(base: &Path, project: &str) -> String {
                 out.push(line(e));
             }
             if t == "project" && !masked.is_empty() {
-                out.push(format!("- {} older project notes left out of the hot index, `engram search` finds them", masked.len()));
+                out.push(format!("- {} older project notes left out of the hot index, `souvenance search` finds them", masked.len()));
             }
             out.push(String::new());
         }
@@ -177,7 +177,7 @@ pub fn render(base: &Path, project: &str) -> String {
             out.push(String::new());
         }
         if archived > 0 {
-            out.push(format!("<!-- {archived} archived note(s), outside the index, reachable with engram search --archives -->"));
+            out.push(format!("<!-- {archived} archived note(s), outside the index, reachable with souvenance search --archives -->"));
         }
         let mut text = out.join("\n");
         while text.ends_with('\n') {

@@ -1,7 +1,7 @@
-//! `engram tray`: the Engrams mark in the menu bar (macOS) or the system tray
+//! `souvenance tray`: the Souvenance mark in the menu bar (macOS) or the system tray
 //! (Linux, Windows), in colour while the warm process runs and grey otherwise, with a
 //! menu to reindex, open the notes, start or stop the process. Built with the `tray`
-//! feature only. `engram tray install` starts it at login.
+//! feature only. `souvenance tray install` starts it at login.
 //!
 //! macOS and Windows go through tray-icon and a tao event loop. Linux speaks the
 //! StatusNotifierItem protocol over D-Bus (ksni, pure Rust): KDE, and GNOME with the
@@ -24,7 +24,7 @@ use tray_icon::{Icon, TrayIcon, TrayIconBuilder};
 
 const EVERY: Duration = Duration::from_secs(5);
 const IDLE_LINE: &str = "Idle: the next search starts the warm process";
-const LABEL: &str = "io.github.codexofc.engrams";
+const LABEL: &str = "io.github.codexofc.souvenance";
 
 /// The warm process seen from its socket: one line, or None when it is down.
 fn status_line() -> Option<String> {
@@ -73,10 +73,10 @@ pub fn run() -> Result<(), String> {
 
     impl ksni::Tray for Item {
         fn id(&self) -> String {
-            "engrams".into()
+            "souvenance".into()
         }
         fn title(&self) -> String {
-            "Engrams".into()
+            "Souvenance".into()
         }
         fn icon_pixmap(&self) -> Vec<ksni::Icon> {
             // The same mark as on macOS, ARGB in network byte order.
@@ -126,7 +126,7 @@ pub fn run() -> Result<(), String> {
         use tao::platform::macos::{ActivationPolicy, EventLoopExtMacOS};
         event_loop.set_activation_policy(ActivationPolicy::Accessory);
     }
-    let status = MenuItem::new("Engrams", false, None);
+    let status = MenuItem::new("Souvenance", false, None);
     let reindex = MenuItem::new("Reindex now", true, None);
     let open = MenuItem::new("Open the notes folder", true, None);
     let start = MenuItem::new("Start the warm process", true, None);
@@ -170,7 +170,7 @@ pub fn run() -> Result<(), String> {
                     } else {
                         let _ = t.set_icon(Some(icon));
                     }
-                    let _ = t.set_tooltip(Some(if is_up { "Engrams: running" } else { "Engrams: idle" }));
+                    let _ = t.set_tooltip(Some(if is_up { "Souvenance: running" } else { "Souvenance: idle" }));
                 }
                 *running = Some(is_up);
             }
@@ -184,7 +184,7 @@ pub fn run() -> Result<(), String> {
                     .with_menu(Box::new(menu.clone()))
                     .with_icon(grey.clone())
                     .with_icon_as_template(true)
-                    .with_tooltip("Engrams")
+                    .with_tooltip("Souvenance")
                     .build()
                     .ok();
                 refresh(&tray, &mut running);
@@ -192,9 +192,9 @@ pub fn run() -> Result<(), String> {
             }
             Event::NewEvents(StartCause::ResumeTimeReached { .. }) => {
                 refresh(&tray, &mut running);
-                // ENGRAM_TRAY_SHOW_MENU opens the menu once the item is up: for the
+                // SOUVENANCE_TRAY_SHOW_MENU opens the menu once the item is up: for the
                 // documentation captures, nothing else.
-                if std::env::var_os("ENGRAM_TRAY_SHOW_MENU").is_some() && !shown {
+                if std::env::var_os("SOUVENANCE_TRAY_SHOW_MENU").is_some() && !shown {
                     if let Some(t) = &tray {
                         if let Some(r) = t.rect() {
                             println!("item at {:?} size {:?}", r.position, r.size);
@@ -230,7 +230,7 @@ fn launch_file() -> PathBuf {
     if cfg!(target_os = "macos") {
         crate::paths::home().join("Library/LaunchAgents").join(format!("{LABEL}.plist"))
     } else {
-        crate::paths::home().join(".config/autostart/engrams.desktop")
+        crate::paths::home().join(".config/autostart/souvenance.desktop")
     }
 }
 
@@ -247,7 +247,7 @@ pub fn install() -> Result<(), String> {
             exe.display()
         )
     } else {
-        format!("[Desktop Entry]\nType=Application\nName=Engrams\nExec={} tray\nX-GNOME-Autostart-enabled=true\n", exe.display())
+        format!("[Desktop Entry]\nType=Application\nName=Souvenance\nExec={} tray\nX-GNOME-Autostart-enabled=true\n", exe.display())
     };
     std::fs::write(&file, body).map_err(|e| format!("{}: {e}", file.display()))?;
     if cfg!(target_os = "macos") {

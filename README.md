@@ -1,17 +1,17 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="Engrams" width="520">
+  <img src="docs/logo.svg" alt="Souvenance" width="520">
 </p>
 
 <p align="center">
-  <a href="https://github.com/codexofc/engrams/actions/workflows/ci.yml"><img src="https://github.com/codexofc/engrams/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
-  <a href="https://github.com/codexofc/engrams/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/codexofc/engrams/badges/coverage.json" alt="coverage"></a>
-  <a href="https://github.com/codexofc/engrams/releases/latest"><img src="https://img.shields.io/github/v/release/codexofc/engrams?color=b7410e" alt="release"></a>
-  <a href="https://github.com/codexofc/engrams/pkgs/container/engrams"><img src="https://img.shields.io/badge/ghcr.io-codexofc%2Fengrams-2b3137.svg" alt="container image"></a>
+  <a href="https://github.com/codexofc/souvenance/actions/workflows/ci.yml"><img src="https://github.com/codexofc/souvenance/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <a href="https://github.com/codexofc/souvenance/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/codexofc/souvenance/badges/coverage.json" alt="coverage"></a>
+  <a href="https://github.com/codexofc/souvenance/releases/latest"><img src="https://img.shields.io/github/v/release/codexofc/souvenance?color=b7410e" alt="release"></a>
+  <a href="https://github.com/codexofc/souvenance/pkgs/container/souvenance"><img src="https://img.shields.io/badge/ghcr.io-codexofc%2Fsouvenance-2b3137.svg" alt="container image"></a>
   <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%20or%20Apache--2.0-blue.svg" alt="license"></a>
   <img src="https://img.shields.io/badge/rust-1.98%2B-orange.svg" alt="rust 1.98+">
 </p>
 
-**Engrams** gives coding agents a durable, searchable memory made of plain markdown
+**Souvenance** gives coding agents a durable, searchable memory made of plain markdown
 files. One binary, no server, no network at search time, no database. The embedding
 model runs on the CPU in **198 MB** of resident memory and answers in **0.10 s**. The
 notes stay yours: readable by any editor, any agent, any tool, ten years from now.
@@ -22,7 +22,7 @@ anything that can run a command. The guided setup finds the tools installed on t
 machine and wires them.
 
 ```
-$ engram search "how are the databases isolated between agents"
+$ souvenance search "how are the databases isolated between agents"
 0.787  ops/common/agent-pipeline.md verified 2026-09-05
        Agent pipeline on two repositories, isolated worktrees
        "A second database server for the agents: worktrees point DB_HOST at it through the compose file…"
@@ -37,11 +37,11 @@ there, but a keyword search misses half of them, especially when notes mix two
 languages or say the same thing with different words. Sending the notes to a remote
 vector service solves the search and creates a dependency, a bill and a leak.
 
-Engrams keeps everything local and measures what it claims, on a private corpus of
+Souvenance keeps everything local and measures what it claims, on a private corpus of
 296 bilingual notes (1.7 MB, 21 projects) with 96 queries written blind, default
 model, every signal on. Recall first, the expected note among the five returned:
 
-| query family | words only (a well-ranked grep) | Engrams |
+| query family | words only (a well-ranked grep) | Souvenance |
 |---|---|---|
 | topic of a note (24 cases) | 33 % | **83 %** |
 | buried detail in a long note (24) | 54 % | **75 %** |
@@ -52,7 +52,7 @@ Then what the memory costs the agent in context, at the three moments it touches
 it. Every line is measured with the real binary on the same 96 queries, tokens
 estimated at four characters:
 
-| moment | without Engrams | with Engrams |
+| moment | without Souvenance | with Souvenance |
 |---|---|---|
 | **every prompt**: the Claude Code hook adds the passages closest to it, two of 700 characters at most, or nothing | nothing arrives | **266 tokens** on average, the expected note already there 57 times out of 96 |
 | **a consultation**: the agent decides to look something up before a task | Claude Code greps the notes with one to three keywords, then reads whole files. Measured with the three longest words of the query: **14 900 tokens**, the right note reached 36 times out of 96. With every word of the query: 33 600 tokens, 35 times | `search` then `read` of the note it returned: **2 350 tokens**, the right note 78 times out of 96. `answer` alone, passages to cite: 520 tokens, 70 times |
@@ -64,7 +64,7 @@ So one consultation saves **12 500 input tokens** against the keyword grep, 31 0
 against the every-word grep, and the hook costs a quarter of a thousand per prompt.
 At the list prices of September 2026, per thousand consultations:
 
-| model, input price per million tokens | keyword grep | Engrams, search and read | saved per 1 000 consultations | saved if the agent grepped every word |
+| model, input price per million tokens | keyword grep | Souvenance, search and read | saved per 1 000 consultations | saved if the agent grepped every word |
 |---|---|---|---|---|
 | Claude Fable 5.1, GPT-6 Astra ($10) | $149 | $23 | **$125** | $312 |
 | Claude Opus 5, GPT-5.5 ($5) | $74 | $12 | **$63** | $156 |
@@ -81,44 +81,44 @@ private, so two synthetic ones ship in `bench/corpora/` with their blind queries
 220 and 30 notes: `scripts/bench-corpus.sh large` replays everything on them (on the
 large one, 92 / 100 / 100 % against 50 / 79 / 92 % for words only, and 1 583 tokens
 per consultation against 5 325 for a keyword grep). These figures assume notes in
-the format `engram check` enforces; a memory imported raw from another tool scores
+the format `souvenance check` enforces; a memory imported raw from another tool scores
 lower until it is converted.
 
 ## Install
 
 ```sh
-curl -sSfL https://raw.githubusercontent.com/codexofc/engrams/master/install.sh | sh
+curl -sSfL https://raw.githubusercontent.com/codexofc/souvenance/master/install.sh | sh
 ```
 
 The script picks the prebuilt binary for your platform (Linux x86_64 and aarch64,
-macOS Apple silicon and Intel) from the [releases](https://github.com/codexofc/engrams/releases),
+macOS Apple silicon and Intel) from the [releases](https://github.com/codexofc/souvenance/releases),
 installs it in `~/.local/bin`, and starts the guided setup. On macOS and Linux with
-Homebrew: `brew install codexofc/tap/engram`. From source, with Rust 1.98 or later:
-`cargo install engrams --features tray`. The binary is called
-`engram`. It needs `curl` once, to download the model.
+Homebrew: `brew install codexofc/tap/souvenance`. From source, with Rust 1.98 or later:
+`cargo install souvenance --features tray`. The binary is called
+`souvenance`. It needs `curl` once, to download the model.
 
 For servers and sandboxes, a container image is published with every release. The
-notes live in a volume mounted on `/notes`, the model in another on `/root/.engram`:
+notes live in a volume mounted on `/notes`, the model in another on `/root/.souvenance`:
 
 ```sh
-docker run --rm -v $PWD/notes:/notes -v engrams-models:/root/.engram ghcr.io/codexofc/engrams search "token rotation"
+docker run --rm -v $PWD/notes:/notes -v souvenance-models:/root/.souvenance ghcr.io/codexofc/souvenance search "token rotation"
 ```
 
 ## Get started
 
 ```sh
-engram init
+souvenance init
 ```
 
-<p align="center"><img src="docs/demo.gif" alt="engram init, the guided setup, then a first search" width="760"></p>
+<p align="center"><img src="docs/demo.gif" alt="souvenance init, the guided setup, then a first search" width="760"></p>
 
 Five steps, each with a default that Enter accepts:
 
-1. **Your notes.** The directory, remembered in `~/.engram/root`, with an ignore
+1. **Your notes.** The directory, remembered in `~/.souvenance/root`, with an ignore
    rule for the derived files and a git repository if you want one.
 2. **The model.** The multilingual default (278 M, 556 MB), a lighter multilingual
    ModernBERT that keeps a whole note in one vector (97 M, 220 MB), or five other
-   measured choices, downloaded once into `~/.engram/models/`. See [Models](#models).
+   measured choices, downloaded once into `~/.souvenance/models/`. See [Models](#models).
 3. **Tools on this machine.** Claude Code, Codex CLI, opencode, Gemini CLI, Cursor,
    Windsurf, Kandev: each one found is offered, the prompt hook and the MCP server
    for Claude Code, the MCP server for the others.
@@ -129,11 +129,11 @@ Five steps, each with a default that Enter accepts:
 Everything the wizard does is also a plain command:
 
 ```sh
-engram init ~/notes --no-download            # directory only
-engram init ~/notes --model e5-small         # an alias, a Hugging Face repository or a directory
-engram setup claude-code                     # or codex, opencode, gemini, cursor, windsurf, kandev, all
-engram config                                # show the settings, or walk through them on a terminal
-engram config set ENGRAM_QUESTIONS_CMD "ollama run qwen2.5:3b"
+souvenance init ~/notes --no-download            # directory only
+souvenance init ~/notes --model e5-small         # an alias, a Hugging Face repository or a directory
+souvenance setup claude-code                     # or codex, opencode, gemini, cursor, windsurf, kandev, all
+souvenance config                                # show the settings, or walk through them on a terminal
+souvenance config set SOUVENANCE_QUESTIONS_CMD "ollama run qwen2.5:3b"
 ```
 
 Then write a note and search it:
@@ -154,15 +154,15 @@ for one hour so that in-flight requests finish. Clients read the new token from 
 `X-Next-Token` header of any authenticated response.
 EOF
 
-engram index
-engram search "how long does an old token stay valid"
+souvenance index
+souvenance search "how long does an old token stay valid"
 ```
 
 ## Integrations
 
 ### Claude Code
 
-`engram setup claude-code` adds a `UserPromptSubmit` hook to `~/.claude/settings.json`
+`souvenance setup claude-code` adds a `UserPromptSubmit` hook to `~/.claude/settings.json`
 and registers the MCP server. Every prompt then arrives with a `<working-memory>`
 block holding the two passages closest to it, and the model has the `search`,
 `answer`, `read`, `write`, `append`, `link` and `learn` tools. Claude Code also loads
@@ -175,60 +175,60 @@ the model uses the memory deliberately:
 
 ```markdown
 ## Working memory
-Durable facts live in engrams. Before a task, search it (`engram search` or the
-`search` tool). Read a note with `engram read` before relying on it. Write durable
-facts with `engram write`, complete them with `engram append`, replace them with
-`engram supersede`; never edit the generated MEMORY.md files. Nothing dated, no
+Durable facts live in souvenance. Before a task, search it (`souvenance search` or the
+`search` tool). Read a note with `souvenance read` before relying on it. Write durable
+facts with `souvenance write`, complete them with `souvenance append`, replace them with
+`souvenance supersede`; never edit the generated MEMORY.md files. Nothing dated, no
 secrets.
 ```
 
 ### Codex CLI, opencode, Gemini CLI, Cursor, Windsurf
 
 ```sh
-engram setup codex      # ~/.codex/config.toml, [mcp_servers.engram]
-engram setup opencode   # ~/.config/opencode/opencode.json, mcp
-engram setup gemini     # ~/.gemini/settings.json, mcpServers
-engram setup cursor     # ~/.cursor/mcp.json, mcpServers
-engram setup windsurf   # ~/.codeium/windsurf/mcp_config.json, mcpServers
+souvenance setup codex      # ~/.codex/config.toml, [mcp_servers.souvenance]
+souvenance setup opencode   # ~/.config/opencode/opencode.json, mcp
+souvenance setup gemini     # ~/.gemini/settings.json, mcpServers
+souvenance setup cursor     # ~/.cursor/mcp.json, mcpServers
+souvenance setup windsurf   # ~/.codeium/windsurf/mcp_config.json, mcpServers
 ```
 
-Each one registers `engram mcp` as a local MCP server, idempotently, with a backup
+Each one registers `souvenance mcp` as a local MCP server, idempotently, with a backup
 of the edited file.
 
 ### Kandev
 
 Cards run Claude Code or opencode with the user's configuration, so the setups above
-apply inside cards. For Kandev's own MCP settings, `engram setup kandev` prints the
+apply inside cards. For Kandev's own MCP settings, `souvenance setup kandev` prints the
 snippet to paste.
 
 ### Any other agent
 
-`engram mcp` speaks the Model Context Protocol over stdio. `engram answer --json`
-returns passages for scripts. `engram context <topic> --out brief.md` writes a
-brief. `engram hook` reads Claude Code's hook JSON and prints the passages.
+`souvenance mcp` speaks the Model Context Protocol over stdio. `souvenance answer --json`
+returns passages for scripts. `souvenance context <topic> --out brief.md` writes a
+brief. `souvenance hook` reads Claude Code's hook JSON and prints the passages.
 
 ## Everyday use
 
 | command | what it does |
 |---|---|
-| `engram search <words>` | five notes at most, with score, path, description and the passage that matched; `--archives` includes replaced notes |
-| `engram answer <question>` | the passages that answer, bounded in size, ready to cite; `--json` for tools |
-| `engram context <topic>` | a markdown brief to hand an agent before it starts |
-| `engram read <name>` | print a note; a read after a search that missed it is a learning signal |
-| `engram write <family/project> <name> --type <t> --description <d>` | write a note (body on stdin); refuses secrets and near-duplicates of an active note |
-| `engram append <name>` | add a paragraph, mark verified today |
-| `engram verify <name>` | the fact still holds, the date says so |
-| `engram supersede <old> <new> --type <t> --description <d>` | replace a fact: new note, old one archived with `superseded_by`, links rewritten |
-| `engram link <a> <b>` | cross-reference two notes |
-| `engram learn "<query>" <name>` | confirm that a note answers a query; `--show`, `--forget` |
-| `engram index` | embed what changed, regenerate the `MEMORY.md` files |
-| `engram check` | naming, mandatory fields, dangling links, bound of the hot index, truncated paragraphs, near-duplicates |
-| `engram secrets` | exit 1 if any note looks like it contains a token, a key or a password (use it as a pre-commit hook) |
-| `engram curation` | a markdown checklist of stale, long, undated or duplicated notes |
-| `engram since 7`, `engram why <name>` | what changed, and where a note comes from (git) |
-| `engram models [use <alias>]` | the models that work, and the switch |
-| `engram status`, `engram stop` | the warm process, the index, the usage cadence; `engram status --short` prints one line for a shell prompt |
-| `engram tray [install]` | the Engrams mark in the menu bar or system tray, see below |
+| `souvenance search <words>` | five notes at most, with score, path, description and the passage that matched; `--archives` includes replaced notes |
+| `souvenance answer <question>` | the passages that answer, bounded in size, ready to cite; `--json` for tools |
+| `souvenance context <topic>` | a markdown brief to hand an agent before it starts |
+| `souvenance read <name>` | print a note; a read after a search that missed it is a learning signal |
+| `souvenance write <family/project> <name> --type <t> --description <d>` | write a note (body on stdin); refuses secrets and near-duplicates of an active note |
+| `souvenance append <name>` | add a paragraph, mark verified today |
+| `souvenance verify <name>` | the fact still holds, the date says so |
+| `souvenance supersede <old> <new> --type <t> --description <d>` | replace a fact: new note, old one archived with `superseded_by`, links rewritten |
+| `souvenance link <a> <b>` | cross-reference two notes |
+| `souvenance learn "<query>" <name>` | confirm that a note answers a query; `--show`, `--forget` |
+| `souvenance index` | embed what changed, regenerate the `MEMORY.md` files |
+| `souvenance check` | naming, mandatory fields, dangling links, bound of the hot index, truncated paragraphs, near-duplicates |
+| `souvenance secrets` | exit 1 if any note looks like it contains a token, a key or a password (use it as a pre-commit hook) |
+| `souvenance curation` | a markdown checklist of stale, long, undated or duplicated notes |
+| `souvenance since 7`, `souvenance why <name>` | what changed, and where a note comes from (git) |
+| `souvenance models [use <alias>]` | the models that work, and the switch |
+| `souvenance status`, `souvenance stop` | the warm process, the index, the usage cadence; `souvenance status --short` prints one line for a shell prompt |
+| `souvenance tray [install]` | the Souvenance mark in the menu bar or system tray, see below |
 
 ### The hot index
 
@@ -236,23 +236,23 @@ Each project gets a generated `MEMORY.md`: one line per active note, ordered by 
 (durable knowledge first, ongoing projects last), bounded to 17 KB. When it
 overflows, the oldest project notes leave first and a line says how many are
 missing. It is the file a session loads at start, which is why it is bounded: never
-edit it, `engram index` regenerates it.
+edit it, `souvenance index` regenerates it.
 
 ### Menu bar
 
-`engram tray` puts the Engrams mark in the menu bar (macOS) or the system tray
+`souvenance tray` puts the Souvenance mark in the menu bar (macOS) or the system tray
 (Linux, through the StatusNotifierItem protocol over D-Bus: KDE as is, GNOME with
 the AppIndicator extension). The mark takes the colour of the bar while nothing runs
 and turns to its own colours while the warm process is up.
 
-<p align="center"><img src="docs/tray.png" alt="The Engrams mark in the menu bar, idle and running, with its menu open" width="760"></p>
+<p align="center"><img src="docs/tray.png" alt="The Souvenance mark in the menu bar, idle and running, with its menu open" width="760"></p>
 
 The menu shows the state of the warm process (uptime, requests served, resident
 memory) and offers **Reindex now**, **Open the notes folder**, **Start** or **Stop
 the warm process**, and **Quit**, which closes the item and leaves the process
-running. `engram tray install` starts it at login (a launchd agent on macOS, an XDG
-autostart entry on Linux), `engram tray uninstall` removes it. It pairs well with
-`ENGRAM_IDLE=never` from `engram config`, which keeps the warm process resident.
+running. `souvenance tray install` starts it at login (a launchd agent on macOS, an XDG
+autostart entry on Linux), `souvenance tray uninstall` removes it. It pairs well with
+`SOUVENANCE_IDLE=never` from `souvenance config`, which keeps the warm process resident.
 
 ## Notes
 
@@ -272,36 +272,36 @@ Markdown body. Paragraphs are the unit of indexing. [[wiki links]] are checked.
 ```
 
 Notes live in `<root>/<family>/<project>/<name>.md`. A project named `common`
-inside a family is listed in the hot index of every sibling project. `engram check`
+inside a family is listed in the hot index of every sibling project. `souvenance check`
 enforces the rules.
 
 ## Configuration
 
-Settings live in `~/.engram/env`, one `KEY=VALUE` per line, managed by
-`engram config` and read at every start. An environment variable of the same name
+Settings live in `~/.souvenance/env`, one `KEY=VALUE` per line, managed by
+`souvenance config` and read at every start. An environment variable of the same name
 wins.
 
 | variable | default | purpose |
 |---|---|---|
-| `ENGRAM_ROOT` | `~/.engram/root` pointer, else `~/engram` | notes directory |
-| `ENGRAM_MODEL` | `~/.engram/models/granite-embedding-278m-multilingual` | model directory |
-| `ENGRAM_PRECISION` | `q8` | `f32` restores full-precision linear layers |
-| `ENGRAM_NO_DAEMON` | unset | never start the warm process |
-| `ENGRAM_IDLE` | 300 | seconds without a request before the warm process exits, or `never` to keep it resident |
-| `ENGRAM_WATCH` | 30 | seconds between background refreshes of the warm process |
-| `ENGRAM_QUESTIONS_CMD` | unset | command that writes the questions a paragraph answers (text on stdin, one per line) |
-| `ENGRAM_QUESTIONS_BATCH` | unlimited / 4 | paragraphs sent per pass (`index` / warm process) |
-| `ENGRAM_ID_BONUS` | 0.04 | lexical bonus per identifier found in a note |
-| `ENGRAM_LEARN` | 1 | `0` disables the learned bonus |
-| `ENGRAM_DUP` | 0.90 | cosine above which a new note is a duplicate |
-| `ENGRAM_HOOK_MIN`, `ENGRAM_HOOK_CHARS`, `ENGRAM_HOOK_LEN` | 0.60, 700, 30 | hook thresholds |
+| `SOUVENANCE_ROOT` | `~/.souvenance/root` pointer, else `~/souvenance` | notes directory |
+| `SOUVENANCE_MODEL` | `~/.souvenance/models/granite-embedding-278m-multilingual` | model directory |
+| `SOUVENANCE_PRECISION` | `q8` | `f32` restores full-precision linear layers |
+| `SOUVENANCE_NO_DAEMON` | unset | never start the warm process |
+| `SOUVENANCE_IDLE` | 300 | seconds without a request before the warm process exits, or `never` to keep it resident |
+| `SOUVENANCE_WATCH` | 30 | seconds between background refreshes of the warm process |
+| `SOUVENANCE_QUESTIONS_CMD` | unset | command that writes the questions a paragraph answers (text on stdin, one per line) |
+| `SOUVENANCE_QUESTIONS_BATCH` | unlimited / 4 | paragraphs sent per pass (`index` / warm process) |
+| `SOUVENANCE_ID_BONUS` | 0.04 | lexical bonus per identifier found in a note |
+| `SOUVENANCE_LEARN` | 1 | `0` disables the learned bonus |
+| `SOUVENANCE_DUP` | 0.90 | cosine above which a new note is a duplicate |
+| `SOUVENANCE_HOOK_MIN`, `SOUVENANCE_HOOK_CHARS`, `SOUVENANCE_HOOK_LEN` | 0.60, 700, 30 | hook thresholds |
 
 **Indexed questions.** Any command that reads a prompt on stdin and prints lines
 works, for example a local model through a CLI:
 
 ```sh
-engram config set ENGRAM_QUESTIONS_CMD "ollama run qwen2.5:3b"
-engram index        # generates once per paragraph, cached in .engram/questions.json
+souvenance config set SOUVENANCE_QUESTIONS_CMD "ollama run qwen2.5:3b"
+souvenance index        # generates once per paragraph, cached in .souvenance/questions.json
 ```
 
 The cache is keyed by paragraph fingerprint and worth versioning: a whole-corpus
@@ -321,8 +321,8 @@ through the model twice. On the benchmark the questions lift buried details from
 | [granite-embedding-english-r2](https://huggingface.co/ibm-granite/granite-embedding-english-r2) | `granite-en` | English | 8192 tokens | 149 M | Apache-2.0 | English, long context, 768 dimensions |
 | [gte-modernbert-base](https://huggingface.co/Alibaba-NLP/gte-modernbert-base) | `gte-modernbert` | English | 8192 tokens | 149 M | Apache-2.0 | English, strong on public retrieval benchmarks |
 
-`engram models` lists them with the one in use, `engram models use <alias>` downloads
-and switches (the index is rebuilt at the next `engram index`), and the guided setup
+`souvenance models` lists them with the one in use, `souvenance models use <alias>` downloads
+and switches (the index is rebuilt at the next `souvenance index`), and the guided setup
 asks the same question. Any other Hugging Face repository or local directory works
 in place of the alias. The e5 models expect a `query: ` or `passage: ` prefix and
 get it automatically. All run on the CPU with Q8 linear layers by default, and every
@@ -364,7 +364,7 @@ flowchart LR
   C -->|optional: an LLM writes 3 questions per paragraph, cached| Q[questions]
   C --> E["embed on CPU\nQ8 linear layers"]
   Q --> E
-  E --> I[".engram/index.bin\nflat f32 matrix"]
+  E --> I[".souvenance/index.bin\nflat f32 matrix"]
   N -->|frontmatter| H["MEMORY.md per project\nhot index, 17 KB bound"]
   U[query] --> E2[embed] --> R["cosine, max per note\n+ identifier bonus\n+ bounded learned bonus"]
   I --> R
@@ -402,6 +402,37 @@ hash map, and the vocabulary read from the native SentencePiece model.
 
 More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
+## How it compares
+
+**Engram, the company.** A San Francisco startup of the same root word, funded in
+2026, builds a learned memory layer: it bakes new and evolving context into model
+weights through adapter fine-tuning, so that a hosted model answers from what it was
+tuned on. Souvenance takes the opposite bet. Memory is documents you can open,
+diff, version and hand to any model, not weights. Nothing is trained, nothing is
+hosted, nothing leaves the machine. The two are not the same product with a
+different name: one is a service that makes a model remember, the other is a file
+format and a search engine that makes notes findable by whichever agent you run
+this year, and by you.
+
+**Hosted memory services** (vector databases and memory APIs for agents) store
+embeddings for you and answer over the network. They scale to teams and they cost
+a subscription, a dependency and a copy of your notes elsewhere. Souvenance runs on
+the CPU in 198 MB and its whole state is a folder. A database mode for teams is on
+the [roadmap](docs/ROADMAP.md), self-hosted.
+
+**grep and a notes folder.** The honest baseline, measured above: it reaches the
+note half as often and costs six to fourteen times the context. It stays the right
+tool when you know the exact word, which is why the engine keeps a lexical signal.
+
+## Roadmap
+
+Two storage modes, the current file mode and a database mode for teams behind the
+same commands; `souvenance import` for memories that already exist (Claude Code,
+Gemini, Codex, plain folders), with a raw corpus in the benchmark to measure the
+gap; fresh-machine tests on Linux desktops; a lexical channel merged with the vector
+ranking. Details and what is deliberately not planned in
+[docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Principles
 
 1. **Files are the truth, everything else is derived and disposable.**
@@ -424,7 +455,7 @@ runs the Linux binary.
 
 ## Acknowledgements
 
-Engrams stands on the work of others. The inference library is
+Souvenance stands on the work of others. The inference library is
 [candle](https://github.com/huggingface/candle) by Hugging Face: the XLM-RoBERTa
 graph here derives from candle-transformers, and the ModernBERT graph was written
 after the reference implementation. The

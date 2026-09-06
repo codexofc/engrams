@@ -1,81 +1,81 @@
-//! `engram`: local semantic memory for coding agents.
+//! `souvenance`: local semantic memory for coding agents.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use engrams::chunking::{budget_for, split};
-use engrams::embedder::Embedder;
-use engrams::index::{content_hash, Header, Index};
-use engrams::note::Note;
-use engrams::paths::{self, relative};
+use souvenance::chunking::{budget_for, split};
+use souvenance::embedder::Embedder;
+use souvenance::index::{content_hash, Header, Index};
+use souvenance::note::Note;
+use souvenance::paths::{self, relative};
 
 #[cfg(feature = "tray")]
 mod tray;
 
 const USAGE: &str = "\
-engram, local semantic memory for coding agents
+souvenance, local semantic memory for coding agents
 
 Setup
-  engram init             guided setup: notes directory, model, integrations, first note
-  engram init <dir> [--model <hf-repo>] [--no-download]
+  souvenance init             guided setup: notes directory, model, integrations, first note
+  souvenance init <dir> [--model <hf-repo>] [--no-download]
                           repositories known to work: ibm-granite/granite-embedding-278m-multilingual (default),
                           ibm-granite/granite-embedding-97m-multilingual-r2 (long context, multilingual)
                           the same without questions, for scripts
-  engram setup [<tool>|all]
+  souvenance setup [<tool>|all]
                           wire the hook and the MCP server into a tool: claude-code, codex,
                           opencode, gemini, cursor, windsurf, kandev (guided without argument)
-  engram config [set <KEY> <VALUE>|unset <KEY>|root <dir>|edit|path]
-                          the settings kept in ~/.engram/env (guided without argument)
-  engram models [use <alias|repo>]
+  souvenance config [set <KEY> <VALUE>|unset <KEY>|root <dir>|edit|path]
+                          the settings kept in ~/.souvenance/env (guided without argument)
+  souvenance models [use <alias|repo>]
                           the models known to work, and the one in use
 
 Search and read
-  engram search <words> [--archives]    five notes at most
-  engram answer <question> [-n 3] [--json]   the best passages, bounded
-  engram context <topic> [--out <file>]  a markdown brief for an agent
-  engram read <name> [--project <p>]     print a whole note
+  souvenance search <words> [--archives]    five notes at most
+  souvenance answer <question> [-n 3] [--json]   the best passages, bounded
+  souvenance context <topic> [--out <file>]  a markdown brief for an agent
+  souvenance read <name> [--project <p>]     print a whole note
 
 Write
-  engram write <family/project> <name> --type <t> --description <d> [--depends-on <x>] [--source <s>] [--force]
+  souvenance write <family/project> <name> --type <t> --description <d> [--depends-on <x>] [--source <s>] [--force]
                           write a note, body on standard input
-  engram append <name>    add a paragraph (standard input), verified today
-  engram verify <name>    mark the note verified today
-  engram supersede <old> <new> --type <t> --description <d>
+  souvenance append <name>    add a paragraph (standard input), verified today
+  souvenance verify <name>    mark the note verified today
+  souvenance supersede <old> <new> --type <t> --description <d>
                           replace: new note, old one archived, links rewritten
-  engram link <a> <b>     cross-reference two notes
-  engram learn [<query> <name>] [--show] [--forget <query>]
+  souvenance link <a> <b>     cross-reference two notes
+  souvenance learn [<query> <name>] [--show] [--forget <query>]
                           usage feedback: explicit, or derived from reads the search had missed
 
 Maintenance
-  engram index            embed changed notes, update the index and the MEMORY.md files
-  engram regen [project]  regenerate the MEMORY.md files
-  engram check            validate frontmatters, links, bounds, truncation, duplicates
-  engram secrets [dir]    exit 1 if any .md looks like it contains a secret
-  engram curation         markdown report of what deserves a review
-  engram since [days]     what changed (git), per project, 7 days by default
-  engram why <name>       provenance: frontmatter, git history, citing notes
-  engram list             families, projects and note counts
+  souvenance index            embed changed notes, update the index and the MEMORY.md files
+  souvenance regen [project]  regenerate the MEMORY.md files
+  souvenance check            validate frontmatters, links, bounds, truncation, duplicates
+  souvenance secrets [dir]    exit 1 if any .md looks like it contains a secret
+  souvenance curation         markdown report of what deserves a review
+  souvenance since [days]     what changed (git), per project, 7 days by default
+  souvenance why <name>       provenance: frontmatter, git history, citing notes
+  souvenance list             families, projects and note counts
 
 Integration
-  engram hook             Claude Code UserPromptSubmit hook: JSON on stdin, passages on stdout
-  engram mcp              MCP server over stdio (search, read, answer, write, append, link, learn)
-  engram serve            warm process on a Unix socket, exits after ENGRAM_IDLE s (300, or never)
-  engram stop | status    stop or inspect the warm process (`status --short`: one line for a prompt)
-  engram tray [install|uninstall]
+  souvenance hook             Claude Code UserPromptSubmit hook: JSON on stdin, passages on stdout
+  souvenance mcp              MCP server over stdio (search, read, answer, write, append, link, learn)
+  souvenance serve            warm process on a Unix socket, exits after SOUVENANCE_IDLE s (300, or never)
+  souvenance stop | status    stop or inspect the warm process (`status --short`: one line for a prompt)
+  souvenance tray [install|uninstall]
                           the mark in the menu bar or system tray, lit while the warm process runs
 
 Environment
-  ENGRAM_ROOT             notes directory (default: the one written by `engram init`, else ~/engram)
-  ENGRAM_MODEL            model directory (default ~/.engram/models/<model>)
-  ENGRAM_PRECISION        q8 (default) or f32 for the linear layers
-  ENGRAM_NO_DAEMON        never start the warm process
-  ENGRAM_IDLE, ENGRAM_WATCH   idle timeout (seconds, or never) and background refresh period of the warm process
-  ENGRAM_QUESTIONS_CMD    command writing the questions a paragraph answers (text on stdin, one per line)
-  ENGRAM_QUESTIONS_BATCH  paragraphs sent per pass (index: unlimited, warm process: 4)
+  SOUVENANCE_ROOT             notes directory (default: the one written by `souvenance init`, else ~/souvenance)
+  SOUVENANCE_MODEL            model directory (default ~/.souvenance/models/<model>)
+  SOUVENANCE_PRECISION        q8 (default) or f32 for the linear layers
+  SOUVENANCE_NO_DAEMON        never start the warm process
+  SOUVENANCE_IDLE, SOUVENANCE_WATCH   idle timeout (seconds, or never) and background refresh period of the warm process
+  SOUVENANCE_QUESTIONS_CMD    command writing the questions a paragraph answers (text on stdin, one per line)
+  SOUVENANCE_QUESTIONS_BATCH  paragraphs sent per pass (index: unlimited, warm process: 4)
 ";
 
 fn main() -> ExitCode {
-    // A closed pipe downstream (`engram list | head`) ends the process quietly.
+    // A closed pipe downstream (`souvenance list | head`) ends the process quietly.
     unsafe {
         libc::signal(libc::SIGPIPE, libc::SIG_DFL);
     }
@@ -120,7 +120,7 @@ fn main() -> ExitCode {
         Some("status") => run_status(args.get(1).is_some_and(|a| a == "--short")),
         Some("tray") => run_tray(args.get(1).map(String::as_str)),
         Some("version") | Some("--version") | Some("-V") => {
-            println!("engram {}", env!("CARGO_PKG_VERSION"));
+            println!("souvenance {}", env!("CARGO_PKG_VERSION"));
             Ok(())
         }
         None | Some("help") | Some("--help") | Some("-h") => {
@@ -139,7 +139,7 @@ fn main() -> ExitCode {
     match outcome {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("engram: {e}");
+            eprintln!("souvenance: {e}");
             ExitCode::FAILURE
         }
     }
@@ -155,7 +155,7 @@ fn model_dir() -> PathBuf {
     paths::model_dir()
 }
 
-/// A derived file under `<root>/.engram/`, the directory created on first use.
+/// A derived file under `<root>/.souvenance/`, the directory created on first use.
 fn state_file(name: &str) -> PathBuf {
     let dir = paths::state_dir(&root());
     let _ = std::fs::create_dir_all(&dir);
@@ -163,7 +163,7 @@ fn state_file(name: &str) -> PathBuf {
 }
 
 fn socket_path() -> PathBuf {
-    state_file("engram.sock")
+    state_file("souvenance.sock")
 }
 
 /// Seconds since the epoch, without a dependency.
@@ -172,7 +172,7 @@ fn now_secs() -> u64 {
 }
 
 fn today() -> String {
-    engrams::hot::ymd(now_secs())
+    souvenance::hot::ymd(now_secs())
 }
 
 fn flag_value<'a>(args: &'a [String], flag: &str) -> Option<&'a str> {
@@ -214,7 +214,7 @@ fn log_usage(args: &[String], started: std::time::Instant, ok: bool) {
 }
 
 fn collect_notes(base: &Path) -> Vec<PathBuf> {
-    engrams::hot::notes_of(base)
+    souvenance::hot::notes_of(base)
 }
 
 // ----------------------------------------------------------------------------- index
@@ -258,11 +258,11 @@ fn open_index(model: &Path, embedder: &Embedder) -> Result<(PathBuf, Index), Str
         Ok(_) => match Index::load(&path) {
             Ok(i) if i.matches(&header) => i,
             Ok(_) => {
-                eprintln!("engram: index produced by another model, full rebuild");
+                eprintln!("souvenance: index produced by another model, full rebuild");
                 Index::new(header)
             }
             Err(e) => {
-                eprintln!("engram: unreadable index ({e}), full rebuild");
+                eprintln!("souvenance: unreadable index ({e}), full rebuild");
                 Index::new(header)
             }
         },
@@ -277,10 +277,10 @@ fn weights_fingerprint(dir: &Path) -> Result<String, String> {
     Ok(meta.len().to_string())
 }
 
-/// How many paragraphs a pass may send to the questions command. `engram index`
+/// How many paragraphs a pass may send to the questions command. `souvenance index`
 /// has no limit; the warm process takes a few per cycle so a search never waits.
 fn questions_budget(default: usize) -> usize {
-    std::env::var("ENGRAM_QUESTIONS_BATCH").ok().and_then(|v| v.parse().ok()).unwrap_or(default)
+    std::env::var("SOUVENANCE_QUESTIONS_BATCH").ok().and_then(|v| v.parse().ok()).unwrap_or(default)
 }
 
 /// Brings the index level with the notes: embeds what changed, removes what
@@ -292,10 +292,10 @@ fn refresh_index(embedder: &Embedder, index: &mut Index, base: &Path, max_genera
     let (mut keys, mut texts): (Vec<(String, u64)>, Vec<String>) = (Vec::new(), Vec::new());
     let mut expected: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-    // Generated questions: enabled by ENGRAM_QUESTIONS_CMD, cached by paragraph
+    // Generated questions: enabled by SOUVENANCE_QUESTIONS_CMD, cached by paragraph
     // fingerprint, indexed as `path#ordinal?k`.
-    let questions_cmd = std::env::var("ENGRAM_QUESTIONS_CMD").ok().filter(|c| !c.trim().is_empty());
-    let mut store = engrams::questions::Store::load(&state_file("questions.json"));
+    let questions_cmd = std::env::var("SOUVENANCE_QUESTIONS_CMD").ok().filter(|c| !c.trim().is_empty());
+    let mut store = souvenance::questions::Store::load(&state_file("questions.json"));
     let mut live_hashes: std::collections::HashSet<u64> = std::collections::HashSet::new();
     // (paragraph fingerprint, text, path, ordinal, note fingerprint)
     let mut pending: Vec<(u64, String, String, usize, u64)> = Vec::new();
@@ -355,7 +355,7 @@ fn refresh_index(embedder: &Embedder, index: &mut Index, base: &Path, max_genera
         // hour of remote calls and must survive an interruption.
         for batch in pending.chunks(8) {
             let prompts: Vec<String> = batch.iter().map(|p| p.1.clone()).collect();
-            let results = engrams::questions::generate_many(cmd, &prompts, 4);
+            let results = souvenance::questions::generate_many(cmd, &prompts, 4);
             for ((hash, _, path, ordinal, fingerprint), result) in batch.iter().zip(results) {
                 match result {
                     Ok(questions) => {
@@ -368,7 +368,7 @@ fn refresh_index(embedder: &Embedder, index: &mut Index, base: &Path, max_genera
                         stats.questions += questions.len();
                         store.insert(*hash, questions);
                     }
-                    Err(e) => eprintln!("engram: {path}#{ordinal}: {e}"),
+                    Err(e) => eprintln!("souvenance: {path}#{ordinal}: {e}"),
                 }
             }
             store.save()?;
@@ -405,8 +405,8 @@ fn run_index() -> Result<(), String> {
     if stats.changed() {
         index.save(&path)?;
     }
-    for p in engrams::hot::projects(&root) {
-        engrams::hot::write(&root, &p)?;
+    for p in souvenance::hot::projects(&root) {
+        souvenance::hot::write(&root, &p)?;
     }
     println!(
         "{} notes, {} embedded as {} chunks, {} unchanged, {} chunks removed, {} questions generated, in {:.1} s",
@@ -433,7 +433,7 @@ struct Engine {
     index: Index,
     index_path: PathBuf,
     base: PathBuf,
-    feedback: engrams::feedback::Table,
+    feedback: souvenance::feedback::Table,
     /// Vectors of the feedback queries, cached in `feedback.bin`.
     feedback_vectors: std::collections::HashMap<String, Vec<f32>>,
 }
@@ -461,7 +461,7 @@ impl Engine {
             index,
             index_path,
             base: root,
-            feedback: engrams::feedback::Table::load(&state_file("feedback.json")),
+            feedback: souvenance::feedback::Table::load(&state_file("feedback.json")),
             feedback_vectors: std::collections::HashMap::new(),
         };
         engine.load_feedback_vectors()?;
@@ -511,17 +511,17 @@ impl Engine {
     /// read. Bounded, decaying, and applied only within the window of the top score.
     fn learned_bonus(&self, query: &[f32]) -> std::collections::HashMap<String, f32> {
         let today = now_secs() / 86_400;
-        engrams::feedback::learned_bonus(&self.feedback, today, |q| self.feedback_vectors.get(q).map(|v| engrams::similarity::cosine(query, v)), None)
+        souvenance::feedback::learned_bonus(&self.feedback, today, |q| self.feedback_vectors.get(q).map(|v| souvenance::similarity::cosine(query, v)), None)
     }
 
     /// Every bonus of a query: lexical on identifiers, learned from usage.
     fn bonuses(&self, query: &str, vector: &[f32], chunks: &Chunks) -> std::collections::HashMap<String, f32> {
-        let step: f32 = std::env::var("ENGRAM_ID_BONUS").ok().and_then(|v| v.parse().ok()).unwrap_or(0.04);
-        let mut bonus = engrams::similarity::lexical_bonus(&self.base, &engrams::similarity::identifiers(query), step);
-        if std::env::var("ENGRAM_LEARN").map_or(true, |v| v != "0") {
+        let step: f32 = std::env::var("SOUVENANCE_ID_BONUS").ok().and_then(|v| v.parse().ok()).unwrap_or(0.04);
+        let mut bonus = souvenance::similarity::lexical_bonus(&self.base, &souvenance::similarity::identifiers(query), step);
+        if std::env::var("SOUVENANCE_LEARN").map_or(true, |v| v != "0") {
             let base_scores: std::collections::HashMap<String, f32> =
-                engrams::similarity::rank_notes(vector, chunks, 50).into_iter().map(|h| (h.path, h.score)).collect();
-            for (p, b) in engrams::feedback::within_window(self.learned_bonus(vector), &base_scores) {
+                souvenance::similarity::rank_notes(vector, chunks, 50).into_iter().map(|h| (h.path, h.score)).collect();
+            for (p, b) in souvenance::feedback::within_window(self.learned_bonus(vector), &base_scores) {
                 *bonus.entry(p).or_insert(0.0) += b;
             }
         }
@@ -548,8 +548,8 @@ impl Engine {
         if stats.changed() {
             self.index.save(&self.index_path)?;
             if questions_budget > 0 {
-                for p in engrams::hot::projects(&self.base) {
-                    engrams::hot::write(&self.base, &p)?;
+                for p in souvenance::hot::projects(&self.base) {
+                    souvenance::hot::write(&self.base, &p)?;
                 }
             }
         }
@@ -569,7 +569,7 @@ impl Engine {
         let mut out = String::new();
         let mut shown = Vec::new();
         let mut hidden = 0usize;
-        for hit in engrams::similarity::rank_notes_with_bonus(&vector, &chunks, 25, &bonus) {
+        for hit in souvenance::similarity::rank_notes_with_bonus(&vector, &chunks, 25, &bonus) {
             if shown.len() == 5 {
                 break;
             }
@@ -607,7 +607,7 @@ impl Engine {
         let bonus = self.bonuses(query, &vector, &chunks);
         let mut out = Vec::new();
         let mut used = 0usize;
-        let ranked = engrams::similarity::rank_notes_with_bonus(&vector, &chunks, 25, &bonus);
+        let ranked = souvenance::similarity::rank_notes_with_bonus(&vector, &chunks, 25, &bonus);
         self.journal_search(query, &ranked.iter().take(5).map(|h| h.path.clone()).collect::<Vec<_>>());
         for hit in ranked {
             if out.len() == n {
@@ -626,7 +626,7 @@ impl Engine {
             let text: String = chunk.text.chars().take(room).collect();
             used += text.chars().count();
             out.push(Passage {
-                name: engrams::hot::display_name(&self.base.join(&hit.path), &note),
+                name: souvenance::hot::display_name(&self.base.join(&hit.path), &note),
                 path: hit.path,
                 score: hit.score,
                 verified: note.field("verified").map(str::to_string),
@@ -687,7 +687,7 @@ fn ask_daemon_answer(query: &str, n: usize, max_chars: usize, json: bool) -> Opt
 }
 
 fn spawn_daemon() {
-    if std::env::var_os("ENGRAM_NO_DAEMON").is_some() {
+    if std::env::var_os("SOUVENANCE_NO_DAEMON").is_some() {
         return;
     }
     if let Ok(exe) = std::env::current_exe() {
@@ -711,7 +711,7 @@ fn idle_limit(raw: Option<&str>) -> Option<u64> {
 }
 
 /// Warm process: model and index stay loaded, requests arrive on a Unix socket, the
-/// process exits after ENGRAM_IDLE seconds without a request. Each connection is
+/// process exits after SOUVENANCE_IDLE seconds without a request. Each connection is
 /// served in its own thread under a read lock; refreshes take the write lock.
 fn run_serve() -> Result<(), String> {
     use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
@@ -720,8 +720,8 @@ fn run_serve() -> Result<(), String> {
     let _ = std::fs::remove_file(&path);
     let listener = std::os::unix::net::UnixListener::bind(&path).map_err(|e| format!("socket {}: {e}", path.display()))?;
     listener.set_nonblocking(true).map_err(|e| e.to_string())?;
-    let idle_limit = idle_limit(std::env::var("ENGRAM_IDLE").ok().as_deref());
-    let watch = std::env::var("ENGRAM_WATCH").ok().and_then(|v| v.parse().ok()).map_or(std::time::Duration::from_secs(30), std::time::Duration::from_secs);
+    let idle_limit = idle_limit(std::env::var("SOUVENANCE_IDLE").ok().as_deref());
+    let watch = std::env::var("SOUVENANCE_WATCH").ok().and_then(|v| v.parse().ok()).map_or(std::time::Duration::from_secs(30), std::time::Duration::from_secs);
     let engine = Arc::new(RwLock::new(Engine::open()?));
     let stamp = exe_stamp();
     let started = std::time::Instant::now();
@@ -833,7 +833,7 @@ fn serve_one(
                 served.load(Ordering::Relaxed),
                 refreshed.load(Ordering::Relaxed),
                 rss_kb(),
-                idle_limit(std::env::var("ENGRAM_IDLE").ok().as_deref()).map_or("never".to_string(), |s| format!("{s} s"))
+                idle_limit(std::env::var("SOUVENANCE_IDLE").ok().as_deref()).map_or("never".to_string(), |s| format!("{s} s"))
             )
         }
         _ => "error\nunknown request\n".to_string(),
@@ -852,7 +852,7 @@ fn rss_kb() -> u64 {
         .unwrap_or(0)
 }
 
-/// `engram tray`: the menu bar item, when the binary was built with the feature.
+/// `souvenance tray`: the menu bar item, when the binary was built with the feature.
 #[cfg(feature = "tray")]
 fn run_tray(arg: Option<&str>) -> Result<(), String> {
     match arg {
@@ -865,10 +865,10 @@ fn run_tray(arg: Option<&str>) -> Result<(), String> {
 
 #[cfg(not(feature = "tray"))]
 fn run_tray(_arg: Option<&str>) -> Result<(), String> {
-    Err("this binary was built without the tray: cargo install engrams --features tray".to_string())
+    Err("this binary was built without the tray: cargo install souvenance --features tray".to_string())
 }
 
-/// `engram status`: the warm process, the root, the index and the usage cadence.
+/// `souvenance status`: the warm process, the root, the index and the usage cadence.
 /// `short` prints one line when the process runs and nothing otherwise, for a
 /// shell prompt or a status bar.
 fn run_status(short: bool) -> Result<(), String> {
@@ -884,7 +884,7 @@ fn run_status(short: bool) -> Result<(), String> {
                 let field = |k: &str| reply.lines().find_map(|l| l.strip_prefix(k).and_then(|r| r.strip_prefix('\t'))).unwrap_or("0");
                 let up = field("uptime_s").parse::<u64>().unwrap_or(0);
                 println!(
-                    "engrams \u{25cf} up {}h{:02} {} requests {} MB",
+                    "souvenance \u{25cf} up {}h{:02} {} requests {} MB",
                     up / 3600,
                     (up % 3600) / 60,
                     field("requests"),
@@ -965,7 +965,7 @@ fn lexical_search(query: &str) -> Result<String, String> {
     let words: Vec<String> = query.split_whitespace().map(|w| w.to_lowercase()).filter(|w| w.len() >= 3).collect();
     let mut out = String::new();
     let mut hits = 0;
-    for f in engrams::hot::notes_of(&base) {
+    for f in souvenance::hot::notes_of(&base) {
         let Ok(content) = std::fs::read_to_string(&f) else { continue };
         let note = Note::parse(&content);
         if let Some((i, l)) = note.body().lines().enumerate().find(|(_, l)| {
@@ -976,7 +976,7 @@ fn lexical_search(query: &str) -> Result<String, String> {
                 "{}:{}\t{}\t{}\n",
                 relative(&f, &base),
                 i + 1,
-                engrams::hot::display_name(&f, &note),
+                souvenance::hot::display_name(&f, &note),
                 l.trim().chars().take(110).collect::<String>()
             ));
             hits += 1;
@@ -1002,7 +1002,7 @@ fn answer_text(query: &str, n: usize, max_chars: usize, json: bool) -> Result<St
 fn run_answer(args: &[String]) -> Result<(), String> {
     let n: usize = flag_value(args, "-n").and_then(|v| v.parse().ok()).unwrap_or(3);
     let json = args.iter().any(|a| a == "--json");
-    let max_chars: usize = std::env::var("ENGRAM_ANSWER_CHARS").ok().and_then(|v| v.parse().ok()).unwrap_or(1800);
+    let max_chars: usize = std::env::var("SOUVENANCE_ANSWER_CHARS").ok().and_then(|v| v.parse().ok()).unwrap_or(1800);
     let query = positional_query(args, &["-n"]);
     if query.is_empty() {
         return Err("missing question".into());
@@ -1035,12 +1035,13 @@ fn run_context(args: &[String]) -> Result<(), String> {
 fn find_note(name: &str, project: Option<&str>) -> Result<PathBuf, String> {
     let base = root();
     let dir = project.map_or_else(|| base.clone(), |p| base.join(p));
-    let wanted = engrams::check::link_key(name);
+    let wanted = souvenance::check::link_key(name);
     let mut found: Vec<PathBuf> = Vec::new();
-    for f in engrams::hot::notes_of(&dir) {
+    for f in souvenance::hot::notes_of(&dir) {
         let stem = f.file_stem().unwrap_or_default().to_string_lossy().into_owned();
-        let by_stem = engrams::check::link_key(&stem) == wanted;
-        let by_name = std::fs::read_to_string(&f).ok().and_then(|c| Note::parse(&c).field("name").map(engrams::check::link_key)).is_some_and(|k| k == wanted);
+        let by_stem = souvenance::check::link_key(&stem) == wanted;
+        let by_name =
+            std::fs::read_to_string(&f).ok().and_then(|c| Note::parse(&c).field("name").map(souvenance::check::link_key)).is_some_and(|k| k == wanted);
         if by_stem || by_name {
             found.push(f);
         }
@@ -1077,7 +1078,7 @@ fn read_stdin_body() -> Result<String, String> {
 /// Refuses a body that looks like a secret: better never written than caught by a
 /// commit hook an hour later.
 fn refuse_secrets(body: &str) -> Result<(), String> {
-    let hits = engrams::secrets::scan_text("(input)", body);
+    let hits = souvenance::secrets::scan_text("(input)", body);
     if hits.is_empty() {
         Ok(())
     } else {
@@ -1103,7 +1104,7 @@ fn nearest_active_note(text: &str, threshold: f32) -> Result<Option<(String, f32
             (path.to_string(), ordinal, v.to_vec())
         })
         .collect();
-    for hit in engrams::similarity::rank_notes(&vector, &chunks, 5) {
+    for hit in souvenance::similarity::rank_notes(&vector, &chunks, 5) {
         let active = std::fs::read_to_string(base.join(&hit.path)).map(|c| Note::parse(&c).is_active()).unwrap_or(false);
         if active {
             return Ok((hit.score >= threshold).then_some((hit.path, hit.score)));
@@ -1113,7 +1114,7 @@ fn nearest_active_note(text: &str, threshold: f32) -> Result<Option<(String, f32
 }
 
 fn dup_threshold() -> f32 {
-    std::env::var("ENGRAM_DUP").ok().and_then(|v| v.parse().ok()).unwrap_or(0.90)
+    std::env::var("SOUVENANCE_DUP").ok().and_then(|v| v.parse().ok()).unwrap_or(0.90)
 }
 
 fn quote_if_needed(v: &str) -> String {
@@ -1137,8 +1138,8 @@ struct NewNote<'a> {
 
 /// Writes a new note. `force` skips the duplicate check. Returns the relative path.
 fn create_note(n: &NewNote) -> Result<String, String> {
-    if !engrams::check::TYPES.contains(&n.kind) {
-        return Err(format!("invalid type `{}`, expected one of {:?}", n.kind, engrams::check::TYPES));
+    if !souvenance::check::TYPES.contains(&n.kind) {
+        return Err(format!("invalid type `{}`, expected one of {:?}", n.kind, souvenance::check::TYPES));
     }
     let name = n.name;
     if !name.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-') || name.starts_with('-') || name.ends_with('-') || name.contains("--") {
@@ -1152,11 +1153,14 @@ fn create_note(n: &NewNote) -> Result<String, String> {
     let dir = base.join(n.project);
     let path = dir.join(format!("{name}.md"));
     if path.exists() {
-        return Err(format!("{} already exists: `engram append {name}` to complete it, `engram supersede {name} <new>` to replace it", relative(&path, &base)));
+        return Err(format!(
+            "{} already exists: `souvenance append {name}` to complete it, `souvenance supersede {name} <new>` to replace it",
+            relative(&path, &base)
+        ));
     }
     if !n.force {
         if let Some((near, score)) = nearest_active_note(&format!("{name}\n{}\n\n{}", n.description, n.body), dup_threshold())? {
-            return Err(format!("an active note already says this at {score:.2} cosine: {near}. `engram append` to complete it, `engram supersede` to replace it, --force to override"));
+            return Err(format!("an active note already says this at {score:.2} cosine: {near}. `souvenance append` to complete it, `souvenance supersede` to replace it, --force to override"));
         }
     }
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
@@ -1169,8 +1173,8 @@ fn create_note(n: &NewNote) -> Result<String, String> {
     }
     head.push_str("---\n\n");
     std::fs::write(&path, format!("{head}{}\n", n.body)).map_err(|e| e.to_string())?;
-    let size = engrams::hot::write(&base, n.project)?;
-    if size > engrams::hot::BOUND {
+    let size = souvenance::hot::write(&base, n.project)?;
+    if size > souvenance::hot::BOUND {
         eprintln!("warning: the hot index of {} exceeds the bound ({size} bytes)", n.project);
     }
     Ok(relative(&path, &base))
@@ -1198,7 +1202,7 @@ fn regen_project_of(path: &Path) -> Result<(), String> {
     let mut parts = rel.split('/');
     if let (Some(fam), Some(proj)) = (parts.next(), parts.next()) {
         if parts.next().is_some() {
-            engrams::hot::write(&base, &format!("{fam}/{proj}"))?;
+            souvenance::hot::write(&base, &format!("{fam}/{proj}"))?;
         }
     }
     Ok(())
@@ -1209,7 +1213,7 @@ fn append_note(name: &str, project: Option<&str>, paragraph: &str) -> Result<Str
     let path = find_note(name, project)?;
     refuse_secrets(paragraph)?;
     let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let updated = engrams::lifecycle::set_field(&engrams::lifecycle::append_paragraph(&content, paragraph), "verified", &today())?;
+    let updated = souvenance::lifecycle::set_field(&souvenance::lifecycle::append_paragraph(&content, paragraph), "verified", &today())?;
     std::fs::write(&path, updated).map_err(|e| e.to_string())?;
     regen_project_of(&path)?;
     Ok(relative(&path, &root()))
@@ -1224,7 +1228,7 @@ fn run_append(args: &[String]) -> Result<(), String> {
 fn run_verify(args: &[String]) -> Result<(), String> {
     let path = find_note(&args[1], flag_value(args, "--project"))?;
     let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    std::fs::write(&path, engrams::lifecycle::set_field(&content, "verified", &today())?).map_err(|e| e.to_string())?;
+    std::fs::write(&path, souvenance::lifecycle::set_field(&content, "verified", &today())?).map_err(|e| e.to_string())?;
     println!("verified today: {}", relative(&path, &root()));
     regen_project_of(&path)
 }
@@ -1252,12 +1256,12 @@ fn run_supersede(args: &[String]) -> Result<(), String> {
     let old_content = std::fs::read_to_string(&old_path).map_err(|e| e.to_string())?;
     let old_note = Note::parse(&old_content);
     let old_stem = old_path.file_stem().unwrap_or_default().to_string_lossy().into_owned();
-    let old_keys: Vec<String> = [Some(old_stem.as_str()), old_note.field("name")].into_iter().flatten().map(engrams::check::link_key).collect();
+    let old_keys: Vec<String> = [Some(old_stem.as_str()), old_note.field("name")].into_iter().flatten().map(souvenance::check::link_key).collect();
     let archived =
-        engrams::lifecycle::set_field(&engrams::lifecycle::set_field(&old_content, "status", "archived")?, "superseded_by", &format!("[[{new_name}]]"))?;
+        souvenance::lifecycle::set_field(&souvenance::lifecycle::set_field(&old_content, "status", "archived")?, "superseded_by", &format!("[[{new_name}]]"))?;
     std::fs::write(&old_path, archived).map_err(|e| e.to_string())?;
     let mut relinked = 0;
-    for f in engrams::hot::notes_of(&base) {
+    for f in souvenance::hot::notes_of(&base) {
         if f == old_path || f == new_path {
             continue;
         }
@@ -1265,7 +1269,7 @@ fn run_supersede(args: &[String]) -> Result<(), String> {
         let mut text = c.clone();
         let mut n = 0;
         for k in &old_keys {
-            let (t, m) = engrams::lifecycle::relink(&text, k, new_name);
+            let (t, m) = souvenance::lifecycle::relink(&text, k, new_name);
             text = t;
             n += m;
         }
@@ -1287,12 +1291,12 @@ fn link_notes(a: &str, b: &str) -> Result<String, String> {
         let content = std::fs::read_to_string(from).map_err(|e| e.to_string())?;
         let to_content = std::fs::read_to_string(to).map_err(|e| e.to_string())?;
         let to_note = Note::parse(&to_content);
-        let to_name = engrams::hot::display_name(to, &to_note);
-        if engrams::lifecycle::relink(&content, &engrams::check::link_key(&to_name), &to_name).1 > 0 {
+        let to_name = souvenance::hot::display_name(to, &to_note);
+        if souvenance::lifecycle::relink(&content, &souvenance::check::link_key(&to_name), &to_name).1 > 0 {
             continue;
         }
         let project = relative(to, &base).split('/').nth(1).unwrap_or("").to_string();
-        let updated = engrams::lifecycle::append_paragraph(&content, &format!("See also [[{to_name}]], the same topic seen from {project}."));
+        let updated = souvenance::lifecycle::append_paragraph(&content, &format!("See also [[{to_name}]], the same topic seen from {project}."));
         std::fs::write(from, updated).map_err(|e| e.to_string())?;
     }
     Ok(format!("linked: {} and {}", relative(&a, &base), relative(&b, &base)))
@@ -1300,7 +1304,7 @@ fn link_notes(a: &str, b: &str) -> Result<String, String> {
 
 // ----------------------------------------------------------------------------- learning
 
-fn read_search_log() -> Vec<engrams::feedback::Searched> {
+fn read_search_log() -> Vec<souvenance::feedback::Searched> {
     std::fs::read_to_string(state_file("searches.log"))
         .unwrap_or_default()
         .lines()
@@ -1309,29 +1313,29 @@ fn read_search_log() -> Vec<engrams::feedback::Searched> {
             let secs = f.next()?.parse().ok()?;
             let query = f.next()?.to_string();
             let shown = f.next().unwrap_or("").split(',').filter(|s| !s.is_empty()).map(str::to_string).collect();
-            Some(engrams::feedback::Searched { secs, query, shown })
+            Some(souvenance::feedback::Searched { secs, query, shown })
         })
         .collect()
 }
 
-fn read_read_log() -> Vec<engrams::feedback::Read> {
+fn read_read_log() -> Vec<souvenance::feedback::Read> {
     std::fs::read_to_string(state_file("reads.log"))
         .unwrap_or_default()
         .lines()
         .filter_map(|l| {
             let (secs, path) = l.split_once('\t')?;
-            Some(engrams::feedback::Read { secs: secs.parse().ok()?, path: path.to_string() })
+            Some(souvenance::feedback::Read { secs: secs.parse().ok()?, path: path.to_string() })
         })
         .collect()
 }
 
 /// Derives the "missed" pairs from the logs and adds them to the table, saved when
 /// it changed. Returns the number of new or reinforced pairs.
-fn learn_from_logs(table: &mut engrams::feedback::Table) -> Result<usize, String> {
+fn learn_from_logs(table: &mut souvenance::feedback::Table) -> Result<usize, String> {
     let searches = read_search_log();
     let reads = read_read_log();
     let mut n = 0;
-    for (query, path, day) in engrams::feedback::missed_pairs(&searches, &reads, 600) {
+    for (query, path, day) in souvenance::feedback::missed_pairs(&searches, &reads, 600) {
         if table.record(&query, &path, "missed", day) {
             n += 1;
         }
@@ -1346,7 +1350,7 @@ fn learn_from_logs(table: &mut engrams::feedback::Table) -> Result<usize, String
 /// at the next engine start, so this needs no model.
 fn learn_pair(query: &str, name: &str, project: Option<&str>) -> Result<String, String> {
     let table_path = state_file("feedback.json");
-    let mut table = engrams::feedback::Table::load(&table_path);
+    let mut table = souvenance::feedback::Table::load(&table_path);
     let note = find_note(name, project)?;
     let rel = relative(&note, &root());
     if table.record(query, &rel, "explicit", now_secs() / 86_400) {
@@ -1359,14 +1363,14 @@ fn learn_pair(query: &str, name: &str, project: Option<&str>) -> Result<String, 
 
 fn run_learn(args: &[String]) -> Result<(), String> {
     let table_path = state_file("feedback.json");
-    let mut table = engrams::feedback::Table::load(&table_path);
+    let mut table = souvenance::feedback::Table::load(&table_path);
     let today = now_secs() / 86_400;
     if args.iter().any(|a| a == "--show") {
         let mut pairs = table.pairs.clone();
         pairs.sort_by_key(|p| std::cmp::Reverse(p.last_day));
         println!("{} learned pair(s)", pairs.len());
         for p in pairs {
-            println!("  {:<8} x{:<2} weight {:.2}  \"{}\" -> {}", p.source, p.count, engrams::feedback::decay(p.last_day, today), p.query, p.path);
+            println!("  {:<8} x{:<2} weight {:.2}  \"{}\" -> {}", p.source, p.count, souvenance::feedback::decay(p.last_day, today), p.query, p.path);
         }
         return Ok(());
     }
@@ -1391,14 +1395,14 @@ fn run_regen(project: Option<&str>) -> Result<(), String> {
     let base = root();
     let projects = match project {
         Some(p) => vec![p.to_string()],
-        None => engrams::hot::projects(&base),
+        None => souvenance::hot::projects(&base),
     };
     let mut over = 0;
     for p in &projects {
-        let size = engrams::hot::write(&base, p)?;
-        let state = if size <= engrams::hot::BOUND { "OK  " } else { "OVER" };
+        let size = souvenance::hot::write(&base, p)?;
+        let state = if size <= souvenance::hot::BOUND { "OK  " } else { "OVER" };
         println!("{state}\t{p}\t{size} bytes");
-        over += usize::from(size > engrams::hot::BOUND);
+        over += usize::from(size > souvenance::hot::BOUND);
     }
     if over > 0 {
         return Err(format!("{over} index(es) above the bound despite compaction"));
@@ -1409,13 +1413,13 @@ fn run_regen(project: Option<&str>) -> Result<(), String> {
 fn run_list() -> Result<(), String> {
     let base = root();
     let mut current_family = String::new();
-    for p in engrams::hot::projects(&base) {
+    for p in souvenance::hot::projects(&base) {
         let family = p.split('/').next().unwrap_or("").to_string();
         if family != current_family {
             println!("{family}");
             current_family = family;
         }
-        println!("  {p}\t{} note(s)", engrams::hot::notes_of(&base.join(&p)).len());
+        println!("  {p}\t{} note(s)", souvenance::hot::notes_of(&base.join(&p)).len());
     }
     Ok(())
 }
@@ -1430,7 +1434,7 @@ fn installed_version(tool: &str) -> Option<String> {
 
 fn run_secrets(dir: Option<PathBuf>) -> Result<(), String> {
     let dir = dir.unwrap_or_else(root);
-    let hits = engrams::secrets::scan_dir(&dir);
+    let hits = souvenance::secrets::scan_dir(&dir);
     for h in &hits {
         println!("  {}:{}  {}", h.path, h.line, h.kind);
     }
@@ -1450,20 +1454,20 @@ fn run_check() -> Result<(), String> {
         corpus.push((relative(file, &base), Note::parse(&content)));
     }
 
-    let mut findings: Vec<engrams::check::Finding> = corpus.iter().flat_map(|(path, note)| engrams::check::check_note(path, note)).collect();
-    findings.extend(engrams::check::check_corpus(&corpus));
+    let mut findings: Vec<souvenance::check::Finding> = corpus.iter().flat_map(|(path, note)| souvenance::check::check_note(path, note)).collect();
+    findings.extend(souvenance::check::check_corpus(&corpus));
 
     for file in &files {
         let Ok(content) = std::fs::read_to_string(file) else { continue };
         let path = relative(file, &base);
         let head = content.split("\n---").next().unwrap_or("");
         if head.lines().any(|l| l.starts_with("metadata:")) {
-            findings.push(engrams::check::Finding::new(&path, "nested `metadata:` block, flatten it to the frontmatter root"));
+            findings.push(souvenance::check::Finding::new(&path, "nested `metadata:` block, flatten it to the frontmatter root"));
         }
         let note = Note::parse(&content);
         if let Some(status) = note.field("status") {
             if !["active", "archived"].contains(&status) {
-                findings.push(engrams::check::Finding::new(&path, format!("unknown status `{status}`, expected active or archived")));
+                findings.push(souvenance::check::Finding::new(&path, format!("unknown status `{status}`, expected active or archived")));
             }
         }
         if let Some(dep) = note.field("depends_on") {
@@ -1473,19 +1477,19 @@ fn run_check() -> Result<(), String> {
                     let pinned = pinned.trim().trim_end_matches(".x");
                     if let Some(current) = installed_version(tool) {
                         if !current.starts_with(pinned) {
-                            findings.push(engrams::check::Finding::new(&path, format!("pinned on {tool} {pinned}, installed {current}, re-verify")));
+                            findings.push(souvenance::check::Finding::new(&path, format!("pinned on {tool} {pinned}, installed {current}, re-verify")));
                         }
                     }
                 }
             }
         }
     }
-    for p in engrams::hot::projects(&base) {
-        let size = engrams::hot::render(&base, &p).len();
-        if size > engrams::hot::BOUND {
-            findings.push(engrams::check::Finding::new(
+    for p in souvenance::hot::projects(&base) {
+        let size = souvenance::hot::render(&base, &p).len();
+        if size > souvenance::hot::BOUND {
+            findings.push(souvenance::check::Finding::new(
                 &format!("{p}/MEMORY.md"),
-                format!("index at {size} bytes, above the {} byte bound despite compaction", engrams::hot::BOUND),
+                format!("index at {size} bytes, above the {} byte bound despite compaction", souvenance::hot::BOUND),
             ));
         }
     }
@@ -1518,15 +1522,15 @@ fn run_check() -> Result<(), String> {
             println!("  ... and {} more", truncated.len() - 10);
         }
     }
-    // Near-duplicates from the index alone. ENGRAM_DUP sets the threshold (0.90).
-    let loaded = Index::load(&state_file("index.bin")).map_err(|e| format!("index missing or unreadable ({e}), run `engram index`"));
+    // Near-duplicates from the index alone. SOUVENANCE_DUP sets the threshold (0.90).
+    let loaded = Index::load(&state_file("index.bin")).map_err(|e| format!("index missing or unreadable ({e}), run `souvenance index`"));
     if let Err(e) = &loaded {
         println!("\nDuplicates: not checked, {e}");
     }
     if let Ok(index) = loaded {
         let threshold = dup_threshold();
         let active: std::collections::HashSet<String> = corpus.iter().filter(|(_, n)| n.is_active()).map(|(p, _)| p.clone()).collect();
-        let (compared, pairs) = engrams::duplicates::near_duplicates(&index, &active, threshold);
+        let (compared, pairs) = souvenance::duplicates::near_duplicates(&index, &active, threshold);
         println!("\nDuplicates: {} chunks of active notes compared, {} pair(s) above {threshold:.2}.", compared, pairs.len());
         for (score, a, b) in pairs.iter().take(30) {
             println!("  {score:.3}  {a}  <->  {b}");
@@ -1601,7 +1605,7 @@ fn run_curation() -> Result<(), String> {
     println!("# Curation, {today}\n");
     println!("This report lists candidates, it decides nothing. Tick what was handled.\n");
     println!("## Active project notes not verified for more than sixty days ({})\n", stale.len());
-    println!("Re-verify (`engram verify`) or replace (`engram supersede`).\n");
+    println!("Re-verify (`souvenance verify`) or replace (`souvenance supersede`).\n");
     for (age, rel) in &stale {
         println!("- [ ] `{rel}` ({age} days)");
     }
@@ -1616,7 +1620,7 @@ fn run_curation() -> Result<(), String> {
     }
     if let Ok(index) = Index::load(&state_file("index.bin")) {
         let active: std::collections::HashSet<String> = corpus.iter().filter(|(_, n)| n.is_active()).map(|(p, _)| p.clone()).collect();
-        let (_, pairs) = engrams::duplicates::near_duplicates(&index, &active, dup_threshold());
+        let (_, pairs) = souvenance::duplicates::near_duplicates(&index, &active, dup_threshold());
         println!("\n## Pairs of active notes above {:.2} cosine ({})\n", dup_threshold(), pairs.len());
         println!("Merge, or cross-reference if they are two angles of one topic.\n");
         for (s, a, b) in pairs.iter().take(30) {
@@ -1625,8 +1629,8 @@ fn run_curation() -> Result<(), String> {
     }
     let mut masked_total = 0usize;
     let mut masked_lines = Vec::new();
-    for p in engrams::hot::projects(&base) {
-        let text = engrams::hot::render(&base, &p);
+    for p in souvenance::hot::projects(&base) {
+        let text = souvenance::hot::render(&base, &p);
         if let Some(line) = text.lines().find(|l| l.contains("left out of the hot index")) {
             let n: usize = line.trim_start_matches("- ").split(' ').next().and_then(|v| v.parse().ok()).unwrap_or(0);
             masked_total += n;
@@ -1670,7 +1674,7 @@ fn run_since(days: &str) -> Result<(), String> {
         let mut f = line.split('\t');
         let (Some(status), Some(path)) = (f.next(), f.next()) else { continue };
         let rel = f.next().unwrap_or(path); // rename: R100\told\tnew
-        if rel.ends_with("MEMORY.md") || rel.starts_with(".engram/") || !rel.ends_with(".md") {
+        if rel.ends_with("MEMORY.md") || rel.starts_with(".souvenance/") || !rel.ends_with(".md") {
             continue;
         }
         let project = rel.rsplit_once('/').map_or("", |(p, _)| p).to_string();
@@ -1719,15 +1723,15 @@ fn run_why(name: &str) -> Result<(), String> {
     for l in history.lines().take(12) {
         println!("  {l}");
     }
-    let key = engrams::check::link_key(&engrams::hot::display_name(&path, &note));
-    let stem_key = engrams::check::link_key(&path.file_stem().unwrap_or_default().to_string_lossy());
+    let key = souvenance::check::link_key(&souvenance::hot::display_name(&path, &note));
+    let stem_key = souvenance::check::link_key(&path.file_stem().unwrap_or_default().to_string_lossy());
     let mut citing = Vec::new();
-    for f in engrams::hot::notes_of(&base) {
+    for f in souvenance::hot::notes_of(&base) {
         if f == path {
             continue;
         }
         let Ok(c) = std::fs::read_to_string(&f) else { continue };
-        if engrams::lifecycle::relink(&c, &key, "x").1 > 0 || engrams::lifecycle::relink(&c, &stem_key, "x").1 > 0 {
+        if souvenance::lifecycle::relink(&c, &key, "x").1 > 0 || souvenance::lifecycle::relink(&c, &stem_key, "x").1 > 0 {
             citing.push(relative(&f, &base));
         }
     }
@@ -1742,20 +1746,20 @@ fn run_why(name: &str) -> Result<(), String> {
 
 /// Claude Code `UserPromptSubmit` hook: reads the hook JSON on stdin, prints the
 /// passages close to the prompt as context. Silent when there is nothing to say.
-/// `ENGRAM_HOOK_MIN` (0.60) drops distant passages, `ENGRAM_HOOK_CHARS` (700)
-/// bounds each passage, `ENGRAM_HOOK_LEN` (30) ignores shorter prompts.
+/// `SOUVENANCE_HOOK_MIN` (0.60) drops distant passages, `SOUVENANCE_HOOK_CHARS` (700)
+/// bounds each passage, `SOUVENANCE_HOOK_LEN` (30) ignores shorter prompts.
 fn run_hook() -> Result<(), String> {
     use std::io::Read;
     let mut input = String::new();
     let _ = std::io::stdin().read_to_string(&mut input);
     let value: serde_json::Value = serde_json::from_str(&input).unwrap_or(serde_json::Value::Null);
     let prompt = value["prompt"].as_str().unwrap_or("").trim();
-    let min_len: usize = std::env::var("ENGRAM_HOOK_LEN").ok().and_then(|v| v.parse().ok()).unwrap_or(30);
+    let min_len: usize = std::env::var("SOUVENANCE_HOOK_LEN").ok().and_then(|v| v.parse().ok()).unwrap_or(30);
     if prompt.chars().count() < min_len || prompt.starts_with('/') || prompt.starts_with('!') {
         return Ok(());
     }
-    let min_score: f32 = std::env::var("ENGRAM_HOOK_MIN").ok().and_then(|v| v.parse().ok()).unwrap_or(0.60);
-    let max_chars: usize = std::env::var("ENGRAM_HOOK_CHARS").ok().and_then(|v| v.parse().ok()).unwrap_or(700);
+    let min_score: f32 = std::env::var("SOUVENANCE_HOOK_MIN").ok().and_then(|v| v.parse().ok()).unwrap_or(0.60);
+    let max_chars: usize = std::env::var("SOUVENANCE_HOOK_CHARS").ok().and_then(|v| v.parse().ok()).unwrap_or(700);
     // A long prompt is summarised by its first lines: the model reads 512 tokens.
     let query: String = prompt.lines().take(12).collect::<Vec<_>>().join(" ").chars().take(1200).collect();
     let Ok(json) = answer_text(&query, 2, max_chars, true) else { return Ok(()) };
@@ -1765,7 +1769,7 @@ fn run_hook() -> Result<(), String> {
         return Ok(());
     }
     println!("<working-memory>");
-    println!("Passages from the user's working memory close to this request (from `engram answer`). They may be off topic: use them only if they answer, and read the whole note with `engram read <name>` before relying on it.\n");
+    println!("Passages from the user's working memory close to this request (from `souvenance answer`). They may be off topic: use them only if they answer, and read the whole note with `souvenance read <name>` before relying on it.\n");
     for p in kept {
         let v = p.verified.as_deref().map(|d| format!(", verified {d}")).unwrap_or_default();
         println!("## {} ({}{v}, {:.2})\n{}\n", p.name, p.path, p.score, p.text.trim());
@@ -1796,7 +1800,7 @@ fn run_mcp() -> Result<(), String> {
             "initialize" => Ok(serde_json::json!({
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "engram", "version": env!("CARGO_PKG_VERSION")}
+                "serverInfo": {"name": "souvenance", "version": env!("CARGO_PKG_VERSION")}
             })),
             "ping" => Ok(serde_json::json!({})),
             "tools/list" => Ok(serde_json::json!({"tools": mcp_tools()})),
@@ -1887,7 +1891,7 @@ fn write_json_object(path: &Path, obj: &serde_json::Map<String, serde_json::Valu
     std::fs::write(path, text + "\n").map_err(|e| format!("{}: {e}", path.display()))
 }
 
-/// A tool that can host engrams: how to detect it and how to wire it.
+/// A tool that can host souvenance: how to detect it and how to wire it.
 struct Tool {
     id: &'static str,
     name: &'static str,
@@ -1916,14 +1920,14 @@ fn detected_tools() -> Vec<&'static Tool> {
     TOOLS.iter().filter(|t| t.detected()).collect()
 }
 
-/// Adds `engram` to a `mcpServers` map in a JSON file, creating the file if needed.
+/// Adds `souvenance` to a `mcpServers` map in a JSON file, creating the file if needed.
 fn add_mcp_server_json(path: &Path, key: &str, exe: &str) -> Result<(), String> {
     let mut config = read_json_object(path)?;
     let servers = config.entry(key).or_insert_with(|| serde_json::json!({}));
     servers
         .as_object_mut()
         .ok_or_else(|| format!("`{key}` is not an object in {}", path.display()))?
-        .insert("engram".into(), serde_json::json!({"command": exe, "args": ["mcp"]}));
+        .insert("souvenance".into(), serde_json::json!({"command": exe, "args": ["mcp"]}));
     write_json_object(path, &config)
 }
 
@@ -1948,7 +1952,7 @@ fn run_setup(tool: &str) -> Result<(), String> {
             let hook_cmd = format!("{exe} hook");
             let hooks = settings.entry("hooks").or_insert_with(|| serde_json::json!({}));
             let list = hooks.as_object_mut().ok_or("`hooks` is not an object")?.entry("UserPromptSubmit").or_insert_with(|| serde_json::json!([]));
-            let already = list.to_string().contains("engram") && list.to_string().contains(" hook");
+            let already = list.to_string().contains("souvenance") && list.to_string().contains(" hook");
             if !already {
                 list.as_array_mut()
                     .ok_or("`UserPromptSubmit` is not an array")?
@@ -1958,13 +1962,13 @@ fn run_setup(tool: &str) -> Result<(), String> {
             } else {
                 println!("Claude Code: hook already present in {}", path.display());
             }
-            let registered = std::process::Command::new("claude").args(["mcp", "get", "engram"]).output().is_ok_and(|o| o.status.success());
+            let registered = std::process::Command::new("claude").args(["mcp", "get", "souvenance"]).output().is_ok_and(|o| o.status.success());
             if registered {
                 println!("Claude Code: MCP server already registered");
             } else {
-                match std::process::Command::new("claude").args(["mcp", "add", "--scope", "user", "engram", "--", &exe, "mcp"]).output() {
+                match std::process::Command::new("claude").args(["mcp", "add", "--scope", "user", "souvenance", "--", &exe, "mcp"]).output() {
                     Ok(o) if o.status.success() => println!("Claude Code: MCP server registered"),
-                    _ => println!("Claude Code: register the MCP server yourself:\n  claude mcp add --scope user engram -- {exe} mcp"),
+                    _ => println!("Claude Code: register the MCP server yourself:\n  claude mcp add --scope user souvenance -- {exe} mcp"),
                 }
             }
             Ok(())
@@ -1972,13 +1976,13 @@ fn run_setup(tool: &str) -> Result<(), String> {
         "codex" => {
             let path = home.join(".codex/config.toml");
             let existing = std::fs::read_to_string(&path).unwrap_or_default();
-            if existing.contains("[mcp_servers.engram]") {
+            if existing.contains("[mcp_servers.souvenance]") {
                 println!("Codex CLI: MCP server already present in {}", path.display());
                 return Ok(());
             }
             std::fs::create_dir_all(home.join(".codex")).map_err(|e| e.to_string())?;
             let block = format!(
-                "{}{}[mcp_servers.engram]\ncommand = \"{exe}\"\nargs = [\"mcp\"]\n",
+                "{}{}[mcp_servers.souvenance]\ncommand = \"{exe}\"\nargs = [\"mcp\"]\n",
                 existing,
                 if existing.is_empty() || existing.ends_with('\n') { "\n" } else { "\n\n" }
             );
@@ -1992,7 +1996,7 @@ fn run_setup(tool: &str) -> Result<(), String> {
             let mcp = config.entry("mcp").or_insert_with(|| serde_json::json!({}));
             mcp.as_object_mut()
                 .ok_or("`mcp` is not an object")?
-                .insert("engram".into(), serde_json::json!({"type": "local", "command": [exe, "mcp"], "enabled": true}));
+                .insert("souvenance".into(), serde_json::json!({"type": "local", "command": [exe, "mcp"], "enabled": true}));
             write_json_object(&path, &config)?;
             println!("opencode: MCP server added to {}", path.display());
             Ok(())
@@ -2020,7 +2024,7 @@ fn run_setup(tool: &str) -> Result<(), String> {
             println!("For Kandev's own MCP settings (Settings > MCP, or the `update_mcp_config` tool), add:");
             println!(
                 "{}",
-                serde_json::to_string_pretty(&serde_json::json!({"engram": {"type": "stdio", "command": exe, "args": ["mcp"]}})).unwrap_or_default()
+                serde_json::to_string_pretty(&serde_json::json!({"souvenance": {"type": "stdio", "command": exe, "args": ["mcp"]}})).unwrap_or_default()
             );
             Ok(())
         }
@@ -2037,17 +2041,17 @@ fn run_init(args: &[String]) -> Result<(), String> {
     if args.iter().any(|a| a == "--no-download") {
         return Ok(());
     }
-    let repo = flag_value(args, "--model").map(|m| engrams::models::find(m).map_or(m, |k| k.repo)).unwrap_or(paths::DEFAULT_MODEL_REPO);
-    let model = match std::env::var("ENGRAM_MODEL") {
+    let repo = flag_value(args, "--model").map(|m| souvenance::models::find(m).map_or(m, |k| k.repo)).unwrap_or(paths::DEFAULT_MODEL_REPO);
+    let model = match std::env::var("SOUVENANCE_MODEL") {
         Ok(m) => PathBuf::from(m),
         Err(_) => paths::model_dir_of(repo),
     };
-    if repo != paths::DEFAULT_MODEL_REPO && std::env::var("ENGRAM_MODEL").is_err() {
-        save_env_value("ENGRAM_MODEL", &model.display().to_string())?;
+    if repo != paths::DEFAULT_MODEL_REPO && std::env::var("SOUVENANCE_MODEL").is_err() {
+        save_env_value("SOUVENANCE_MODEL", &model.display().to_string())?;
     }
     download_model(repo, &model)?;
     println!("model: {}", model.display());
-    println!("next: write notes under {}/<family>/<project>/, then `engram index`", dir.display());
+    println!("next: write notes under {}/<family>/<project>/, then `souvenance index`", dir.display());
     Ok(())
 }
 
@@ -2058,7 +2062,7 @@ fn remember_root(dir: &Path) -> Result<(), String> {
     std::fs::write(paths::config_dir().join("root"), format!("{}\n", dir.display())).map_err(|e| e.to_string())?;
     let ignore = dir.join(".gitignore");
     if !ignore.exists() && !inside_git(dir) {
-        std::fs::write(&ignore, ".engram/*\n!.engram/questions.json\n!.engram/feedback.json\n").map_err(|e| e.to_string())?;
+        std::fs::write(&ignore, ".souvenance/*\n!.souvenance/questions.json\n!.souvenance/feedback.json\n").map_err(|e| e.to_string())?;
     }
     Ok(())
 }
@@ -2194,7 +2198,7 @@ mod ui {
         let colours = ["38;2;217;165;138", "38;2;207;122;79", "38;2;183;65;14"];
         let paint = |s: &str, shade: u8| if tty() { format!("\x1b[{}m{s}\x1b[0m", colours[shade as usize]) } else { s.to_string() };
         let mut side: Vec<String> = vec![String::new(); rows];
-        side[6] = bold("e n g r a m s");
+        side[6] = bold("s o u v e n a n c e");
         side[9] = dim("local semantic memory for coding agents");
         side[10] = dim(&format!("v{version}"));
         println!();
@@ -2274,15 +2278,15 @@ mod ui {
     pub fn help(usage: &str) -> String {
         usage
             .lines()
-            .map(|l| if !l.is_empty() && !l.starts_with(' ') && !l.starts_with("engram,") { bold(l) } else { l.to_string() })
+            .map(|l| if !l.is_empty() && !l.starts_with(' ') && !l.starts_with("souvenance,") { bold(l) } else { l.to_string() })
             .collect::<Vec<_>>()
             .join("\n")
             + "\n"
     }
 }
 
-/// Values of `~/.engram/env`, one `KEY=VALUE` per line, applied to the environment
-/// when the variable is not already set. Written by `engram config`, editable by hand.
+/// Values of `~/.souvenance/env`, one `KEY=VALUE` per line, applied to the environment
+/// when the variable is not already set. Written by `souvenance config`, editable by hand.
 fn load_env_file() {
     let Ok(text) = std::fs::read_to_string(paths::config_dir().join("env")) else { return };
     for line in text.lines() {
@@ -2326,18 +2330,18 @@ fn save_env_value(key: &str, value: &str) -> Result<(), String> {
 
 /// The settings the CLI manages, with their meaning and default.
 const SETTINGS: [(&str, &str, &str); 9] = [
-    ("ENGRAM_MODEL", "model directory", "~/.engram/models/<model>"),
-    ("ENGRAM_PRECISION", "q8 or f32 for the linear layers", "q8"),
-    ("ENGRAM_QUESTIONS_CMD", "command writing the questions a paragraph answers", "unset"),
-    ("ENGRAM_QUESTIONS_BATCH", "paragraphs sent to that command per pass", "unlimited / 4"),
-    ("ENGRAM_IDLE", "seconds before the warm process exits, or never", "300"),
-    ("ENGRAM_WATCH", "seconds between background refreshes", "30"),
-    ("ENGRAM_ID_BONUS", "lexical bonus per identifier found", "0.04"),
-    ("ENGRAM_LEARN", "0 disables the learned bonus", "1"),
-    ("ENGRAM_HOOK_MIN", "minimum score for the hook to inject a passage", "0.60"),
+    ("SOUVENANCE_MODEL", "model directory", "~/.souvenance/models/<model>"),
+    ("SOUVENANCE_PRECISION", "q8 or f32 for the linear layers", "q8"),
+    ("SOUVENANCE_QUESTIONS_CMD", "command writing the questions a paragraph answers", "unset"),
+    ("SOUVENANCE_QUESTIONS_BATCH", "paragraphs sent to that command per pass", "unlimited / 4"),
+    ("SOUVENANCE_IDLE", "seconds before the warm process exits, or never", "300"),
+    ("SOUVENANCE_WATCH", "seconds between background refreshes", "30"),
+    ("SOUVENANCE_ID_BONUS", "lexical bonus per identifier found", "0.04"),
+    ("SOUVENANCE_LEARN", "0 disables the learned bonus", "1"),
+    ("SOUVENANCE_HOOK_MIN", "minimum score for the hook to inject a passage", "0.60"),
 ];
 
-/// `engram config`: the root and the settings; `set`, `unset`, `edit`, or an
+/// `souvenance config`: the root and the settings; `set`, `unset`, `edit`, or an
 /// interactive walk through the settings when no argument is given on a terminal.
 fn run_config(args: &[String]) -> Result<(), String> {
     match args.get(1).map(String::as_str) {
@@ -2401,15 +2405,15 @@ fn config_wizard() -> Result<(), String> {
     let saved: std::collections::HashMap<String, String> = env_file_entries().into_iter().collect();
     for (key, what, default) in SETTINGS {
         let current = saved.get(key).cloned().unwrap_or_default();
-        if key == "ENGRAM_IDLE" {
-            let options = [("5 minutes", "300"), ("30 minutes", "1800"), ("2 hours", "7200"), ("never: engrams stays resident", "never")];
+        if key == "SOUVENANCE_IDLE" {
+            let options = [("5 minutes", "300"), ("30 minutes", "1800"), ("2 hours", "7200"), ("never: souvenance stays resident", "never")];
             let value = ui::choose("Warm process: how long to stay up without a request?", &options, if current.is_empty() { default } else { &current });
             if value != current && (value != default || !current.is_empty()) {
                 save_env_value(key, &value)?;
                 ui::done(&format!("{key} = {value}"));
             }
             if value == "never" {
-                ui::note("`engram status --short` prints one line while it runs, for a shell prompt. `engram tray install` puts the mark in the menu bar. `engram stop` ends it.");
+                ui::note("`souvenance status --short` prints one line while it runs, for a shell prompt. `souvenance tray install` puts the mark in the menu bar. `souvenance stop` ends it.");
             }
             continue;
         }
@@ -2485,7 +2489,7 @@ fn run_wizard() -> Result<(), String> {
     let dir = expand_home(&ui::ask("Directory for your notes:", &root().display().to_string()));
     let dir = if dir.is_absolute() { dir } else { std::env::current_dir().map_err(|e| e.to_string())?.join(dir) };
     remember_root(&dir)?;
-    ui::done(&format!("root {} (remembered in ~/.engram/root)", dir.display()));
+    ui::done(&format!("root {} (remembered in ~/.souvenance/root)", dir.display()));
     if !inside_git(&dir) && ui::confirm("Turn it into a git repository (notes are worth backing up)?", true) {
         let _ = std::process::Command::new("git").args(["init", "-q"]).current_dir(&dir).status();
         ui::done("git repository initialised");
@@ -2493,7 +2497,7 @@ fn run_wizard() -> Result<(), String> {
     println!();
 
     ui::step(2, total, "The embedding model");
-    for (i, m) in engrams::models::KNOWN.iter().enumerate() {
+    for (i, m) in souvenance::models::KNOWN.iter().enumerate() {
         ui::note(&format!(
             "{}  {:<22} {:<9} {:>5}-token window  {:>4} M  {:>5} MB  {}",
             i + 1,
@@ -2506,13 +2510,13 @@ fn run_wizard() -> Result<(), String> {
         ));
     }
     let choice = ui::ask("Which model?", "1");
-    let repo = choice.trim().parse::<usize>().ok().and_then(|i| engrams::models::KNOWN.get(i.wrapping_sub(1))).map_or(paths::DEFAULT_MODEL_REPO, |m| m.repo);
+    let repo = choice.trim().parse::<usize>().ok().and_then(|i| souvenance::models::KNOWN.get(i.wrapping_sub(1))).map_or(paths::DEFAULT_MODEL_REPO, |m| m.repo);
     let model = paths::model_dir_of(repo);
     if repo != paths::DEFAULT_MODEL_REPO {
-        save_env_value("ENGRAM_MODEL", &model.display().to_string())?;
-        std::env::set_var("ENGRAM_MODEL", &model);
+        save_env_value("SOUVENANCE_MODEL", &model.display().to_string())?;
+        std::env::set_var("SOUVENANCE_MODEL", &model);
     } else {
-        save_env_value("ENGRAM_MODEL", "")?;
+        save_env_value("SOUVENANCE_MODEL", "")?;
     }
     if model.join("model.safetensors").exists() {
         ui::done(&format!("model present in {}", model.display()));
@@ -2522,7 +2526,7 @@ fn run_wizard() -> Result<(), String> {
             download_model(repo, &model)?;
             ui::done("model ready");
         } else {
-            ui::note("skipped: `engram init <dir> --model <repo>` downloads it later; until then search is lexical");
+            ui::note("skipped: `souvenance init <dir> --model <repo>` downloads it later; until then search is lexical");
         }
     }
     println!();
@@ -2532,7 +2536,7 @@ fn run_wizard() -> Result<(), String> {
     let mut wired = Vec::new();
     if found.is_empty() {
         ui::note("no supported tool detected (Claude Code, Codex CLI, opencode, Gemini CLI, Cursor, Windsurf, Kandev)");
-        ui::note("the CLI and `engram mcp` work on their own; `engram setup <tool>` wires one later");
+        ui::note("the CLI and `souvenance mcp` work on their own; `souvenance setup <tool>` wires one later");
     }
     for t in found {
         let what = match t.id {
@@ -2540,7 +2544,7 @@ fn run_wizard() -> Result<(), String> {
             "kandev" => "print the MCP snippet",
             _ => "MCP server",
         };
-        if ui::confirm(&format!("{} found. Wire engrams ({what})?", t.name), true) {
+        if ui::confirm(&format!("{} found. Wire souvenance ({what})?", t.name), true) {
             run_setup(t.id)?;
             wired.push(t.name);
         }
@@ -2548,7 +2552,7 @@ fn run_wizard() -> Result<(), String> {
     println!();
 
     ui::step(4, total, "Indexed questions (optional)");
-    ui::note("A command that reads a prompt on stdin and prints lines lets engrams index, once per paragraph,");
+    ui::note("A command that reads a prompt on stdin and prints lines lets souvenance index, once per paragraph,");
     ui::note("the questions it answers. On the benchmark it lifts buried details from 58 % to 75 %.");
     let suggestion = if in_path("ollama") {
         "ollama run qwen2.5:3b"
@@ -2566,12 +2570,12 @@ fn run_wizard() -> Result<(), String> {
     let cmd = ui::ask("Command (Enter or `skip` to skip):", if suggestion.is_empty() { "skip" } else { suggestion });
     let refused = ["skip", "n", "no", "non", "y", "yes", "oui", ""];
     if !refused.contains(&cmd.to_lowercase().as_str()) && cmd.split_whitespace().next().is_some_and(in_path) {
-        save_env_value("ENGRAM_QUESTIONS_CMD", &cmd)?;
-        std::env::set_var("ENGRAM_QUESTIONS_CMD", &cmd);
-        ui::done(&format!("ENGRAM_QUESTIONS_CMD saved in ~/.engram/env: {cmd}"));
+        save_env_value("SOUVENANCE_QUESTIONS_CMD", &cmd)?;
+        std::env::set_var("SOUVENANCE_QUESTIONS_CMD", &cmd);
+        ui::done(&format!("SOUVENANCE_QUESTIONS_CMD saved in ~/.souvenance/env: {cmd}"));
     } else if !refused.contains(&cmd.to_lowercase().as_str()) {
         ui::note(&format!(
-            "`{}` is not in PATH, skipped; set it later with `engram config set ENGRAM_QUESTIONS_CMD \"...\"`",
+            "`{}` is not in PATH, skipped; set it later with `souvenance config set SOUVENANCE_QUESTIONS_CMD \"...\"`",
             cmd.split_whitespace().next().unwrap_or("")
         ));
     } else {
@@ -2580,11 +2584,11 @@ fn run_wizard() -> Result<(), String> {
     println!();
 
     ui::step(5, total, "First note");
-    let has_notes = !engrams::hot::notes_of(&dir).is_empty();
+    let has_notes = !souvenance::hot::notes_of(&dir).is_empty();
     if !has_notes && ui::confirm("Write an example note showing the format?", true) {
-        let body = "One durable fact per file. The frontmatter carries the name (equal to the file name), a one-line description, a type (user, feedback, project, reference), a status and the date of the last verification.\n\nParagraphs are the unit of indexing: keep one idea per paragraph. Link related notes with [[wiki-links]]. When a fact becomes false, replace it with `engram supersede`, never delete it.\n\nTry: `engram search \"how do I write a note\"`.\n";
+        let body = "One durable fact per file. The frontmatter carries the name (equal to the file name), a one-line description, a type (user, feedback, project, reference), a status and the date of the last verification.\n\nParagraphs are the unit of indexing: keep one idea per paragraph. Link related notes with [[wiki-links]]. When a fact becomes false, replace it with `souvenance supersede`, never delete it.\n\nTry: `souvenance search \"how do I write a note\"`.\n";
         create_note(&NewNote {
-            project: "getting-started/engrams",
+            project: "getting-started/souvenance",
             name: "how-to-write-a-note",
             kind: "reference",
             description: "The shape of a note: one fact per file, a flat frontmatter, paragraphs as the unit of search",
@@ -2593,16 +2597,16 @@ fn run_wizard() -> Result<(), String> {
             body,
             force: true,
         })?;
-        ui::done("getting-started/engrams/how-to-write-a-note.md");
+        ui::done("getting-started/souvenance/how-to-write-a-note.md");
     }
     if model_dir().join("model.safetensors").exists() && ui::confirm("Index now?", true) {
         run_index()?;
     }
     println!();
     println!("  {}", ui::bold("Done."));
-    println!("  {}", ui::dim("search   engram search <words>"));
-    println!("  {}", ui::dim("write    engram write <family/project> <name> --type <t> --description <d>"));
-    println!("  {}", ui::dim("config   engram config          help   engram"));
+    println!("  {}", ui::dim("search   souvenance search <words>"));
+    println!("  {}", ui::dim("write    souvenance write <family/project> <name> --type <t> --description <d>"));
+    println!("  {}", ui::dim("config   souvenance config          help   souvenance"));
     if !wired.is_empty() {
         println!("  {}", ui::dim(&format!("wired: {}. Restart those tools to pick up the change.", wired.join(", "))));
     }
@@ -2610,13 +2614,13 @@ fn run_wizard() -> Result<(), String> {
     Ok(())
 }
 
-/// `engram models`: the known models, with the installed ones marked; `use <alias>`
-/// selects one (downloading it when needed) and remembers it in `~/.engram/env`.
+/// `souvenance models`: the known models, with the installed ones marked; `use <alias>`
+/// selects one (downloading it when needed) and remembers it in `~/.souvenance/env`.
 fn run_models(args: &[String]) -> Result<(), String> {
     match args.get(1).map(String::as_str) {
         Some("use") if args.len() > 2 => {
             let name = &args[2];
-            let (repo, dir) = match engrams::models::find(name) {
+            let (repo, dir) = match souvenance::models::find(name) {
                 Some(m) => (m.repo.to_string(), paths::model_dir_of(m.repo)),
                 None if name.contains('/') && !Path::new(name).exists() => (name.clone(), paths::model_dir_of(name)),
                 None => (String::new(), expand_home(name)),
@@ -2629,15 +2633,15 @@ fn run_models(args: &[String]) -> Result<(), String> {
             }
             let default = paths::model_dir_of(paths::DEFAULT_MODEL_REPO);
             let value = if dir == default { String::new() } else { dir.display().to_string() };
-            save_env_value("ENGRAM_MODEL", &value)?;
-            println!("model: {} (the index rebuilds at the next `engram index`)", dir.display());
+            save_env_value("SOUVENANCE_MODEL", &value)?;
+            println!("model: {} (the index rebuilds at the next `souvenance index`)", dir.display());
             Ok(())
         }
-        Some("use") => Err("usage: engram models use <alias|repository|directory>".into()),
+        Some("use") => Err("usage: souvenance models use <alias|repository|directory>".into()),
         _ => {
             let current = model_dir();
             println!("{:<22} {:<18} {:<9} {:>6} {:>7} {:>8}", "alias", "family", "languages", "window", "params", "download");
-            for m in engrams::models::KNOWN.iter() {
+            for m in souvenance::models::KNOWN.iter() {
                 let dir = paths::model_dir_of(m.repo);
                 let mark = if dir == current {
                     "current"
@@ -2660,7 +2664,7 @@ fn run_models(args: &[String]) -> Result<(), String> {
                 println!("{:<22} {}", "", ui::dim(&format!("{} ({})", m.repo, m.license)));
             }
             println!("\ncurrent: {}", current.display());
-            println!("select: engram models use <alias>   any other checkpoint: engram models use <owner/repo>");
+            println!("select: souvenance models use <alias>   any other checkpoint: souvenance models use <owner/repo>");
             Ok(())
         }
     }

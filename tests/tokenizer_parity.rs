@@ -1,13 +1,13 @@
 //! The compact tokenizer must return exactly the ids of the reference, on a whole
 //! corpus, every benchmark query and edge cases. A different id makes a different
 //! vector without any signal.
-use engrams::chunking::{budget_for, split};
-use engrams::note::Note;
-use engrams::tokenizer::Unigram;
+use souvenance::chunking::{budget_for, split};
+use souvenance::note::Note;
+use souvenance::tokenizer::Unigram;
 use std::path::{Path, PathBuf};
 
 fn model_dir() -> Option<PathBuf> {
-    let d = engrams::paths::model_dir();
+    let d = souvenance::paths::model_dir();
     d.join("tokenizer.json").exists().then_some(d)
 }
 
@@ -47,7 +47,7 @@ fn edge_cases() -> Vec<String> {
 /// benchmark queries when present.
 fn corpus_texts() -> Vec<String> {
     let mut texts = Vec::new();
-    let root = engrams::paths::root();
+    let root = souvenance::paths::root();
     let mut files = Vec::new();
     walk(&root, &mut files);
     for f in &files {
@@ -59,7 +59,7 @@ fn corpus_texts() -> Vec<String> {
         }
         texts.push(content);
     }
-    let bench = std::env::var("ENGRAM_BENCH").map(PathBuf::from).unwrap_or_else(|_| engrams::paths::state_dir(&root).join("bench-queries.json"));
+    let bench = std::env::var("SOUVENANCE_BENCH").map(PathBuf::from).unwrap_or_else(|_| souvenance::paths::state_dir(&root).join("bench-queries.json"));
     if let Ok(raw) = std::fs::read_to_string(bench) {
         let cases: std::collections::BTreeMap<String, Vec<serde_json::Value>> = serde_json::from_str(&raw).unwrap_or_default();
         for list in cases.values() {
@@ -146,12 +146,12 @@ fn native_sentencepiece_matches_tokenizer_json() {
 /// The byte-level BPE tokenizer must match the reference crate on the same texts.
 #[test]
 fn bpe_tokenizer_matches_the_reference_everywhere() {
-    let dir = engrams::paths::alt_model_dir();
+    let dir = souvenance::paths::alt_model_dir();
     if !dir.join("tokenizer.json").exists() {
         eprintln!("BPE model absent, test skipped");
         return;
     }
-    let ours = engrams::bpe::Bpe::from_file(&dir.join("tokenizer.json"), 8192).expect("bpe tokenizer");
+    let ours = souvenance::bpe::Bpe::from_file(&dir.join("tokenizer.json"), 8192).expect("bpe tokenizer");
     let mut reference = tokenizers::Tokenizer::from_file(dir.join("tokenizer.json")).expect("reference");
     reference.with_truncation(Some(tokenizers::TruncationParams { max_length: 8192, ..Default::default() })).unwrap();
     let mut texts = edge_cases();
@@ -180,11 +180,11 @@ fn bpe_tokenizer_matches_the_reference_everywhere() {
     assert_eq!(mismatches, 0, "{mismatches} mismatch(es) on {} texts", texts.len());
 }
 
-/// Every BPE model installed under `~/.engram/models` must match the reference
+/// Every BPE model installed under `~/.souvenance/models` must match the reference
 /// crate, whatever its split pattern and normaliser.
 #[test]
 fn every_installed_bpe_tokenizer_matches_the_reference() {
-    let models = engrams::paths::config_dir().join("models");
+    let models = souvenance::paths::config_dir().join("models");
     let Ok(dirs) = std::fs::read_dir(&models) else {
         eprintln!("no models directory, test skipped");
         return;
@@ -196,7 +196,7 @@ fn every_installed_bpe_tokenizer_matches_the_reference() {
         if !raw.contains("\"type\":\"BPE\"") && !raw.contains("\"type\": \"BPE\"") {
             continue;
         }
-        let ours = engrams::bpe::Bpe::from_file(&json, 8192).unwrap_or_else(|e| panic!("{}: {e}", dir.display()));
+        let ours = souvenance::bpe::Bpe::from_file(&json, 8192).unwrap_or_else(|e| panic!("{}: {e}", dir.display()));
         let mut reference = tokenizers::Tokenizer::from_file(&json).expect("reference");
         reference.with_truncation(Some(tokenizers::TruncationParams { max_length: 8192, ..Default::default() })).unwrap();
         let mut texts = edge_cases();
@@ -232,7 +232,7 @@ fn every_installed_bpe_tokenizer_matches_the_reference() {
 /// (`WhitespaceSplit` then `Metaspace` for XLM-R, `Metaspace` alone for e5-small).
 #[test]
 fn every_installed_unigram_tokenizer_matches_the_reference() {
-    let models = engrams::paths::config_dir().join("models");
+    let models = souvenance::paths::config_dir().join("models");
     let Ok(dirs) = std::fs::read_dir(&models) else {
         eprintln!("no models directory, test skipped");
         return;

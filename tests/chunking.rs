@@ -1,6 +1,6 @@
 //! Splitting follows the markdown structure and never cuts inside a paragraph.
 
-use engrams::chunking::{split, Chunk};
+use souvenance::chunking::{split, Chunk};
 
 fn note(body: &str) -> Vec<Chunk> {
     split(body, 300)
@@ -79,11 +79,11 @@ fn a_note_without_description_still_gets_its_name() {
 
 #[test]
 fn the_budget_is_derived_from_the_model_window() {
-    assert_eq!(engrams::chunking::budget_for(512), 450);
-    assert_eq!(engrams::chunking::budget_for(8192), 8130);
+    assert_eq!(souvenance::chunking::budget_for(512), 450);
+    assert_eq!(souvenance::chunking::budget_for(8192), 8130);
 }
 
 #[test]
 fn a_tiny_window_still_leaves_room_for_content() {
-    assert!(engrams::chunking::budget_for(64) > 0);
+    assert!(souvenance::chunking::budget_for(64) > 0);
 }

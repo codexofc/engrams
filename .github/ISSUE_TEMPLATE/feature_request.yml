@@ -6,7 +6,7 @@ body:
     id: problem
     attributes:
       label: The problem
-      description: What you are trying to do and where engrams stops short. Describe the situation, not the solution.
+      description: What you are trying to do and where souvenance stops short. Describe the situation, not the solution.
     validations:
       required: true
   - type: textarea

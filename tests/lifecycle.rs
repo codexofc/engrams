@@ -1,5 +1,5 @@
 //! Life-cycle operations keep everything they do not touch.
-use engrams::lifecycle::{append_paragraph, relink, remove_field, set_field};
+use souvenance::lifecycle::{append_paragraph, relink, remove_field, set_field};
 
 const NOTE: &str = "---\nname: alpha\ndescription: \"Alpha: a note\"\ntype: project\nstatus: active\n---\n\nFirst paragraph.\n\nSee [[beta]] and [[Beta_Two|that one]] and [[gamma#section]].\n";
 

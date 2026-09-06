@@ -59,7 +59,7 @@ pub fn scan_dir(root: &Path) -> Vec<Hit> {
         for e in listing.flatten() {
             let p = e.path();
             if p.is_dir() {
-                if p.file_name().is_some_and(|n| n == ".git" || n == ".engram" || n == "models" || n == "target") {
+                if p.file_name().is_some_and(|n| n == ".git" || n == ".souvenance" || n == "models" || n == "target") {
                     continue;
                 }
                 stack.push(p);

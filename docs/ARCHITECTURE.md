@@ -3,7 +3,7 @@
 ## Guiding principle
 
 The markdown files are the truth. Vectors, hot indexes and caches derive from them
-and are disposable: losing `.engram/` costs a few minutes of rebuild, losing the notes
+and are disposable: losing `.souvenance/` costs a few minutes of rebuild, losing the notes
 would cost years. Nothing the engine writes is precious, and nothing it writes may
 make the notes depend on it.
 
@@ -14,18 +14,18 @@ frontmatter at search time, never from the index; a fact is replaced, never dele
 ## Layout on disk
 
 ```
-<root>/                          the notes, ENGRAM_ROOT or ~/.engram/root
+<root>/                          the notes, SOUVENANCE_ROOT or ~/.souvenance/root
   <family>/<project>/<name>.md   one durable fact per file, frontmatter + body
   <family>/<project>/MEMORY.md   generated hot index, bounded to 17 KB
   <family>/common/               notes listed in every project of the family
-  .engram/
+  .souvenance/
     index.bin                    vectors, binary (JSON header + f32 LE)
     questions.json               paragraph fingerprint -> generated questions (versionable)
     feedback.json                learned (query, note) pairs (versionable)
     feedback.bin                 cached vectors of the learned queries
     usage.log, searches.log, reads.log
-    engram.sock                  warm process socket
-~/.engram/models/<model>/        weights, config, pooling, sentencepiece.bpe.model
+    souvenance.sock                  warm process socket
+~/.souvenance/models/<model>/        weights, config, pooling, sentencepiece.bpe.model
 ```
 
 ## Modules
@@ -58,7 +58,7 @@ hook, MCP server. Pure modules have no I/O and are tested without a model.
 
 ## The refresh pass
 
-The same pass serves `engram index`, every search, and the warm process's
+The same pass serves `souvenance index`, every search, and the warm process's
 background loop:
 
 1. walk the notes, split each body into chunks, prefix each chunk with the note's
@@ -82,8 +82,8 @@ show five with the passage that matched.
 
 ## Warm process
 
-`engram serve` keeps the engine loaded behind a Unix socket and exits after
-`ENGRAM_IDLE` seconds without a request (`never` keeps it resident, `engram status
+`souvenance serve` keeps the engine loaded behind a Unix socket and exits after
+`SOUVENANCE_IDLE` seconds without a request (`never` keeps it resident, `souvenance status
 --short` shows it in one line). Protocol: one tab-separated request line,
 one reply. Each connection is served in its own thread under a read lock; refreshes
 take the write lock. A client whose binary is newer than the server's makes the
@@ -92,12 +92,12 @@ starts the process and answers locally without waiting for it.
 
 ## Integrations
 
-- `engram hook` reads Claude Code's `UserPromptSubmit` JSON on stdin and prints a
+- `souvenance hook` reads Claude Code's `UserPromptSubmit` JSON on stdin and prints a
   `<working-memory>` block with the passages close to the prompt.
-- `engram mcp` is a JSON-RPC server over stdio (one message per line) exposing
+- `souvenance mcp` is a JSON-RPC server over stdio (one message per line) exposing
   `search`, `answer`, `read`, `write`, `append`, `link`, `learn`. Tools call the same
   functions as the CLI.
-- `engram setup <tool>` edits the tool's configuration to register both.
+- `souvenance setup <tool>` edits the tool's configuration to register both.
 
 ## Formats
 

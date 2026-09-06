@@ -1,12 +1,12 @@
 //! Loading a model from a local directory. No download: the directory is given, or
 //! loading fails naming the missing file.
 
-use engrams::embedder::Embedder;
+use souvenance::embedder::Embedder;
 use std::fs;
 use std::path::PathBuf;
 
 fn scratch_dir(name: &str) -> PathBuf {
-    let d = std::env::temp_dir().join(format!("engram-test-{name}-{}", std::process::id()));
+    let d = std::env::temp_dir().join(format!("souvenance-test-{name}-{}", std::process::id()));
     let _ = fs::remove_dir_all(&d);
     fs::create_dir_all(&d).unwrap();
     d

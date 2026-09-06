@@ -1,7 +1,7 @@
 //! Ranking is what the agent sees. A good note in ninth position is buried, not found.
 
-use engrams::similarity::rank_notes;
-use engrams::{cosine, rank, Hit};
+use souvenance::similarity::rank_notes;
+use souvenance::{cosine, rank, Hit};
 
 #[test]
 fn identical_vectors_have_a_cosine_of_one() {

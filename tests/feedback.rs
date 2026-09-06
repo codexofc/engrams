@@ -1,5 +1,5 @@
 //! Learning must learn nothing from the engine itself, stay bounded, and decay.
-use engrams::feedback::{decay, learned_bonus, missed_pairs, within_window, Read, Searched, Table, CAP, STEP};
+use souvenance::feedback::{decay, learned_bonus, missed_pairs, within_window, Read, Searched, Table, CAP, STEP};
 use std::collections::HashMap;
 
 #[test]

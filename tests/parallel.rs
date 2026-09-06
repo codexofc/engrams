@@ -1,17 +1,17 @@
 //! Parallel encoding must return exactly the sequential vectors, in order: the core
 //! count of a machine must not change the index.
-use engrams::embedder::Embedder;
+use souvenance::embedder::Embedder;
 use std::path::PathBuf;
 
 fn model_dir() -> Option<PathBuf> {
-    let d = engrams::paths::model_dir();
+    let d = souvenance::paths::model_dir();
     d.join("model.safetensors").exists().then_some(d)
 }
 
 #[test]
 fn parallel_encoding_matches_sequential_and_keeps_order() {
     let Some(dir) = model_dir() else {
-        eprintln!("model absent, test skipped; run `engram init`");
+        eprintln!("model absent, test skipped; run `souvenance init`");
         return;
     };
     let embedder = Embedder::load(&dir).expect("model");

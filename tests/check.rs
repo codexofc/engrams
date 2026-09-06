@@ -1,14 +1,14 @@
-//! `engram check` gives every frontmatter field a reader, and defines by what it
+//! `souvenance check` gives every frontmatter field a reader, and defines by what it
 //! refuses the YAML subset the memory accepts.
 
-use engrams::check::{check_corpus, check_note};
-use engrams::note::Note;
+use souvenance::check::{check_corpus, check_note};
+use souvenance::note::Note;
 
 fn note(raw: &str) -> Note {
     Note::parse(raw)
 }
 
-fn messages(findings: &[engrams::check::Finding]) -> String {
+fn messages(findings: &[souvenance::check::Finding]) -> String {
     findings.iter().map(|f| f.message.as_str()).collect::<Vec<_>>().join(" | ")
 }
 

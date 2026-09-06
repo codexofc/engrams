@@ -2,7 +2,7 @@
 //! costs fourteen points of recall.
 
 use candle_core::{Device, Tensor};
-use engrams::pooling::{pool, Pooling};
+use souvenance::pooling::{pool, Pooling};
 
 fn hidden(values: &[[f32; 3]]) -> Tensor {
     let flat: Vec<f32> = values.iter().flatten().copied().collect();

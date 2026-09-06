@@ -1,0 +1,44 @@
+[package]
+name = "engrams"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Local semantic memory for coding agents: markdown notes in, a 200 MB search engine out. No server, no network, no database."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/codexofc/engrams"
+homepage = "https://github.com/codexofc/engrams"
+readme = "README.md"
+keywords = ["embeddings", "semantic-search", "memory", "agents", "mcp"]
+categories = ["command-line-utilities", "text-processing"]
+exclude = ["docs/*.png", "docs/*.pdf"]
+
+[lib]
+name = "engrams"
+path = "src/lib.rs"
+
+[[bin]]
+name = "engram"
+path = "src/main.rs"
+
+[dependencies]
+candle-core = "0.9"
+candle-nn = "0.9"
+candle-transformers = "0.9"
+spm_precompiled = "0.1"
+base64 = "0.13"
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+safetensors = "0.4"
+half = "2"
+libc = "0.2"
+regex = "1"
+
+[dev-dependencies]
+candle-core = "0.9"
+# Reference implementation for the tokenizer parity test. Never linked into the binary.
+tokenizers = { version = "0.21", default-features = false, features = ["onig"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="400" viewBox="0 0 820 400" font-family="Helvetica, Arial, sans-serif" font-size="12">
+  <title>Expected note among the five returned, by query family</title>
+  <rect width="820" height="400" fill="#ffffff"/>
+  <text x="20" y="26" font-size="15" font-weight="700" fill="#10202b">Expected note among the five returned (%), 96 blind queries, same index</text>
+  <!-- legend -->
+  <g font-size="11" fill="#485864">
+    <rect x="20" y="40" width="12" height="12" fill="#9aa5b1"/><text x="38" y="50">text only</text>
+    <rect x="110" y="40" width="12" height="12" fill="#2d6a9f"/><text x="128" y="50">+ identifier bonus</text>
+    <rect x="250" y="40" width="12" height="12" fill="#b7410e"/><text x="268" y="50">+ indexed questions (default)</text>
+    <rect x="440" y="40" width="12" height="12" fill="#3d7d5a"/><text x="458" y="50">words only (grep-like baseline)</text>
+  </g>
+  <!-- x scale: 0..100 -> 240..660 (4.2 px per point) -->
+  <g stroke="#e3e7eb"><line x1="240" y1="64" x2="240" y2="360"/><line x1="345" y1="64" x2="345" y2="360"/><line x1="450" y1="64" x2="450" y2="360"/><line x1="555" y1="64" x2="555" y2="360"/><line x1="660" y1="64" x2="660" y2="360"/></g>
+  <g fill="#7c8a95" text-anchor="middle"><text x="240" y="376">0</text><text x="345" y="376">25</text><text x="450" y="376">50</text><text x="555" y="376">75</text><text x="660" y="376">100</text></g>
+  <!-- group 1: topic of a note (24 cases): 83 83 83 33 -->
+  <text x="228" y="105" text-anchor="end" fill="#485864">topic of a note (24)</text>
+  <rect x="240" y="72" width="348.6" height="13" rx="2" fill="#9aa5b1"/><text x="594" y="83" fill="#10202b">83</text>
+  <rect x="240" y="88" width="348.6" height="13" rx="2" fill="#2d6a9f"/><text x="594" y="99" fill="#10202b">83</text>
+  <rect x="240" y="104" width="348.6" height="13" rx="2" fill="#b7410e"/><text x="594" y="115" fill="#10202b">83</text>
+  <rect x="240" y="120" width="138.6" height="13" rx="2" fill="#3d7d5a"/><text x="384" y="131" fill="#10202b">33</text>
+  <!-- group 2: buried detail (24): 58 58 75 54 -->
+  <text x="228" y="179" text-anchor="end" fill="#485864">buried detail (24)</text>
+  <rect x="240" y="146" width="243.6" height="13" rx="2" fill="#9aa5b1"/><text x="489" y="157" fill="#10202b">58</text>
+  <rect x="240" y="162" width="243.6" height="13" rx="2" fill="#2d6a9f"/><text x="489" y="173" fill="#10202b">58</text>
+  <rect x="240" y="178" width="315" height="13" rx="2" fill="#b7410e"/><text x="561" y="189" fill="#10202b">75</text>
+  <rect x="240" y="194" width="226.8" height="13" rx="2" fill="#3d7d5a"/><text x="472" y="205" fill="#10202b">54</text>
+  <!-- group 3: named identifier (12): 75 92 100 75 -->
+  <text x="228" y="253" text-anchor="end" fill="#485864">named identifier (12)</text>
+  <rect x="240" y="220" width="315" height="13" rx="2" fill="#9aa5b1"/><text x="561" y="231" fill="#10202b">75</text>
+  <rect x="240" y="236" width="386.4" height="13" rx="2" fill="#2d6a9f"/><text x="632" y="247" fill="#10202b">92</text>
+  <rect x="240" y="252" width="420" height="13" rx="2" fill="#b7410e"/><text x="666" y="263" fill="#10202b">100</text>
+  <rect x="240" y="268" width="315" height="13" rx="2" fill="#3d7d5a"/><text x="561" y="279" fill="#10202b">75</text>
+  <!-- group 4: first benchmark (36): 81 81 81 19 -->
+  <text x="228" y="327" text-anchor="end" fill="#485864">first benchmark (36)</text>
+  <rect x="240" y="294" width="340.2" height="13" rx="2" fill="#9aa5b1"/><text x="586" y="305" fill="#10202b">81</text>
+  <rect x="240" y="310" width="340.2" height="13" rx="2" fill="#2d6a9f"/><text x="586" y="321" fill="#10202b">81</text>
+  <rect x="240" y="326" width="340.2" height="13" rx="2" fill="#b7410e"/><text x="586" y="337" fill="#10202b">81</text>
+  <rect x="240" y="342" width="79.8" height="13" rx="2" fill="#3d7d5a"/><text x="325" y="353" fill="#10202b">19</text>
+  <line x1="240" y1="64" x2="240" y2="360" stroke="#10202b"/>
+  <text x="20" y="394" font-size="11" fill="#7c8a95">Each signal moves only the family it targets. Standard error: 10 points at 24 cases, 14 at 12. Private bilingual corpus, 296 notes, 6 625 vectors.</text>
+</svg>

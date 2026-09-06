@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="360" viewBox="0 0 820 360" font-family="Helvetica, Arial, sans-serif" font-size="12">
+  <title>Resident memory of the warm process, step by step</title>
+  <rect width="820" height="360" fill="#ffffff"/>
+  <text x="20" y="26" font-size="15" font-weight="700" fill="#10202b">Resident memory of the warm process, step by step (MB)</text>
+  <!-- grid: y = 300 - v * 0.1158 (1900 MB -> 220 px) -->
+  <g stroke="#e3e7eb" stroke-width="1">
+    <line x1="60" y1="300" x2="800" y2="300"/>
+    <line x1="60" y1="242.1" x2="800" y2="242.1"/>
+    <line x1="60" y1="184.2" x2="800" y2="184.2"/>
+    <line x1="60" y1="126.3" x2="800" y2="126.3"/>
+    <line x1="60" y1="68.4" x2="800" y2="68.4"/>
+  </g>
+  <g fill="#7c8a95" text-anchor="end">
+    <text x="52" y="304">0</text>
+    <text x="52" y="246">500</text>
+    <text x="52" y="188">1000</text>
+    <text x="52" y="130">1500</text>
+    <text x="52" y="72">2000</text>
+  </g>
+  <!-- bars, 6 columns of 120 px from x = 70 -->
+  <rect x="90" y="86.7" width="80" height="213.3" rx="3" fill="#6f7a84"/>
+  <text x="130" y="80" text-anchor="middle" font-weight="700" fill="#10202b">1842</text>
+  <line x1="170" y1="86.7" x2="210" y2="86.7" stroke="#7c8a95" stroke-dasharray="3 3"/>
+  <rect x="210" y="86.7" width="80" height="126.8" rx="3" fill="#b7410e"/>
+  <text x="250" y="80" text-anchor="middle" font-weight="700" fill="#10202b">747</text>
+  <text x="250" y="228" text-anchor="middle" fill="#b7410e">−1095</text>
+  <line x1="290" y1="213.5" x2="330" y2="213.5" stroke="#7c8a95" stroke-dasharray="3 3"/>
+  <rect x="330" y="213.5" width="80" height="27.2" rx="3" fill="#b7410e"/>
+  <text x="370" y="207" text-anchor="middle" font-weight="700" fill="#10202b">512</text>
+  <text x="370" y="255" text-anchor="middle" fill="#b7410e">−235</text>
+  <line x1="410" y1="240.7" x2="450" y2="240.7" stroke="#7c8a95" stroke-dasharray="3 3"/>
+  <rect x="450" y="240.7" width="80" height="34.6" rx="3" fill="#b7410e"/>
+  <text x="490" y="234" text-anchor="middle" font-weight="700" fill="#10202b">213</text>
+  <text x="490" y="290" text-anchor="middle" fill="#b7410e">−299</text>
+  <line x1="530" y1="275.3" x2="570" y2="275.3" stroke="#7c8a95" stroke-dasharray="3 3"/>
+  <rect x="570" y="271.9" width="80" height="3.4" rx="1" fill="#2d6a9f"/>
+  <text x="610" y="265" text-anchor="middle" font-weight="700" fill="#10202b">243</text>
+  <text x="610" y="290" text-anchor="middle" fill="#2d6a9f">+30</text>
+  <line x1="650" y1="271.9" x2="690" y2="271.9" stroke="#7c8a95" stroke-dasharray="3 3"/>
+  <rect x="690" y="277.1" width="80" height="22.9" rx="3" fill="#6f7a84"/>
+  <text x="730" y="270" text-anchor="middle" font-weight="700" fill="#10202b">198</text>
+  <line x1="60" y1="300" x2="800" y2="300" stroke="#10202b"/>
+  <!-- labels -->
+  <g fill="#485864" text-anchor="middle" font-size="11">
+    <text x="130" y="320">first engine, F32</text>
+    <text x="130" y="334">full embedding table</text>
+    <text x="250" y="320">embedding table</text>
+    <text x="250" y="334">read from the file</text>
+    <text x="370" y="320">Q8_0 linear layers</text>
+    <text x="490" y="320">compact tokenizer</text>
+    <text x="490" y="334">hash map + Viterbi</text>
+    <text x="610" y="320">questions indexed</text>
+    <text x="610" y="334">index x4</text>
+    <text x="730" y="320">native SentencePiece</text>
+    <text x="730" y="334">no JSON</text>
+  </g>
+  <text x="20" y="352" font-size="11" fill="#7c8a95">Same machine, same weights, same answers at every step (cosine 0.9999 to F32, benchmark identical). MacBook Pro M1 Pro.</text>
+</svg>

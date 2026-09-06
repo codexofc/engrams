@@ -6,6 +6,8 @@ All notable changes to Engrams are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-06
+
 ### Added
 - The tray on Linux, through the StatusNotifierItem protocol over D-Bus in pure Rust
   (ksni): no GTK at build or run time, every release binary ships the `tray` feature.

@@ -50,6 +50,8 @@ frontmatter at search time, never from the index; a fact is replaced, never dele
 | `lifecycle` | append, verify, supersede, relink on the file text | `check` |
 | `secrets` | patterns that must never be written | `regex` |
 | `paths` | where things live | nothing |
+| `models` | the registry of known checkpoints: aliases, families, sizes, licences, the prefixes some expect | nothing |
+| `tray` (binary, feature `tray`) | the mark in the menu bar or system tray, its menu, the login item | `tray-icon`, `tao` on macOS, `ksni` on Linux |
 
 The binary (`src/main.rs`) composes them: refresh pass, engine, warm process, CLI,
 hook, MCP server. Pure modules have no I/O and are tested without a model.

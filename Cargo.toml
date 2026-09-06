@@ -1,6 +1,6 @@
 [package]
 name = "engrams"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 rust-version = "1.98"
 description = "Local semantic memory for coding agents: markdown notes in, a 200 MB search engine out. No server, no network, no database."
@@ -10,7 +10,7 @@ homepage = "https://github.com/codexofc/engrams"
 readme = "README.md"
 keywords = ["embeddings", "semantic-search", "memory", "agents", "mcp"]
 categories = ["command-line-utilities", "text-processing"]
-exclude = ["docs/*.png", "docs/*.pdf"]
+exclude = ["docs/*.png", "docs/*.pdf", "bench/", ".github/", "scripts/", "Dockerfile", "install.sh"]
 
 [lib]
 name = "engrams"

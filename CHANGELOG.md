@@ -6,6 +6,12 @@ All notable changes to Engrams are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-06
+
+### Added
+- README sections on privacy and platforms (no telemetry, Linux and macOS, no
+  Windows yet) and acknowledgements. The crate is published on crates.io.
+
 ### Changed
 - The context cost is measured at the three moments an agent touches the memory
   (the hook at every prompt, a consultation, a session start), against a keyword

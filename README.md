@@ -405,6 +405,37 @@ More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/BENCHMARKS.md](do
 5. **Low level where it runs.** Memory layout, precision and evaluation order are
    decisions this code makes itself; that is where the 1.8 GB went.
 
+## Privacy and platforms
+
+No telemetry, no account, no network at search time. The only network access is
+the model download from Hugging Face, once, by `curl`, and only when you ask for
+it. Notes, index, questions cache and feedback table stay on the machine, in the
+directory you chose. Linux and macOS are supported and tested in CI. Windows is not
+supported yet: the warm process uses a Unix socket. Windows Subsystem for Linux
+runs the Linux binary.
+
+## Acknowledgements
+
+Engrams stands on the work of others. The inference library is
+[candle](https://github.com/huggingface/candle) by Hugging Face: the XLM-RoBERTa
+graph here derives from candle-transformers, and the ModernBERT graph was written
+after the reference implementation. The
+[tokenizers](https://github.com/huggingface/tokenizers) crate is the parity
+reference of the compact tokenizers, and
+[spm_precompiled](https://github.com/huggingface/spm_precompiled) applies the
+SentencePiece normalisation tables. The tray uses
+[tray-icon](https://github.com/tauri-apps/tray-icon) and
+[tao](https://github.com/tauri-apps/tao) from the Tauri project on macOS and
+[ksni](https://github.com/iovxw/ksni) on Linux. safetensors, half, regex,
+unicode-normalization, serde and serde_json do the rest.
+
+The models are the work of their authors: the Granite embedding models by IBM
+Research (Apache-2.0), multilingual-e5 by the intfloat team at Microsoft (MIT),
+gte-modernbert-base by Alibaba (Apache-2.0), the ModernBERT architecture by
+Answer.AI and LightOn, SentencePiece by Google. Thanks to the teams behind Claude
+Code, Codex CLI, opencode, Gemini CLI, Cursor, Windsurf and Kandev for the hook
+and MCP surfaces this engine plugs into, and to the Rust project.
+
 ## Contributing and license
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md). Licensed

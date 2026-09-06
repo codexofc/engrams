@@ -26,6 +26,16 @@ All notable changes to Engrams are recorded here. The format follows
 - Container image on GitHub Packages (`ghcr.io/codexofc/engrams`) built from the
   release binaries for linux/amd64 and linux/arm64.
 - Coverage job in CI, `develop` branch and repository rulesets ready to import.
+- Seven models measured on the same corpus, in quality per query family and in
+  isolation (latency, peak memory): tables and two charts in docs/BENCHMARKS.md,
+  drawn by `examples/charts.rs` from the typed-in numbers. Every table and chart
+  names its model.
+
+### Fixed
+- The compact Unigram tokenizer honours the `Metaspace`-only layout and the
+  space-folding normaliser of multilingual-e5-small (66 mismatches out of 2 073
+  texts before). The parity test covers every installed tokenizer.
+- Indexes written before the prompts field existed stay valid after the upgrade.
 
 ### Changed
 - Minimum Rust version 1.98. Intel macOS binaries are cross-compiled from the Apple

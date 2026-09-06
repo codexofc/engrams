@@ -8,27 +8,47 @@
   <rect x="268" y="52" width="12" height="12" fill="#b7410e"/><text x="286" y="62" font-size="11" fill="#485864">ModernBERT</text>
   <line x1="70" y1="80" x2="70" y2="360" stroke="#e3e7eb"/>
   <text x="70" y="376" text-anchor="middle" fill="#7c8a95" font-size="10">0</text>
-  <line x1="430" y1="80" x2="430" y2="360" stroke="#e3e7eb"/>
-  <text x="430" y="376" text-anchor="middle" fill="#7c8a95" font-size="10">250</text>
-  <line x1="790" y1="80" x2="790" y2="360" stroke="#e3e7eb"/>
-  <text x="790" y="376" text-anchor="middle" fill="#7c8a95" font-size="10">500</text>
-  <line x1="70" y1="360" x2="790" y2="360" stroke="#e3e7eb"/>
+  <line x1="182.5" y1="80" x2="182.5" y2="360" stroke="#e3e7eb"/>
+  <text x="182.5" y="376" text-anchor="middle" fill="#7c8a95" font-size="10">500</text>
+  <line x1="295" y1="80" x2="295" y2="360" stroke="#e3e7eb"/>
+  <text x="295" y="376" text-anchor="middle" fill="#7c8a95" font-size="10">1000</text>
+  <line x1="407.5" y1="80" x2="407.5" y2="360" stroke="#e3e7eb"/>
+  <text x="407.5" y="376" text-anchor="middle" fill="#7c8a95" font-size="10">1500</text>
+  <line x1="520" y1="80" x2="520" y2="360" stroke="#e3e7eb"/>
+  <text x="520" y="376" text-anchor="middle" fill="#7c8a95" font-size="10">2000</text>
+  <line x1="70" y1="360" x2="520" y2="360" stroke="#e3e7eb"/>
   <text x="62" y="364" text-anchor="end" fill="#7c8a95" font-size="10">40</text>
-  <line x1="70" y1="304" x2="790" y2="304" stroke="#e3e7eb"/>
+  <line x1="70" y1="304" x2="520" y2="304" stroke="#e3e7eb"/>
   <text x="62" y="308" text-anchor="end" fill="#7c8a95" font-size="10">50</text>
-  <line x1="70" y1="248" x2="790" y2="248" stroke="#e3e7eb"/>
+  <line x1="70" y1="248" x2="520" y2="248" stroke="#e3e7eb"/>
   <text x="62" y="252" text-anchor="end" fill="#7c8a95" font-size="10">60</text>
-  <line x1="70" y1="192" x2="790" y2="192" stroke="#e3e7eb"/>
+  <line x1="70" y1="192" x2="520" y2="192" stroke="#e3e7eb"/>
   <text x="62" y="196" text-anchor="end" fill="#7c8a95" font-size="10">70</text>
-  <line x1="70" y1="136" x2="790" y2="136" stroke="#e3e7eb"/>
+  <line x1="70" y1="136" x2="520" y2="136" stroke="#e3e7eb"/>
   <text x="62" y="140" text-anchor="end" fill="#7c8a95" font-size="10">80</text>
-  <line x1="70" y1="80" x2="790" y2="80" stroke="#e3e7eb"/>
+  <line x1="70" y1="80" x2="520" y2="80" stroke="#e3e7eb"/>
   <text x="62" y="84" text-anchor="end" fill="#7c8a95" font-size="10">90</text>
-  <text x="430" y="394" text-anchor="middle" fill="#485864" font-size="11">peak resident memory of an isolated search (MB)</text>
+  <text x="295" y="394" text-anchor="middle" fill="#485864" font-size="11">peak resident memory of an isolated search (MB)</text>
   <text x="18" y="220" transform="rotate(-90 18 220)" text-anchor="middle" fill="#485864" font-size="11">expected note in the top five (%)</text>
-  <circle cx="516.4" cy="164" r="11.5" fill="#2d6a9f" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
-  <text x="535.903" y="168" fill="#10202b" font-size="11">granite-multilingual <tspan fill="#7c8a95">75 %, 310 MB, 0.21 s</tspan></text>
-  <circle cx="480.4" cy="170.99997" r="8.4" fill="#b7410e" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
-  <line x1="488.83197" y1="170.99997" x2="494.83197" y2="179" stroke="#7c8a95" stroke-width="1"/>
-  <text x="496.83197" y="183" fill="#10202b" font-size="11">granite-small-en <tspan fill="#7c8a95">74 %, 285 MB, 0.43 s</tspan></text>
+  <circle cx="413.57498" cy="140.2" r="14.6" fill="#2d6a9f" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
+  <polyline points="428.22394,140.2 540,140.2 554,140.2" fill="none" stroke="#7c8a95" stroke-width="0.8"/>
+  <text x="560" y="144.2" fill="#10202b" font-size="11">e5-large <tspan fill="#7c8a95">79 %, 1527 MB, 0.55 s</tspan></text>
+  <circle cx="140.875" cy="164" r="11.5" fill="#2d6a9f" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
+  <polyline points="152.378,164 540,164 554,164" fill="none" stroke="#7c8a95" stroke-width="0.8"/>
+  <text x="560" y="168" fill="#10202b" font-size="11">granite-multilingual <tspan fill="#7c8a95">75 %, 315 MB, 0.18 s</tspan></text>
+  <circle cx="135.25" cy="170.99997" r="8.4" fill="#b7410e" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
+  <polyline points="143.68199,170.99997 540,180 554,180" fill="none" stroke="#7c8a95" stroke-width="0.8"/>
+  <text x="560" y="184" fill="#10202b" font-size="11">granite-small-en <tspan fill="#7c8a95">74 %, 290 MB, 0.43 s</tspan></text>
+  <circle cx="177.54999" cy="199" r="11.5" fill="#2d6a9f" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
+  <polyline points="189.053,199 540,199 554,199" fill="none" stroke="#7c8a95" stroke-width="0.8"/>
+  <text x="560" y="203" fill="#10202b" font-size="11">e5-base <tspan fill="#7c8a95">69 %, 478 MB, 0.20 s</tspan></text>
+  <circle cx="119.95" cy="211.6" r="8.9" fill="#3d7d5a" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
+  <polyline points="128.83824,211.6 540,215 554,215" fill="none" stroke="#7c8a95" stroke-width="0.8"/>
+  <text x="560" y="219" fill="#10202b" font-size="11">e5-small <tspan fill="#7c8a95">66 %, 222 MB, 0.20 s</tspan></text>
+  <circle cx="153.25" cy="215.79996" r="9.5" fill="#b7410e" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
+  <polyline points="162.74295,215.79996 540,231 554,231" fill="none" stroke="#7c8a95" stroke-width="0.8"/>
+  <text x="560" y="235" fill="#10202b" font-size="11">granite-en <tspan fill="#7c8a95">66 %, 370 MB, 0.24 s</tspan></text>
+  <circle cx="153.25" cy="297.7" r="9.5" fill="#b7410e" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
+  <polyline points="162.74295,297.7 540,297.7 554,297.7" fill="none" stroke="#7c8a95" stroke-width="0.8"/>
+  <text x="560" y="301.7" fill="#10202b" font-size="11">gte-modernbert <tspan fill="#7c8a95">51 %, 370 MB, 0.27 s</tspan></text>
 </svg>

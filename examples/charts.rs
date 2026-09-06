@@ -19,13 +19,13 @@ const CASES: [u32; 4] = [24, 24, 12, 36];
 const FAMILIES: [&str; 4] = ["topic of a note (24)", "buried detail (24)", "named identifier (12)", "first benchmark (36)"];
 
 const MODELS: &[Model] = &[
-    Model { alias: "granite-multilingual", family: "XLM-RoBERTa", params_m: 278, top5: [83, 58, 75, 81], rss_mb: 310, latency_s: 0.21 },
-    Model { alias: "e5-small", family: "BERT", params_m: 118, top5: [0, 0, 0, 0], rss_mb: 0, latency_s: 0.0 },
-    Model { alias: "e5-base", family: "XLM-RoBERTa", params_m: 278, top5: [0, 0, 0, 0], rss_mb: 0, latency_s: 0.0 },
-    Model { alias: "e5-large", family: "XLM-RoBERTa", params_m: 560, top5: [0, 0, 0, 0], rss_mb: 0, latency_s: 0.0 },
-    Model { alias: "granite-small-en", family: "ModernBERT", params_m: 97, top5: [83, 54, 100, 72], rss_mb: 285, latency_s: 0.43 },
-    Model { alias: "granite-en", family: "ModernBERT", params_m: 149, top5: [67, 71, 100, 50], rss_mb: 0, latency_s: 0.0 },
-    Model { alias: "gte-modernbert", family: "ModernBERT", params_m: 149, top5: [0, 0, 0, 0], rss_mb: 0, latency_s: 0.0 },
+    Model { alias: "granite-multilingual", family: "XLM-RoBERTa", params_m: 278, top5: [83, 58, 75, 81], rss_mb: 315, latency_s: 0.18 },
+    Model { alias: "e5-small", family: "BERT", params_m: 118, top5: [62, 58, 100, 64], rss_mb: 222, latency_s: 0.20 },
+    Model { alias: "e5-base", family: "XLM-RoBERTa", params_m: 278, top5: [71, 58, 100, 64], rss_mb: 478, latency_s: 0.20 },
+    Model { alias: "e5-large", family: "XLM-RoBERTa", params_m: 560, top5: [79, 71, 100, 78], rss_mb: 1527, latency_s: 0.55 },
+    Model { alias: "granite-small-en", family: "ModernBERT", params_m: 97, top5: [83, 54, 100, 72], rss_mb: 290, latency_s: 0.43 },
+    Model { alias: "granite-en", family: "ModernBERT", params_m: 149, top5: [67, 71, 100, 50], rss_mb: 370, latency_s: 0.24 },
+    Model { alias: "gte-modernbert", family: "ModernBERT", params_m: 149, top5: [50, 50, 92, 39], rss_mb: 370, latency_s: 0.27 },
 ];
 
 const INK: &str = "#10202b";
@@ -114,7 +114,9 @@ fn quality_svg() -> String {
 fn efficiency_svg() -> String {
     let models: Vec<&Model> = MODELS.iter().filter(|m| measured(m) && m.rss_mb > 0).collect();
     let (w, h) = (820u32, 420u32);
-    let (x0, x1, y0, y1) = (70.0f32, 790.0f32, 360.0f32, 80.0f32);
+    // The plot stops at x1; the labels stack in a column to its right, one line
+    // each, joined to their dot by a leader, so they can never overlap.
+    let (x0, x1, y0, y1) = (70.0f32, 520.0f32, 360.0f32, 80.0f32);
     let max_mb = models.iter().map(|m| m.rss_mb).max().unwrap_or(1000).next_multiple_of(500) as f32;
     let mut s = head(
         w,
@@ -138,32 +140,30 @@ fn efficiency_svg() -> String {
         y0 + 34.0
     );
     s += &format!("  <text x=\"18\" y=\"{}\" transform=\"rotate(-90 18 {})\" text-anchor=\"middle\" fill=\"#485864\" font-size=\"11\">expected note in the top five (%)</text>\n", (y0 + y1) / 2.0, (y0 + y1) / 2.0);
-    // Labels are pushed apart when two dots sit within a line of each other.
     let mut placed: Vec<(f32, f32, f32, &Model)> = models
         .iter()
         .map(|m| (x0 + m.rss_mb as f32 / max_mb * (x1 - x0), y0 - (overall(m) - 40.0) / 50.0 * (y0 - y1), 4.0 + (m.params_m as f32).sqrt() * 0.45, *m))
         .collect();
     placed.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-    let mut labels: Vec<f32> = Vec::new();
+    // Label rows: in dot order from the top, at least 16 px apart, then pushed back
+    // up as a block if the last one would fall under the plot.
+    let mut rows: Vec<f32> = Vec::new();
     for (_, y, _, _) in &placed {
-        let mut ly = *y;
-        if let Some(prev) = labels.last() {
-            ly = ly.max(prev + 15.0);
-        }
-        labels.push(ly);
+        let low = rows.last().map_or(y1, |p| p + 16.0);
+        rows.push(y.max(low));
     }
-    for ((x, y, r, m), ly) in placed.iter().zip(labels) {
+    let overflow = rows.last().map_or(0.0, |last| (last - y0).max(0.0));
+    let rows: Vec<f32> = rows.iter().map(|r| r - overflow).collect();
+    let column = x1 + 40.0;
+    for ((x, y, r, m), ly) in placed.iter().zip(rows) {
         let (x, y, r) = (*x, *y, *r);
         s += &format!(
             "  <circle cx=\"{x}\" cy=\"{y}\" r=\"{r:.1}\" fill=\"{}\" fill-opacity=\"0.85\" stroke=\"#ffffff\" stroke-width=\"2\"/>\n",
             colour(m.family)
         );
-        if (ly - y).abs() > 1.0 {
-            s += &format!("  <line x1=\"{}\" y1=\"{y}\" x2=\"{}\" y2=\"{ly}\" stroke=\"{MUTED}\" stroke-width=\"1\"/>\n", x + r, x + r + 6.0);
-        }
+        s += &format!("  <polyline points=\"{},{y} {},{ly} {},{ly}\" fill=\"none\" stroke=\"{MUTED}\" stroke-width=\"0.8\"/>\n", x + r, x1 + 20.0, column - 6.0);
         s += &format!(
-            "  <text x=\"{}\" y=\"{}\" fill=\"{INK}\" font-size=\"11\">{} <tspan fill=\"{MUTED}\">{:.0} %, {} MB, {:.2} s</tspan></text>\n",
-            x + r + 8.0,
+            "  <text x=\"{column}\" y=\"{}\" fill=\"{INK}\" font-size=\"11\">{} <tspan fill=\"{MUTED}\">{:.0} %, {} MB, {:.2} s</tspan></text>\n",
             ly + 4.0,
             m.alias,
             overall(m),

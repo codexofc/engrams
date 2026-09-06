@@ -264,7 +264,29 @@ from the configuration). Any sentence-embedding checkpoint of those families wit
 `mean` pooling declared in `1_Pooling/config.json` should load; every model change
 must pass the concordance test (cosine above 0.999 with reference vectors) before it
 is served. A plausible wrong vector is the failure mode this project refuses.
-Measured numbers per model are in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+All seven were measured on the same private corpus (296 bilingual notes, 96 blind
+queries, text only, Q8) and in isolation (one search on a two-note root, peak
+memory). Full tables in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+
+| alias | topic | detail | identifier | first bench | overall | isolated call | peak memory |
+|---|---|---|---|---|---|---|---|
+| `granite-multilingual` (default) | 83 % | 58 % | 75 % | 81 % | 75 % | 0.18 s | 315 MB |
+| `e5-small` | 62 % | 58 % | 100 % | 64 % | 66 % | 0.20 s | 222 MB |
+| `e5-base` | 71 % | 58 % | 100 % | 64 % | 69 % | 0.20 s | 478 MB |
+| `e5-large` | 79 % | 71 % | 100 % | 78 % | 79 % | 0.55 s | 1 527 MB |
+| `granite-small-en` | 83 % | 54 % | 100 % | 72 % | 74 % | 0.43 s | 290 MB |
+| `granite-en` | 67 % | 71 % | 100 % | 50 % | 66 % | 0.24 s | 370 MB |
+| `gte-modernbert` | 50 % | 50 % | 92 % | 39 % | 51 % | 0.27 s | 370 MB |
+
+<p align="center"><img src="docs/models-quality.svg" alt="Expected note among the five returned, by model and query family" width="820"></p>
+
+<p align="center"><img src="docs/models-efficiency.svg" alt="Hit rate over the 96 queries against the peak resident memory of an isolated search, by model" width="820"></p>
+
+The default model is the best trade on a bilingual corpus. e5-large buys four
+points overall for five times the memory. granite-small-en is the pick for English
+notes with long paragraphs. The default model also carries the two signals the
+others were measured without: the identifier bonus and the indexed questions, which
+lift it to 83 / 75 / 100 / 81 %.
 
 ## Why Engrams
 

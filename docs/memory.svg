@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="820" height="360" viewBox="0 0 820 360" font-family="Helvetica, Arial, sans-serif" font-size="12">
-  <title>Resident memory of the warm process, step by step</title>
+  <title>Resident memory of the warm process, step by step, granite-embedding-278m-multilingual</title>
   <rect width="820" height="360" fill="#ffffff"/>
-  <text x="20" y="26" font-size="15" font-weight="700" fill="#10202b">Resident memory of the warm process, step by step (MB)</text>
+  <text x="20" y="26" font-size="15" font-weight="700" fill="#10202b">Resident memory of the warm process, step by step (MB), model granite-embedding-278m-multilingual (default)</text>
   <!-- grid: y = 300 - v * 0.1158 (1900 MB -> 220 px) -->
   <g stroke="#e3e7eb" stroke-width="1">
     <line x1="60" y1="300" x2="800" y2="300"/>

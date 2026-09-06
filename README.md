@@ -12,9 +12,9 @@
 </p>
 
 **Engrams** gives coding agents a durable, searchable memory made of plain markdown
-files. One binary, no server, no network at search time, no database. A multilingual
-embedding model runs on the CPU in **198 MB** of resident memory and answers in
-**0.10 s**. The notes stay yours: readable by any editor, any agent, any tool, ten
+files. One binary, no server, no network at search time, no database. The default
+multilingual embedding model (granite-embedding-278m-multilingual, 278 M parameters)
+runs on the CPU in **198 MB** of resident memory and answers in **0.10 s**. The notes stay yours: readable by any editor, any agent, any tool, ten
 years from now.
 
 It plugs into **Claude Code** (a prompt hook and an MCP server), **Codex CLI**,
@@ -274,22 +274,23 @@ languages or say the same thing with different words. Sending the notes to a rem
 vector service solves the search and creates a dependency, a bill and a leak.
 
 Engrams keeps everything local and measures what it claims. On a private corpus of
-296 bilingual notes with 96 blind queries:
+296 bilingual notes with 96 blind queries, default model
+(granite-embedding-278m-multilingual, Q8), every signal on:
 
-| query family | words only | engrams |
+| query family | words only | Engrams, default model |
 |---|---|---|
 | topic of a note (24 cases) | 33 % | **83 %** |
 | buried detail in a long note (24) | 54 % | **75 %** |
 | named identifier (12) | 75 % | **100 %** |
 | first benchmark, one third cross-language (36) | 19 % | **81 %** |
 
-<p align="center"><img src="docs/quality.svg" alt="Expected note among the five returned, by query family" width="820"></p>
+<p align="center"><img src="docs/quality.svg" alt="Expected note among the five returned, by query family, default model" width="820"></p>
 
 The engine started at 1.8 GB resident and 0.70 s per search. Every step down was a
 mathematical observation applied to the code, measured alone, with the answers
 verified identical (cosine 0.9999 to full precision, benchmark unchanged):
 
-<p align="center"><img src="docs/memory.svg" alt="Resident memory of the warm process, step by step" width="820"></p>
+<p align="center"><img src="docs/memory.svg" alt="Resident memory of the warm process, step by step, default model" width="820"></p>
 
 | step | why it works |
 |---|---|

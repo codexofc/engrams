@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="820" height="400" viewBox="0 0 820 400" font-family="Helvetica, Arial, sans-serif" font-size="12">
-  <title>Expected note among the five returned, by query family</title>
+  <title>Expected note among the five returned, by query family, granite-embedding-278m-multilingual</title>
   <rect width="820" height="400" fill="#ffffff"/>
-  <text x="20" y="26" font-size="15" font-weight="700" fill="#10202b">Expected note among the five returned (%), 96 blind queries, same index</text>
+  <text x="20" y="26" font-size="15" font-weight="700" fill="#10202b">Expected note among the five returned (%), 96 blind queries, same index, model granite-embedding-278m-multilingual (default), Q8</text>
   <!-- legend -->
   <g font-size="11" fill="#485864">
     <rect x="20" y="40" width="12" height="12" fill="#9aa5b1"/><text x="38" y="50">text only</text>

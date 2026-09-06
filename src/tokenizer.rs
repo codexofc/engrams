@@ -34,6 +34,12 @@ pub struct Unigram {
     /// Added tokens, matched verbatim in the raw text, longest first.
     specials: Vec<(String, u32)>,
     max_tokens: usize,
+    /// `Metaspace` alone as pre-tokenizer (multilingual-e5-small): a space at the
+    /// end of a segment is a piece of its own, where the XLM-R layout
+    /// (`WhitespaceSplit` then `Metaspace`) drops it.
+    metaspace_only: bool,
+    /// A `Replace` normaliser folding runs of spaces into one.
+    collapse_spaces: bool,
 }
 
 impl std::fmt::Debug for Unigram {
@@ -94,7 +100,24 @@ impl Unigram {
         let bos = find("<s>").ok_or("missing <s> token")?;
         let eos = find("</s>").ok_or("missing </s> token")?;
 
-        Ok(Self { normalizer, pieces, max_piece_bytes, unk_id, unk_score: min_score - UNK_PENALTY, bos, eos, specials, max_tokens })
+        let metaspace_only = json["pre_tokenizer"]["type"] == "Metaspace";
+        let collapse_spaces = json["normalizer"]["normalizers"]
+            .as_array()
+            .is_some_and(|a| a.iter().any(|n| n["type"] == "Replace" && n["pattern"]["Regex"] == " {2,}" && n["content"] == " "));
+
+        Ok(Self {
+            normalizer,
+            pieces,
+            max_piece_bytes,
+            unk_id,
+            unk_score: min_score - UNK_PENALTY,
+            bos,
+            eos,
+            specials,
+            max_tokens,
+            metaspace_only,
+            collapse_spaces,
+        })
     }
 
     /// Reads the native SentencePiece model (`sentencepiece.bpe.model`, a protobuf
@@ -161,7 +184,19 @@ impl Unigram {
             vec![("<s>".into(), 0), ("<pad>".into(), 1), ("</s>".into(), 2), ("<unk>".into(), 3), ("<mask>".into(), mask_id)];
         specials.sort_by_key(|(content, _)| std::cmp::Reverse(content.len()));
 
-        Ok(Self { normalizer, pieces, max_piece_bytes, unk_id: 3, unk_score: min_score - UNK_PENALTY, bos: 0, eos: 2, specials, max_tokens })
+        Ok(Self {
+            normalizer,
+            pieces,
+            max_piece_bytes,
+            unk_id: 3,
+            unk_score: min_score - UNK_PENALTY,
+            bos: 0,
+            eos: 2,
+            specials,
+            max_tokens,
+            metaspace_only: false,
+            collapse_spaces: false,
+        })
     }
 
     /// The native model when present, else `tokenizer.json`.
@@ -214,7 +249,32 @@ impl Unigram {
         if segment.is_empty() {
             return;
         }
-        let normalized = self.normalizer.normalize_string(segment);
+        let mut normalized = self.normalizer.normalize_string(segment);
+        if self.collapse_spaces {
+            let mut folded = String::with_capacity(normalized.len());
+            for c in normalized.chars() {
+                if c != ' ' || !folded.ends_with(' ') {
+                    folded.push(c);
+                }
+            }
+            normalized = folded;
+        }
+        if self.metaspace_only {
+            // Every space becomes a marker and each piece starts with one, so a
+            // trailing space is a piece of its own, as in the reference.
+            let mut text = normalized.replace(' ', SPACE);
+            if !text.starts_with(SPACE) {
+                text.insert_str(0, SPACE);
+            }
+            let mut starts: Vec<usize> = text.match_indices(SPACE).map(|(i, _)| i).collect();
+            starts.push(text.len());
+            for pair in starts.windows(2) {
+                if pair[1] > pair[0] {
+                    self.encode_word(&text[pair[0]..pair[1]], out);
+                }
+            }
+            return;
+        }
         for word in normalized.split(char::is_whitespace).filter(|w| !w.is_empty()) {
             let mut w = String::with_capacity(word.len() + 3);
             if !word.starts_with(SPACE) {

@@ -2556,6 +2556,10 @@ fn run_wizard() -> Result<(), String> {
         "claude -p"
     } else if in_path("codex") {
         "codex exec"
+    } else if in_path("opencode") {
+        "opencode run"
+    } else if in_path("gemini") {
+        "gemini -p"
     } else {
         ""
     };

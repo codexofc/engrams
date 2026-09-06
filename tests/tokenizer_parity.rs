@@ -227,3 +227,51 @@ fn every_installed_bpe_tokenizer_matches_the_reference() {
     }
     eprintln!("{checked} BPE tokenizer(s) checked");
 }
+
+/// Every installed Unigram `tokenizer.json`, whatever its pre-tokenizer layout
+/// (`WhitespaceSplit` then `Metaspace` for XLM-R, `Metaspace` alone for e5-small).
+#[test]
+fn every_installed_unigram_tokenizer_matches_the_reference() {
+    let models = engrams::paths::config_dir().join("models");
+    let Ok(dirs) = std::fs::read_dir(&models) else {
+        eprintln!("no models directory, test skipped");
+        return;
+    };
+    let mut checked = 0;
+    for dir in dirs.flatten().map(|e| e.path()) {
+        let json = dir.join("tokenizer.json");
+        let Ok(raw) = std::fs::read_to_string(&json) else { continue };
+        if !raw.contains("\"type\":\"Unigram\"") && !raw.contains("\"type\": \"Unigram\"") {
+            continue;
+        }
+        let ours = Unigram::from_file(&json, 512).unwrap_or_else(|e| panic!("{}: {e}", dir.display()));
+        let mut reference = tokenizers::Tokenizer::from_file(&json).expect("reference");
+        reference.with_truncation(Some(tokenizers::TruncationParams { max_length: 512, ..Default::default() })).unwrap();
+        let mut texts = edge_cases();
+        texts.push("trailing space ".into());
+        texts.push("  two leading, three   inside, tab\tand newline\nkept".into());
+        texts.extend(corpus_texts());
+        let mut mismatches = 0;
+        for t in &texts {
+            let a = ours.encode(t);
+            let b = reference.encode(t.as_str(), true).unwrap();
+            if a.ids != b.get_ids() {
+                mismatches += 1;
+                if mismatches <= 3 {
+                    let first = a.ids.iter().zip(b.get_ids()).position(|(x, y)| x != y);
+                    eprintln!(
+                        "{}: mismatch on {:?}, first difference at {:?}\n  ours {:?}\n  ref  {:?}",
+                        dir.display(),
+                        t.chars().take(60).collect::<String>(),
+                        first,
+                        &a.ids[..a.ids.len().min(24)],
+                        &b.get_ids()[..b.get_ids().len().min(24)]
+                    );
+                }
+            }
+        }
+        assert_eq!(mismatches, 0, "{}: {mismatches} mismatch(es) on {} texts", dir.display(), texts.len());
+        checked += 1;
+    }
+    eprintln!("{checked} Unigram tokenizer(s) checked");
+}

@@ -1,4 +1,4 @@
-| query family | words only | Engrams |<p align="center">
+<p align="center">
   <img src="docs/logo.svg" alt="Engrams" width="520">
 </p>
 

@@ -180,7 +180,29 @@ brief. `engram hook` reads Claude Code's hook JSON and prints the passages.
 | `engram curation` | a markdown checklist of stale, long, undated or duplicated notes |
 | `engram since 7`, `engram why <name>` | what changed, and where a note comes from (git) |
 | `engram status`, `engram stop` | the warm process, the index, the usage cadence. `engram status --short` prints one line while the process runs, for a shell prompt or a status bar |
-| `engram tray`, `engram tray install` | the Engrams mark in the menu bar or system tray, lit while the warm process runs, with a menu to reindex, open the notes, start or stop it. `install` starts it at login (macOS binaries ship it, elsewhere `cargo install engrams --features tray` with the GTK development packages) |
+| `engram tray`, `engram tray install` | the Engrams mark in the menu bar or system tray, see below |
+
+## Menu bar
+
+`engram tray` puts the Engrams mark in the menu bar (macOS) or the system tray. It
+watches the warm process every five seconds: the mark takes the colour of the bar
+while nothing runs, and turns to its own colours while the warm process is up.
+
+<p align="center"><img src="docs/tray.png" alt="The Engrams mark in the menu bar, idle and running, with its menu open" width="760"></p>
+
+The menu shows the state of the warm process (uptime, requests served, resident
+memory) and offers four actions:
+
+- **Reindex now** runs `engram index` in the background.
+- **Open the notes folder** opens the root in the file manager.
+- **Start the warm process** and **Stop the warm process**, one enabled at a time.
+- **Quit** closes the menu bar item; the warm process keeps running.
+
+`engram tray install` starts it at login (a launchd agent on macOS, an XDG autostart
+entry on Linux), `engram tray uninstall` removes it. The macOS release binaries ship
+the tray; elsewhere build it with `cargo install engrams --features tray` and the GTK
+development packages. It pairs well with `ENGRAM_IDLE=never` from `engram config`,
+which keeps the warm process resident.
 
 ## Notes
 

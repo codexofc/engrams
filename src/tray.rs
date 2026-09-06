@@ -84,6 +84,7 @@ pub fn run() -> Result<(), String> {
     let grey = Icon::from_rgba(ui::logo_rgba(size as usize, Some(idle_rgb)), size, size).map_err(|e| e.to_string())?;
     let mut tray: Option<TrayIcon> = None;
     let mut running = None;
+    let mut shown = false;
     let refresh = {
         let (status, start, stop, lit, grey) = (status.clone(), start.clone(), stop.clone(), lit.clone(), grey.clone());
         move |tray: &Option<TrayIcon>, running: &mut Option<bool>| {
@@ -122,6 +123,17 @@ pub fn run() -> Result<(), String> {
             }
             Event::NewEvents(StartCause::ResumeTimeReached { .. }) => {
                 refresh(&tray, &mut running);
+                // ENGRAM_TRAY_SHOW_MENU opens the menu once the item is up: for the
+                // documentation captures, nothing else.
+                if std::env::var_os("ENGRAM_TRAY_SHOW_MENU").is_some() && !shown {
+                    if let Some(t) = &tray {
+                        if let Some(r) = t.rect() {
+                            println!("item at {:?} size {:?}", r.position, r.size);
+                        }
+                        t.show_menu();
+                    }
+                    shown = true;
+                }
                 *control_flow = ControlFlow::WaitUntil(Instant::now() + EVERY);
             }
             _ => {}

@@ -52,7 +52,7 @@ The binary is called `engram`. It needs `curl` once, to download the model.
 engram init
 ```
 
-<p align="center"><img src="docs/wizard.svg" alt="engram init, the guided setup" width="720"></p>
+<p align="center"><img src="docs/wizard.png" alt="engram init, the guided setup" width="720"></p>
 
 Five steps, each with a default that Enter accepts:
 

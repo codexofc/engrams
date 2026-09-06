@@ -2052,7 +2052,7 @@ mod ui {
             (22.0, 37.9, 142.1, 8.0, 2),
         ];
         const DOT: f32 = 9.0;
-        let (cols, rows) = (40usize, 19usize);
+        let (cols, rows) = (40usize, 17usize);
         let span = 124.0f32;
         let step = span / cols as f32;
         // Coverage of a pixel at (x, y): the strongest shade it touches, if any.

@@ -6,6 +6,8 @@ All notable changes to Kept are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-09-07
+
 ### Changed
 - The large public corpus grew from 220 to 523 notes (30 projects in seven families,
   2.9 MB): the 60 blind queries stay the same, the new notes act as distractors, and
@@ -142,6 +144,13 @@ All notable changes to Kept are recorded here. The format follows
   process, Claude Code hook, MCP server over stdio, life-cycle commands, secret
   scanner, curation report, benchmark tooling.
 
-[Unreleased]: https://github.com/codexofc/kept/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/codexofc/kept/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/codexofc/kept/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/codexofc/kept/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/codexofc/kept/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/codexofc/kept/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/codexofc/kept/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/codexofc/kept/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/codexofc/kept/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/codexofc/kept/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/codexofc/kept/releases/tag/v0.1.0

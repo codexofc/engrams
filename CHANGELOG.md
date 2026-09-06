@@ -7,9 +7,10 @@ All notable changes to Engrams are recorded here. The format follows
 ## [Unreleased]
 
 ### Changed
-- The context cost is aligned on the list prices of Anthropic, OpenAI and Google as
-  published on 2026-09-06, per thousand questions, in the README and in
-  docs/BENCHMARKS.md.
+- The context cost is measured at the three moments an agent touches the memory
+  (the hook at every prompt, a consultation, a session start), against a keyword
+  grep and an every-word grep, and aligned on the list prices of Anthropic, OpenAI
+  and Google as published on 2026-09-06, in the README and in docs/BENCHMARKS.md.
 
 ## [0.4.0] - 2026-09-06
 

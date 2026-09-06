@@ -38,33 +38,42 @@ languages or say the same thing with different words. Sending the notes to a rem
 vector service solves the search and creates a dependency, a bill and a leak.
 
 Engrams keeps everything local and measures what it claims, on a private corpus of
-296 bilingual notes with 96 queries written blind (default model, every signal on):
+296 bilingual notes (1.7 MB, 21 projects) with 96 queries written blind, default
+model, every signal on. Recall first, the expected note among the five returned:
 
-| | words only (a well-ranked grep) | Engrams |
+| query family | words only (a well-ranked grep) | Engrams |
 |---|---|---|
-| expected note among the five returned, four query families | 33 / 54 / 75 / 19 % | **83 / 75 / 100 / 81 %** |
-| context spent per question to reach the note, tokens | 33 600, reaching it 35 times out of 96 | **2 350**, reaching it 78 times (**520** with the passages alone, 70 times) |
-| what a session loads at start | | one hot index per project, **17 KB at most** |
-| resident memory, latency | 2 MB, 9 ms | 198 MB, 0.10 s |
+| topic of a note (24 cases) | 33 % | **83 %** |
+| buried detail in a long note (24) | 54 % | **75 %** |
+| named identifier (12) | 75 % | **100 %** |
+| first benchmark, one third cross-language (36) | 19 % | **81 %** |
 
-The first line is the recall a coding agent gets. The second is what it costs it in
-context: with grep, an agent reads whole notes in an order that words alone decide;
-with Engrams it reads five lines and the right note, or only the passages that
-answer. That is **31 000 input tokens saved per question**, 33 000 when the passages
-suffice, and at the list prices of September 2026 it reads as follows, per thousand
-questions:
+Then what the memory costs the agent in context, at the three moments it touches
+it. Every line is measured with the real binary on the same 96 queries, tokens
+estimated at four characters:
 
-| model, input price per million tokens | grep path | Engrams, search and read | Engrams, passages only | saved |
+| moment | without Engrams | with Engrams |
+|---|---|---|
+| **every prompt**: the Claude Code hook adds the passages closest to it, two of 700 characters at most, or nothing | nothing arrives | **266 tokens** on average, the expected note already there 57 times out of 96 |
+| **a consultation**: the agent decides to look something up before a task | Claude Code greps the notes with one to three keywords, then reads whole files. Measured with the three longest words of the query: **14 900 tokens**, the right note reached 36 times out of 96. With every word of the query: 33 600 tokens, 35 times | `search` then `read` of the note it returned: **2 350 tokens**, the right note 78 times out of 96. `answer` alone, passages to cite: 520 tokens, 70 times |
+| **a session start**: the hot index of the project, loaded by Claude Code | the notes of the project, or an index that grows with them | one generated `MEMORY.md`, **17 KB at most**, 2 500 characters on average here (about 630 tokens) |
+
+So one consultation saves **12 500 input tokens** against the keyword grep, 31 000
+against the every-word grep, and the hook costs a quarter of a thousand per prompt.
+At the list prices of September 2026, per thousand consultations:
+
+| model, input price per million tokens | keyword grep | Engrams, search and read | saved per 1 000 consultations | saved if the agent grepped every word |
 |---|---|---|---|---|
-| Claude Fable 5.1, GPT-6 Astra ($10) | $336 | $23 | $5 | **$312** |
-| Claude Opus 5, GPT-5.5 ($5) | $168 | $12 | $2.6 | **$156** |
-| GPT-5.6 Sol ($4) | $134 | $9 | $2 | **$125** |
-| Claude Sonnet 5, GPT-5.6 Terra, Gemini 3.1 Pro ($2) | $67 | $5 | $1 | **$62** |
-| Gemini 3.8 Flash ($0.75) | $25 | $2 | $0.4 | **$23** |
+| Claude Fable 5.1, GPT-6 Astra ($10) | $149 | $23 | **$125** | $312 |
+| Claude Opus 5, GPT-5.5 ($5) | $74 | $12 | **$63** | $156 |
+| GPT-5.6 Sol ($4) | $60 | $9 | **$50** | $125 |
+| Claude Sonnet 5, GPT-5.6 Terra, Gemini 3.1 Pro ($2) | $30 | $5 | **$25** | $62 |
+| Gemini 3.8 Flash ($0.75) | $11 | $2 | **$9** | $23 |
 
-List prices of the input token, no caching or batch discount, tokens estimated at
-four characters: the notes an agent reads are new content each time, which caching
-does not cover, and the newest Claude tokenizer yields about 30 % more tokens for the
+Scale: on the author's machine, 446 prompts went through the hook in the last
+twenty-four hours, 119 000 tokens in all, $0.60 on Claude Opus 5. List prices of the
+input token, no caching or batch discount, because the notes an agent reads are new
+content each time. The newest Claude tokenizer yields about 30 % more tokens for the
 same text, so the dollar figures are a floor. Protocol, error bars, sources and the
 other models in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 

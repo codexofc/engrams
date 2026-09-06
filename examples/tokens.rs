@@ -36,6 +36,44 @@ fn run(bin: &str, args: &[&str]) -> String {
     String::from_utf8_lossy(&out.stdout).into_owned()
 }
 
+/// The hook as Claude Code calls it: the prompt as JSON on stdin, the passages out.
+fn run_hook(bin: &str, prompt: &str) -> String {
+    use std::io::Write;
+    let mut child = Command::new(bin)
+        .arg("hook")
+        .env("ENGRAM_NO_DAEMON", "1")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("running the hook");
+    let input = serde_json::json!({ "prompt": prompt }).to_string();
+    child.stdin.take().expect("stdin").write_all(input.as_bytes()).expect("writing the prompt");
+    let out = child.wait_with_output().expect("hook output");
+    String::from_utf8_lossy(&out.stdout).into_owned()
+}
+
+/// The grep path for a list of words: one `grep -rli` per word, the notes ranked by
+/// the number of words they contain, read in that order until the expected one.
+fn grep_path(root: &Path, words: &[String], expected: &str, tally: &mut Tally) {
+    let mut per_file: BTreeMap<String, usize> = BTreeMap::new();
+    for word in words {
+        let out = run("grep", &["-rli", "--include=*.md", "--exclude-dir=.engram", "-e", word, &root.display().to_string()]);
+        tally.output += out.len();
+        for file in out.lines() {
+            *per_file.entry(file.to_string()).or_default() += 1;
+        }
+    }
+    let mut ranked: Vec<(usize, String)> = per_file.into_iter().map(|(f, n)| (n, f)).collect();
+    ranked.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)));
+    for (_, file) in ranked.iter().take(5) {
+        tally.notes += std::fs::read_to_string(file).map(|s| s.len()).unwrap_or(0);
+        if file == expected {
+            tally.reached += 1;
+            break;
+        }
+    }
+}
+
 fn read_note(root: &Path, rel: &str) -> String {
     std::fs::read_to_string(root.join(rel)).unwrap_or_default()
 }
@@ -66,28 +104,17 @@ fn main() {
     let cases: Vec<&Case> = families.values().flatten().collect();
     println!("# {} queries, root {}\n", cases.len(), root.display());
 
-    let (mut grep, mut search, mut answer) = (Tally::ZERO, Tally::ZERO, Tally::ZERO);
-    let expected_of = |case: &Case| root.join(&case.path).display().to_string();
+    let (mut grep_all, mut grep_picked, mut search, mut answer, mut hook) = (Tally::ZERO, Tally::ZERO, Tally::ZERO, Tally::ZERO, Tally::ZERO);
     for case in &cases {
-        // grep: one list of files per word, the notes ranked by distinct words matched.
-        let mut per_file: BTreeMap<String, usize> = BTreeMap::new();
-        for word in words(&case.query) {
-            let out = run("grep", &["-rli", "--include=*.md", "--exclude-dir=.engram", "-e", &word, &root.display().to_string()]);
-            grep.output += out.len();
-            for file in out.lines() {
-                *per_file.entry(file.to_string()).or_default() += 1;
-            }
-        }
-        let mut ranked: Vec<(usize, String)> = per_file.into_iter().map(|(f, n)| (n, f)).collect();
-        ranked.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)));
-        let expected = expected_of(case);
-        for (_, file) in ranked.iter().take(5) {
-            grep.notes += std::fs::read_to_string(file).map(|s| s.len()).unwrap_or(0);
-            if *file == expected {
-                grep.reached += 1;
-                break;
-            }
-        }
+        let expected = root.join(&case.path).display().to_string();
+        // grep with every word of the query, and grep with the three longest words,
+        // the keywords an agent would pick.
+        let all = words(&case.query);
+        grep_path(&root, &all, &expected, &mut grep_all);
+        let mut picked = all.clone();
+        picked.sort_by_key(|w| std::cmp::Reverse(w.chars().count()));
+        picked.truncate(3);
+        grep_path(&root, &picked, &expected, &mut grep_picked);
 
         // engram search, then the note if the search returned it.
         let out = run(&bin, &["search", &case.query]);
@@ -102,14 +129,21 @@ fn main() {
         let out = run(&bin, &["answer", &case.query]);
         answer.output += out.len();
         answer.reached += usize::from(out.contains(&case.path));
+
+        // The hook, as it runs on every prompt: bounded passages, or nothing.
+        let out = run_hook(&bin, &case.query);
+        hook.output += out.len();
+        hook.reached += usize::from(out.contains(&case.path));
     }
     let n = cases.len();
     println!("| path to the answer | tool output | notes read | total per query | tokens (est.) | expected note reached |");
     println!("|---|---|---|---|---|---|");
     for (name, t) in [
-        ("grep per word, then the notes in grep order (5 at most)", &grep),
+        ("grep with every word of the query, then the notes in grep order (5 at most)", &grep_all),
+        ("grep with the three longest words, then the notes in grep order (5 at most)", &grep_picked),
         ("engram search, then engram read", &search),
         ("engram answer, passages only", &answer),
+        ("engram hook, what every prompt receives", &hook),
     ] {
         let total = (t.output + t.notes) / n;
         println!("| {name} | {} | {} | {total} | {} | {} / {n} |", t.output / n, t.notes / n, tokens(total), t.reached);

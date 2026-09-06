@@ -88,43 +88,72 @@ configuration and reaches 1.000000).
 ## Context cost: what reaches the model
 
 The reason to run a memory engine next to an agent is not only to find the note, it
-is to spend fewer tokens finding it. `examples/tokens.rs` runs, for each of the 96
-benchmark queries, the two ways an agent has to reach the note that answers, and
-measures what enters its context. Sizes are characters, tokens are estimated at four
-characters per token. Default model, every signal on.
+is to spend fewer tokens finding it. `examples/tokens.rs` replays the 96 benchmark
+queries through every way an agent has to reach the note that answers, with the real
+binary and a real grep, and measures what enters the context. Sizes are characters,
+tokens are estimated at four characters per token. Default model, every signal on.
 
-| path to the answer | tool output | notes read | total per query | tokens (est.) | expected note reached |
+### What an agent does without a memory engine
+
+Claude Code, given a folder of notes and a question, runs its Grep tool with one to
+three keywords, reads the files it lists, whole or by ranges, and stops when it has
+what it needs. Two grep protocols bracket that behaviour. The keyword one takes the
+three longest words of the query, which is close to what an agent picks. The
+every-word one takes every word of three characters or more, the worst case, where
+stop words list most of the corpus. In both, one `grep -rli` per word, the notes
+ranked by the number of words they contain, then read in that order until the
+expected note is reached, five notes at most.
+
+### The three moments, measured
+
+| moment and path | tool output | notes read | total per query | tokens (est.) | expected note reached |
 |---|---|---|---|---|---|
-| grep, one list of files per word, then the notes in grep order (5 at most) | 48 266 | 86 082 | 134 348 | 33 587 | 35 / 96 |
-| `engram search`, then `engram read` of the note it returned | 2 024 | 7 367 | 9 391 | 2 348 | 78 / 96 |
-| `engram answer`, the passages only, what the hook and the MCP tool give | 2 070 | 0 | 2 070 | 518 | 70 / 96 |
+| consultation, grep with every word of the query, then the notes in grep order | 48 266 | 86 082 | 134 348 | 33 587 | 35 / 96 |
+| consultation, grep with the three longest words, then the notes in grep order | 5 421 | 54 114 | 59 535 | 14 884 | 36 / 96 |
+| consultation, `engram search` then `engram read` of the note it returned | 2 024 | 7 367 | 9 391 | 2 348 | 78 / 96 |
+| consultation, `engram answer`, the passages only | 2 070 | 0 | 2 070 | 518 | 70 / 96 |
+| every prompt, `engram hook`, two passages of 700 characters at most or nothing | 1 062 | 0 | 1 062 | 266 | 57 / 96 |
 
-Reading: the grep path costs fourteen times more context per question and reaches
-the right note half as often, because it reads whole notes in an order that words
-alone decide. The passages of `engram answer` cite the expected note in 70 cases out
-of 96 for about five hundred tokens, and the search-then-read path, which brings the
-whole note in, stays under 2 400.
+Reading. A consultation through Engrams costs six times less context than the
+keyword grep and reaches the right note twice as often, because grep reads whole
+notes in an order that words alone decide, and it misses the note two times out of
+three even with the right keywords when the query does not share its vocabulary.
+The every-word grep costs fourteen times more than Engrams for the same recall as
+the keyword grep: its lists of files are the cost. The hook is the passive path: at
+every prompt, whether the agent asks or not, 266 tokens on average bring the
+expected note into the context 57 times out of 96, and nothing at all when no
+passage scores above the threshold.
+
+### Scale
+
+- **Per prompt**: 266 tokens through the hook. On the author's machine, 446 prompts
+  went through it in the last twenty-four hours: 119 000 tokens a day, $0.60 on
+  Claude Opus 5, $0.24 on Sonnet 5.
+- **Per consultation**: 2 348 tokens against 14 884 for the keyword grep, 12 536
+  saved; against the every-word grep, 31 239 saved.
+- **Per session start**: the hot index of the project, 17 408 bytes at most, 2 500
+  characters on average on this corpus (about 630 tokens), against 1.7 MB (425 000
+  tokens) if a session loaded the notes.
 
 ### What it costs at list prices
 
-The difference is input tokens, and input tokens have a price. The table applies the
-list prices of the three main providers as published on 2026-09-06 to the three
-paths above, per thousand questions. Prices per million input tokens, standard
-tier, no prompt caching and no batch discount: the notes an agent reads to answer a
-question are new content each time, which a cache does not cover, and the questions
-of a working session are not a batch.
+The table applies the list prices of the three main providers as published on
+2026-09-06 to the consultation paths, per thousand consultations. Prices per million
+input tokens, standard tier, no prompt caching and no batch discount: the notes an
+agent reads to answer a question are new content each time, which a cache does not
+cover, and the questions of a working session are not a batch.
 
-| model | input price / MTok | grep path (33 587 tokens) | search and read (2 348) | passages only (518) | saved, search and read | saved, passages only |
-|---|---|---|---|---|---|---|
-| Claude Fable 5.1 | $10 | $335.9 | $23.5 | $5.2 | $312.4 | $330.7 |
-| GPT-6 Astra | $10 | $335.9 | $23.5 | $5.2 | $312.4 | $330.7 |
-| Claude Opus 5 | $5 | $167.9 | $11.7 | $2.6 | $156.2 | $165.3 |
-| GPT-5.5 | $5 | $167.9 | $11.7 | $2.6 | $156.2 | $165.3 |
-| GPT-5.6 Sol | $4 | $134.3 | $9.4 | $2.1 | $124.9 | $132.2 |
-| Claude Sonnet 5 | $2 | $67.2 | $4.7 | $1.0 | $62.5 | $66.2 |
-| GPT-5.6 Terra | $2 | $67.2 | $4.7 | $1.0 | $62.5 | $66.2 |
-| Gemini 3.1 Pro Preview | $2 (prompts up to 200k) | $67.2 | $4.7 | $1.0 | $62.5 | $66.2 |
-| Gemini 3.8 Flash | $0.75 (until 2026-12-31) | $25.2 | $1.8 | $0.4 | $23.4 | $24.8 |
+| model | input price / MTok | keyword grep (14 884 tokens) | every-word grep (33 587) | search and read (2 348) | passages only (518) | saved against the keyword grep | saved against the every-word grep |
+|---|---|---|---|---|---|---|---|
+| Claude Fable 5.1 | $10 | $148.8 | $335.9 | $23.5 | $5.2 | $125.4 | $312.4 |
+| GPT-6 Astra | $10 | $148.8 | $335.9 | $23.5 | $5.2 | $125.4 | $312.4 |
+| Claude Opus 5 | $5 | $74.4 | $167.9 | $11.7 | $2.6 | $62.7 | $156.2 |
+| GPT-5.5 | $5 | $74.4 | $167.9 | $11.7 | $2.6 | $62.7 | $156.2 |
+| GPT-5.6 Sol | $4 | $59.5 | $134.3 | $9.4 | $2.1 | $50.1 | $124.9 |
+| Claude Sonnet 5 | $2 | $29.8 | $67.2 | $4.7 | $1.0 | $25.1 | $62.5 |
+| GPT-5.6 Terra | $2 | $29.8 | $67.2 | $4.7 | $1.0 | $25.1 | $62.5 |
+| Gemini 3.1 Pro Preview | $2 (prompts up to 200k) | $29.8 | $67.2 | $4.7 | $1.0 | $25.1 | $62.5 |
+| Gemini 3.8 Flash | $0.75 (until 2026-12-31) | $11.2 | $25.2 | $1.8 | $0.4 | $9.4 | $23.4 |
 
 Sources: [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing),
 [OpenAI](https://developers.openai.com/api/docs/pricing),
@@ -134,13 +163,10 @@ providers give for English; Anthropic states that its tokenizer from Claude 4.7 
 yields about 30 % more tokens for the same text, so the billed savings on those
 models are larger than the table. And output tokens are unchanged by the tool, the
 saving is entirely on input, which is also the part that fills the context window
-and degrades the answers when it grows.
+and degrades the answers when it grows. The engine itself costs nothing per query:
+it runs on the CPU of the machine, 198 MB resident.
 
-At the author's measured cadence, 161 searches a day through the hook and the
-agents, the grep path would cost 5.4 million input tokens a day and Engrams 0.38
-million (or 0.08 with the passages alone): on Claude Opus 5, $27 a day against
-$1.9, on Claude Sonnet 5 or Gemini 3.1 Pro $11 against $0.8. The engine itself
-costs nothing per query: it runs on the CPU of the machine, 198 MB resident.
+### The hot index
 
 The hot index a session loads at start is bounded too: 17 408 bytes per project, so
 at most about 4 400 tokens, where the notes of a project would be far more. On this

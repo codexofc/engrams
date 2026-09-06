@@ -44,8 +44,25 @@ jobs:
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: Swatinem/rust-cache@v2
-      - run: cargo llvm-cov --all-targets --lcov --output-path lcov.info
-      - run: cargo llvm-cov report --json --summary-only --output-path coverage-summary.json
+      # The model-dependent tests (concordance, tokenizer parity, end to end) skip
+      # themselves without a model; the coverage figure should include them.
+      - uses: actions/cache@v4
+        id: models
+        with:
+          path: ~/.engram/models
+          key: models-granite-278m-multilingual-small-english-r2-v1
+      - if: steps.models.outputs.cache-hit != 'true'
+        run: |
+          for repo in ibm-granite/granite-embedding-278m-multilingual ibm-granite/granite-embedding-small-english-r2; do
+            dir="$HOME/.engram/models/${repo##*/}"
+            mkdir -p "$dir/1_Pooling"
+            for f in config.json 1_Pooling/config.json tokenizer.json model.safetensors sentence_bert_config.json sentencepiece.bpe.model; do
+              curl -sfL -o "$dir/$f" "https://huggingface.co/$repo/resolve/main/$f" || rm -f "$dir/$f"
+            done
+          done
+          du -sh "$HOME/.engram/models"/*
+      - run: cargo llvm-cov --release --all-targets --lcov --output-path lcov.info
+      - run: cargo llvm-cov report --release --json --summary-only --output-path coverage-summary.json
       - uses: actions/upload-artifact@v4
         with:
           name: coverage

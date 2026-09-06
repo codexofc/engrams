@@ -77,8 +77,11 @@ pub fn run() -> Result<(), String> {
     ])
     .map_err(|e| e.to_string())?;
     let size = 44u32;
-    let lit = Icon::from_rgba(ui::logo_rgba(size as usize, true), size, size).map_err(|e| e.to_string())?;
-    let grey = Icon::from_rgba(ui::logo_rgba(size as usize, false), size, size).map_err(|e| e.to_string())?;
+    let lit = Icon::from_rgba(ui::logo_rgba(size as usize, None), size, size).map_err(|e| e.to_string())?;
+    // Idle: a template icon on macOS, which the menu bar paints white or black by
+    // itself, and a white mark elsewhere.
+    let idle_rgb = if cfg!(target_os = "macos") { [0, 0, 0] } else { [235, 235, 235] };
+    let grey = Icon::from_rgba(ui::logo_rgba(size as usize, Some(idle_rgb)), size, size).map_err(|e| e.to_string())?;
     let mut tray: Option<TrayIcon> = None;
     let mut running = None;
     let refresh = {
@@ -91,7 +94,12 @@ pub fn run() -> Result<(), String> {
             stop.set_enabled(is_up);
             if *running != Some(is_up) {
                 if let Some(t) = tray {
-                    let _ = t.set_icon(Some(if is_up { lit.clone() } else { grey.clone() }));
+                    let icon = if is_up { lit.clone() } else { grey.clone() };
+                    if cfg!(target_os = "macos") {
+                        let _ = t.set_icon_with_as_template(Some(icon), !is_up);
+                    } else {
+                        let _ = t.set_icon(Some(icon));
+                    }
                     let _ = t.set_tooltip(Some(if is_up { "Engrams: running" } else { "Engrams: idle" }));
                 }
                 *running = Some(is_up);
@@ -102,7 +110,13 @@ pub fn run() -> Result<(), String> {
         match event {
             Event::NewEvents(StartCause::Init) => {
                 // macOS wants the item created once the loop runs, not before.
-                tray = TrayIconBuilder::new().with_menu(Box::new(menu.clone())).with_icon(grey.clone()).with_tooltip("Engrams").build().ok();
+                tray = TrayIconBuilder::new()
+                    .with_menu(Box::new(menu.clone()))
+                    .with_icon(grey.clone())
+                    .with_icon_as_template(true)
+                    .with_tooltip("Engrams")
+                    .build()
+                    .ok();
                 refresh(&tray, &mut running);
                 *control_flow = ControlFlow::WaitUntil(Instant::now() + EVERY);
             }

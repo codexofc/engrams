@@ -2109,9 +2109,11 @@ mod ui {
     ];
     const DOT: f32 = 9.0;
     const SPAN: f32 = 124.0;
+    #[cfg(feature = "tray")]
     const SHADES: [[u8; 3]; 3] = [[217, 165, 138], [207, 122, 79], [183, 65, 14]];
 
     /// The shade under a point of the SVG frame, the darkest one when arcs overlap.
+    #[cfg(feature = "tray")]
     fn shade_under(px: f32, py: f32) -> Option<u8> {
         let r = (px * px + py * py).sqrt();
         let a = py.atan2(px).to_degrees();
@@ -2124,9 +2126,10 @@ mod ui {
         best
     }
 
-    /// The mark as a square RGBA bitmap, antialiased, for a tray icon. Grey when
-    /// `colour` is false.
-    pub fn logo_rgba(size: usize, colour: bool) -> Vec<u8> {
+    /// The mark as a square RGBA bitmap, antialiased, for a tray icon. `flat` paints
+    /// every shade in one colour (a template icon on macOS, white elsewhere).
+    #[cfg(feature = "tray")]
+    pub fn logo_rgba(size: usize, flat: Option<[u8; 3]>) -> Vec<u8> {
         let step = SPAN / size as f32;
         let mut out = Vec::with_capacity(size * size * 4);
         for y in 0..size {
@@ -2143,7 +2146,7 @@ mod ui {
                 }
                 let covered: u8 = hits.iter().sum();
                 let shade = (0..3).max_by_key(|&s| hits[s]).unwrap_or(0);
-                let [r, g, b] = if colour { SHADES[shade] } else { [110, 110, 110] };
+                let [r, g, b] = flat.unwrap_or(SHADES[shade]);
                 out.extend([r, g, b, (u16::from(covered) * 255 / 16) as u8]);
             }
         }

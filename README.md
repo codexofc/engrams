@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/codexofc/engrams/actions/workflows/ci.yml"><img src="https://github.com/codexofc/engrams/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
   <a href="https://codecov.io/gh/codexofc/engrams"><img src="https://codecov.io/gh/codexofc/engrams/graph/badge.svg" alt="coverage"></a>
-  <a href="https://github.com/codexofc/engrams/releases/latest"><img src="https://img.shields.io/badge/release-v0.3.0-b7410e.svg" alt="release v0.3.0"></a>
+  <a href="https://github.com/codexofc/engrams/releases/latest"><img src="https://img.shields.io/github/v/release/codexofc/engrams?color=b7410e" alt="release"></a>
   <a href="https://github.com/codexofc/engrams/pkgs/container/engrams"><img src="https://img.shields.io/badge/ghcr.io-codexofc%2Fengrams-2b3137.svg" alt="container image"></a>
   <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%20or%20Apache--2.0-blue.svg" alt="license"></a>
   <img src="https://img.shields.io/badge/rust-1.98%2B-orange.svg" alt="rust 1.98+">

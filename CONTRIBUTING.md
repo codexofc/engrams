@@ -77,8 +77,8 @@ environment variables so they run on the same index. See `docs/BENCHMARKS.md`.
 - `develop` is where pull requests land. Open a branch from it (`feat/…`, `fix/…`,
   `docs/…`) and target it in the pull request. CI runs on both branches.
 - A release is a pull request from `develop` to `master` that bumps the version in
-  `Cargo.toml`, moves the `Unreleased` section of `CHANGELOG.md` under the new
-  version, and updates the release badge in `README.md`. Once merged, the tag
+  `Cargo.toml` and moves the `Unreleased` section of `CHANGELOG.md` under the new
+  version. Once merged, the tag
   triggers the release workflow: binaries for four targets, release notes taken from
   the changelog, and the container image on GitHub Packages.
 - The rulesets in `.github/rulesets/` protect both branches and the tags (pull

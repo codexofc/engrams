@@ -50,10 +50,10 @@ jobs:
         id: models
         with:
           path: ~/.engram/models
-          key: models-granite-278m-multilingual-small-english-r2-v1
+          key: models-granite-278m-multilingual-97m-multilingual-r2-v1
       - if: steps.models.outputs.cache-hit != 'true'
         run: |
-          for repo in ibm-granite/granite-embedding-278m-multilingual ibm-granite/granite-embedding-small-english-r2; do
+          for repo in ibm-granite/granite-embedding-278m-multilingual ibm-granite/granite-embedding-97m-multilingual-r2; do
             dir="$HOME/.engram/models/${repo##*/}"
             mkdir -p "$dir/1_Pooling"
             for f in config.json 1_Pooling/config.json tokenizer.json model.safetensors sentence_bert_config.json sentencepiece.bpe.model; do

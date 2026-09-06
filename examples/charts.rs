@@ -23,7 +23,7 @@ const MODELS: &[Model] = &[
     Model { alias: "e5-small", family: "BERT", params_m: 118, top5: [62, 58, 100, 64], rss_mb: 222, latency_s: 0.20 },
     Model { alias: "e5-base", family: "XLM-RoBERTa", params_m: 278, top5: [71, 58, 100, 64], rss_mb: 478, latency_s: 0.20 },
     Model { alias: "e5-large", family: "XLM-RoBERTa", params_m: 560, top5: [79, 71, 100, 78], rss_mb: 1527, latency_s: 0.55 },
-    Model { alias: "granite-small-en", family: "ModernBERT", params_m: 97, top5: [83, 54, 100, 72], rss_mb: 290, latency_s: 0.43 },
+    Model { alias: "granite-multilingual-r2", family: "ModernBERT", params_m: 97, top5: [83, 54, 100, 72], rss_mb: 290, latency_s: 0.43 },
     Model { alias: "granite-en", family: "ModernBERT", params_m: 149, top5: [67, 71, 100, 50], rss_mb: 370, latency_s: 0.24 },
     Model { alias: "gte-modernbert", family: "ModernBERT", params_m: 149, top5: [50, 50, 92, 39], rss_mb: 370, latency_s: 0.27 },
 ];

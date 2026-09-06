@@ -95,7 +95,7 @@ fn the_modernbert_model_matches_its_reference() {
         return;
     }
     let embedder = Embedder::load(&dir).expect("model");
-    let raw = include_str!("fixtures/reference-granite-small-english-r2.json");
+    let raw = include_str!("fixtures/reference-granite-97m-multilingual-r2.json");
     let reference: std::collections::BTreeMap<String, Case> = serde_json::from_str(raw).expect("unreadable fixture");
     for (name, case) in reference {
         let got = embedder.encode(&case.text).expect("encoding");

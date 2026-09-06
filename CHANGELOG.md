@@ -6,6 +6,19 @@ All notable changes to Engrams are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-06
+
+### Fixed
+- The ModernBERT model shipped since 0.2.0 under the name granite-embedding-small-english-r2
+  was in fact `ibm-granite/granite-embedding-97m-multilingual-r2`: 97 M parameters,
+  180 000-piece vocabulary, SiLU, 32 768-token window, multilingual. The registry,
+  the alias (`granite-multilingual-r2`), the concordance fixture, the CI download and
+  every document now name it correctly. The measurements were made on that model and
+  stand. The real granite-embedding-small-english-r2 (47 M, English, GELU, mean
+  pooling) is not in the registry yet, it has not been measured.
+- The coverage job of the CI downloads the two models the tests need, so the badge
+  counts the concordance, parity and end-to-end tests.
+
 ## [0.3.0] - 2026-09-06
 
 ### Added

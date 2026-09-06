@@ -19,7 +19,7 @@ Setup
   engram init             guided setup: notes directory, model, integrations, first note
   engram init <dir> [--model <hf-repo>] [--no-download]
                           repositories known to work: ibm-granite/granite-embedding-278m-multilingual (default),
-                          ibm-granite/granite-embedding-small-english-r2 (long context, English)
+                          ibm-granite/granite-embedding-97m-multilingual-r2 (long context, multilingual)
                           the same without questions, for scripts
   engram setup [<tool>|all]
                           wire the hook and the MCP server into a tool: claude-code, codex,

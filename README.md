@@ -68,8 +68,9 @@ Five steps, each with a default that Enter accepts:
 
 1. **Your notes.** The directory, remembered in `~/.engram/root`, with an ignore
    rule for the derived files and a git repository if you want one.
-2. **The model.** Multilingual with a 512-token window (default, 556 MB), or English
-   with an 8192-token window (ModernBERT, 190 MB, faster). Downloaded once into
+2. **The model.** Multilingual with a 512-token window (default, 556 MB), a lighter
+   multilingual ModernBERT that keeps a whole note in one vector (97 M, 220 MB), or
+   five other measured choices. Downloaded once into
    `~/.engram/models/`. See [Models](#models).
 3. **Tools on this machine.** Claude Code, Codex CLI, opencode, Gemini CLI, Cursor,
    Windsurf, Kandev: each one found is offered, the prompt hook and the MCP server
@@ -82,7 +83,7 @@ Everything the wizard does is also a plain command:
 
 ```sh
 engram init ~/notes --no-download            # directory only
-engram init ~/notes --model ibm-granite/granite-embedding-small-english-r2
+engram init ~/notes --model ibm-granite/granite-embedding-97m-multilingual-r2
 engram setup claude-code                     # or codex, opencode, gemini, cursor, windsurf, kandev, all
 engram config                                # show the settings, or walk through them on a terminal
 engram config set ENGRAM_QUESTIONS_CMD "ollama run qwen2.5:3b"
@@ -248,7 +249,7 @@ through the model twice.
 | [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) | `e5-small` | 100+ | 512 tokens | 118 M | MIT | the small multilingual option, 384 dimensions |
 | [multilingual-e5-base](https://huggingface.co/intfloat/multilingual-e5-base) | `e5-base` | 100+ | 512 tokens | 278 M | MIT | multilingual, mean pooling |
 | [multilingual-e5-large](https://huggingface.co/intfloat/multilingual-e5-large) | `e5-large` | 100+ | 512 tokens | 560 M | MIT | multilingual, 1024 dimensions, the heaviest choice |
-| [granite-embedding-small-english-r2](https://huggingface.co/ibm-granite/granite-embedding-small-english-r2) | `granite-small-en` | English | 8192 tokens | 97 M | Apache-2.0 | English notes, long paragraphs, smaller machines |
+| [granite-embedding-97m-multilingual-r2](https://huggingface.co/ibm-granite/granite-embedding-97m-multilingual-r2) | `granite-multilingual-r2` | 100+ | 32 768 tokens | 97 M | Apache-2.0 | the lightest ModernBERT, a whole note in one vector |
 | [granite-embedding-english-r2](https://huggingface.co/ibm-granite/granite-embedding-english-r2) | `granite-en` | English | 8192 tokens | 149 M | Apache-2.0 | English, long context, 768 dimensions |
 | [gte-modernbert-base](https://huggingface.co/Alibaba-NLP/gte-modernbert-base) | `gte-modernbert` | English | 8192 tokens | 149 M | Apache-2.0 | English, strong on public retrieval benchmarks |
 
@@ -274,7 +275,7 @@ memory). Full tables in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 | `e5-small` | 62 % | 58 % | 100 % | 64 % | 66 % | 0.20 s | 222 MB |
 | `e5-base` | 71 % | 58 % | 100 % | 64 % | 69 % | 0.20 s | 478 MB |
 | `e5-large` | 79 % | 71 % | 100 % | 78 % | 79 % | 0.55 s | 1 527 MB |
-| `granite-small-en` | 83 % | 54 % | 100 % | 72 % | 74 % | 0.43 s | 290 MB |
+| `granite-multilingual-r2` | 83 % | 54 % | 100 % | 72 % | 74 % | 0.43 s | 290 MB |
 | `granite-en` | 67 % | 71 % | 100 % | 50 % | 66 % | 0.24 s | 370 MB |
 | `gte-modernbert` | 50 % | 50 % | 92 % | 39 % | 51 % | 0.27 s | 370 MB |
 
@@ -283,8 +284,8 @@ memory). Full tables in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 <p align="center"><img src="docs/models-efficiency.svg" alt="Hit rate over the 96 queries against the peak resident memory of an isolated search, by model" width="820"></p>
 
 The default model is the best trade on a bilingual corpus. e5-large buys four
-points overall for five times the memory. granite-small-en is the pick for English
-notes with long paragraphs. The default model also carries the two signals the
+points overall for five times the memory. granite-multilingual-r2 is the lightest
+ModernBERT, multilingual, with a whole note in one vector. The default model also carries the two signals the
 others were measured without: the identifier bonus and the indexed questions, which
 lift it to 83 / 75 / 100 / 81 %.
 

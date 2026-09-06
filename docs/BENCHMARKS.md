@@ -45,7 +45,7 @@ one query, rank, exit, best of three runs, peak resident memory from `time -l`.
 | multilingual-e5-small | `e5-small` | BERT (MiniLM) | 118 M | 512 | 62 % | 58 % | **100 %** | 64 % | 66 % | 0.20 s | **222 MB** |
 | multilingual-e5-base | `e5-base` | XLM-RoBERTa | 278 M | 512 | 71 % | 58 % | **100 %** | 64 % | 69 % | 0.20 s | 478 MB |
 | multilingual-e5-large | `e5-large` | XLM-RoBERTa large | 560 M | 512 | 79 % | **71 %** | **100 %** | 78 % | **79 %** | 0.55 s | 1 527 MB |
-| granite-embedding-small-english-r2 | `granite-small-en` | ModernBERT | 97 M | 8192 | **83 %** | 54 % | **100 %** | 72 % | 74 % | 0.43 s | 290 MB |
+| granite-embedding-97m-multilingual-r2 | `granite-multilingual-r2` | ModernBERT | 97 M | 32 768 | **83 %** | 54 % | **100 %** | 72 % | 74 % | 0.43 s | 290 MB |
 | granite-embedding-english-r2 | `granite-en` | ModernBERT | 149 M | 8192 | 67 % | **71 %** | **100 %** | 50 % | 66 % | 0.24 s | 370 MB |
 | gte-modernbert-base | `gte-modernbert` | ModernBERT | 149 M | 8192 | 50 % | 50 % | 92 % | 39 % | 51 % | 0.27 s | 370 MB |
 
@@ -65,15 +65,16 @@ Reading, family by family:
   100 % on the twelve cases. The default model's 75 % is why the identifier bonus
   exists: with it the default reaches 92 %, with the questions 100 %.
 - **First benchmark, one third cross-language.** The default model keeps its lead at
-  81 %, e5-large is at 78 %, the English models fall to 72 %, 50 % and 39 % in that
-  order, which is what English-only models should do on French queries.
+  81 %, e5-large is at 78 %, the 97 M multilingual ModernBERT is at 72 %, and the two
+  English models fall to 50 % and 39 %, which is what English-only models should do
+  on French queries.
 
 Reading, cost against result: the default model is the best trade on this corpus,
 75 % overall for 315 MB and 0.18 s. e5-large buys four points overall and thirteen
 on buried details for five times the memory and three times the latency. e5-small
-gives up nine points for a hundred fewer megabytes. granite-small-en is the choice
-for English notes with long paragraphs: 74 % overall, 290 MB, an 8192-token window
-that keeps a whole paragraph in one vector (1 121 chunks against 1 661). Its 0.43 s
+gives up nine points for a hundred fewer megabytes. granite-multilingual-r2 is the
+lightest ModernBERT and a multilingual one: 74 % overall, 290 MB, a 32 768-token
+window that keeps a whole note in one vector (1 117 chunks against 1 661). Its 0.43 s
 isolated call is the byte-level BPE vocabulary parsed from JSON at every start, not
 the model.
 
@@ -177,22 +178,23 @@ the reference crate on the corpus plus edge cases.
 
 ## The ModernBERT models in detail
 
-`granite-embedding-small-english-r2`, `granite-embedding-english-r2` and
+`granite-embedding-97m-multilingual-r2`, `granite-embedding-english-r2` and
 `gte-modernbert-base` share the ModernBERT graph: alternating global and
 sliding-window attention, rotary positions, gated MLP, activation read from the
-configuration, byte-level BPE tokenizer. Their 8192-token window merges paragraphs
-into 1 121 chunks instead of 1 661, so the "right passage" column of the benchmark
+configuration, byte-level BPE tokenizer. Their long window (32 768 tokens for the
+97 M multilingual one, 8 192 for the two English ones) merges paragraphs into
+1 117 to 1 121 chunks instead of 1 661, so the "right passage" column of the benchmark
 is not comparable with the 512-token models.
 
-Concordance with the reference vectors on granite-embedding-small-english-r2: cosine
+Concordance with the reference vectors on granite-embedding-97m-multilingual-r2: cosine
 1.000000 in F32, 0.99986 in Q8. The library implementation of the graph stalled at
 0.85 on this model because it hard-codes a GELU activation where the configuration
 says SiLU.
 
-Of the three, the small one is the better choice on this corpus: it holds the topic
-family at 83 % and the identifiers at 100 %, and its base-size siblings do not pay
-back their extra 80 MB (granite-en loses sixteen points on topics and twenty-two on
-the cross-language family, gte-modernbert loses more). The long window has a cost at
+Of the three, the 97 M multilingual one is the better choice on this corpus: it holds
+the topic family at 83 % and the identifiers at 100 %, and the two English base
+models do not pay back their extra 80 MB (granite-en loses sixteen points on topics
+and twenty-two on the cross-language family, gte-modernbert loses more). The long window has a cost at
 indexing time: gte-modernbert-base took 1 307 s and granite-embedding-english-r2
 1 673 s to embed the corpus on a machine that was also compiling, where
 multilingual-e5-small took 237 s on a quiet one, because a whole paragraph goes

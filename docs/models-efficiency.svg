@@ -38,7 +38,7 @@
   <text x="560" y="168" fill="#10202b" font-size="11">granite-multilingual <tspan fill="#7c8a95">75 %, 315 MB, 0.18 s</tspan></text>
   <circle cx="135.25" cy="170.99997" r="8.4" fill="#b7410e" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
   <polyline points="143.68199,170.99997 540,180 554,180" fill="none" stroke="#7c8a95" stroke-width="0.8"/>
-  <text x="560" y="184" fill="#10202b" font-size="11">granite-small-en <tspan fill="#7c8a95">74 %, 290 MB, 0.43 s</tspan></text>
+  <text x="560" y="184" fill="#10202b" font-size="11">granite-multilingual-r2 <tspan fill="#7c8a95">74 %, 290 MB, 0.43 s</tspan></text>
   <circle cx="177.54999" cy="199" r="11.5" fill="#2d6a9f" fill-opacity="0.85" stroke="#ffffff" stroke-width="2"/>
   <polyline points="189.053,199 540,199 554,199" fill="none" stroke="#7c8a95" stroke-width="0.8"/>
   <text x="560" y="203" fill="#10202b" font-size="11">e5-base <tspan fill="#7c8a95">69 %, 478 MB, 0.20 s</tspan></text>

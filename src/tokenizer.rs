@@ -348,3 +348,34 @@ mod proto {
         }
     }
 }
+
+/// Either tokenizer family, chosen from the model directory.
+pub enum AnyTokenizer {
+    Unigram(Unigram),
+    Bpe(Box<crate::bpe::Bpe>),
+}
+
+impl AnyTokenizer {
+    /// The native SentencePiece model when present, else `tokenizer.json`, which
+    /// says whether it is Unigram or byte-level BPE.
+    pub fn from_model_dir(dir: &Path, max_tokens: usize) -> Result<Self, String> {
+        let native = dir.join("sentencepiece.bpe.model");
+        if native.exists() {
+            return Ok(AnyTokenizer::Unigram(Unigram::from_sentencepiece(&native, max_tokens)?));
+        }
+        let json = dir.join("tokenizer.json");
+        let raw = std::fs::read_to_string(&json).map_err(|e| format!("{}: {e}", json.display()))?;
+        let kind = serde_json::from_str::<serde_json::Value>(&raw).ok().and_then(|v| v["model"]["type"].as_str().map(str::to_string)).unwrap_or_default();
+        match kind.as_str() {
+            "BPE" => Ok(AnyTokenizer::Bpe(Box::new(crate::bpe::Bpe::from_file(&json, max_tokens)?))),
+            _ => Ok(AnyTokenizer::Unigram(Unigram::from_file(&json, max_tokens)?)),
+        }
+    }
+
+    pub fn encode(&self, text: &str) -> Encoding {
+        match self {
+            AnyTokenizer::Unigram(t) => t.encode(text),
+            AnyTokenizer::Bpe(t) => t.encode(text),
+        }
+    }
+}

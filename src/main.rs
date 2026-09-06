@@ -15,6 +15,8 @@ engram, local semantic memory for coding agents
 Setup
   engram init             guided setup: notes directory, model, integrations, first note
   engram init <dir> [--model <hf-repo>] [--no-download]
+                          repositories known to work: ibm-granite/granite-embedding-278m-multilingual (default),
+                          ibm-granite/granite-embedding-small-english-r2 (long context, English)
                           the same without questions, for scripts
   engram setup [<tool>|all]
                           wire the hook and the MCP server into a tool: claude-code, codex,
@@ -2024,10 +2026,6 @@ mod ui {
         wrap("38;2;183;65;14", s)
     }
 
-    fn accent_dim(s: &str) -> String {
-        wrap("38;2;214;140;104", s)
-    }
-
     pub fn bold(s: &str) -> String {
         wrap("1", s)
     }
@@ -2040,17 +2038,76 @@ mod ui {
         wrap("38;2;61;125;90", s)
     }
 
-    /// The mark, drawn with block characters: two rings around the fact itself.
+    /// The README mark, rasterised at run time from the same arcs as `docs/logo.svg`
+    /// into half-block characters, so the terminal and the page show one logo.
     pub fn logo(version: &str) {
-        let ring = |s: &str| accent_dim(s);
-        let core = |s: &str| accent(s);
+        // (radius, start angle, end angle, stroke width, shade) in the SVG's frame,
+        // angles in degrees with y pointing down, as in the SVG.
+        const ARCS: [(f32, f32, f32, f32, u8); 6] = [
+            (50.0, -158.6, -111.3, 5.0, 0),
+            (50.0, -68.7, -21.4, 5.0, 0),
+            (40.0, 36.9, 143.1, 6.0, 1),
+            (32.0, -161.6, -71.6, 7.0, 2),
+            (32.0, -108.4, -18.4, 7.0, 1),
+            (22.0, 37.9, 142.1, 8.0, 2),
+        ];
+        const DOT: f32 = 9.0;
+        let (cols, rows) = (40usize, 19usize);
+        let span = 124.0f32;
+        let step = span / cols as f32;
+        // Coverage of a pixel at (x, y): the strongest shade it touches, if any.
+        let shade_at = |x: f32, y: f32| -> Option<u8> {
+            let mut best: Option<u8> = None;
+            let mut sub = 0;
+            let mut hits = [0u8; 3];
+            for i in 0..3 {
+                for j in 0..3 {
+                    let (px, py) = (x + (i as f32 + 0.5) * step / 3.0, y + (j as f32 + 0.5) * step / 3.0);
+                    let r = (px * px + py * py).sqrt();
+                    let a = py.atan2(px).to_degrees();
+                    if r <= DOT {
+                        hits[2] += 1;
+                    }
+                    for (radius, from, to, width, shade) in ARCS {
+                        if (r - radius).abs() <= width / 2.0 && a >= from && a <= to {
+                            hits[shade as usize] += 1;
+                        }
+                    }
+                    sub += 1;
+                }
+            }
+            for s in (0..3).rev() {
+                if hits[s] * 2 >= sub / 3 {
+                    best = Some(s as u8);
+                    break;
+                }
+            }
+            best
+        };
+        let colours = ["38;2;217;165;138", "38;2;207;122;79", "38;2;183;65;14"];
+        let paint = |s: &str, shade: u8| if tty() { format!("\x1b[{}m{s}\x1b[0m", colours[shade as usize]) } else { s.to_string() };
+        let mut side: Vec<String> = vec![String::new(); rows];
+        side[6] = bold("e n g r a m s");
+        side[9] = dim("local semantic memory for coding agents");
+        side[10] = dim(&format!("v{version}"));
         println!();
-        println!("      {}", ring("▄▄▄▄▄▄▄▄"));
-        println!("    {}          {}", ring("▄█▀      ▀█▄"), bold("e n g r a m s"));
-        println!("   {}   {}   {}", ring("██"), core("▄██▄"), ring("██"));
-        println!("   {}   {}   {}          {}", ring("██"), core("▀██▀"), ring("██"), dim("local semantic memory for coding agents"));
-        println!("    {}          {}", ring("▀█▄      ▄█▀"), dim(&format!("v{version}")));
-        println!("      {}", ring("▀▀▀▀▀▀▀▀"));
+        for (row, text) in side.iter().enumerate() {
+            let mut line = String::from("  ");
+            for col in 0..cols {
+                let x = -span / 2.0 + col as f32 * step;
+                let y_top = -span / 2.0 + (row * 2) as f32 * step;
+                let top = shade_at(x, y_top);
+                let bottom = shade_at(x, y_top + step);
+                let (glyph, shade) = match (top, bottom) {
+                    (Some(a), Some(b)) => ("█", a.max(b)),
+                    (Some(a), None) => ("▀", a),
+                    (None, Some(b)) => ("▄", b),
+                    (None, None) => (" ", 0),
+                };
+                line.push_str(&if glyph == " " { " ".to_string() } else { paint(glyph, shade) });
+            }
+            println!("{line}     {text}");
+        }
         println!();
     }
 
@@ -2249,7 +2306,17 @@ fn in_path(tool: &str) -> bool {
 /// repository `repo`, with curl's progress bar.
 fn download_model(repo: &str, model: &Path) -> Result<(), String> {
     std::fs::create_dir_all(model.join("1_Pooling")).map_err(|e| e.to_string())?;
-    for file in ["config.json", "1_Pooling/config.json", "sentencepiece.bpe.model", "model.safetensors"] {
+    // Optional files are absent from some repositories: a SentencePiece model only
+    // ships with XLM-RoBERTa, the sentence-transformers cap is not always there.
+    let files = [
+        ("config.json", true),
+        ("1_Pooling/config.json", true),
+        ("sentence_bert_config.json", false),
+        ("sentencepiece.bpe.model", false),
+        ("tokenizer.json", true),
+        ("model.safetensors", true),
+    ];
+    for (file, required) in files {
         let target = model.join(file);
         if std::fs::metadata(&target).is_ok_and(|m| m.len() > 0) {
             ui::done(&format!("{file} already present"));
@@ -2265,7 +2332,10 @@ fn download_model(repo: &str, model: &Path) -> Result<(), String> {
             .map_err(|e| format!("curl: {e}"))?;
         if !status.success() {
             let _ = std::fs::remove_file(&target);
-            return Err(format!("download failed: {url}"));
+            if required {
+                return Err(format!("download failed: {url}"));
+            }
+            ui::note(&format!("{file} not in this repository, skipped"));
         }
     }
     Ok(())
@@ -2289,16 +2359,26 @@ fn run_wizard() -> Result<(), String> {
     println!();
 
     ui::step(2, total, "The embedding model");
-    let model = model_dir();
+    ui::note("1  multilingual, 512-token window, 278M parameters, 556 MB    (default)");
+    ui::note("2  English, 8192-token window, 97M parameters, 190 MB, faster  (ModernBERT)");
+    let choice = ui::ask("Which model?", "1");
+    let repo = if choice.trim() == "2" { paths::ALT_MODEL_REPO } else { paths::DEFAULT_MODEL_REPO };
+    let model = paths::model_dir_of(repo);
+    if repo != paths::DEFAULT_MODEL_REPO {
+        save_env_value("ENGRAM_MODEL", &model.display().to_string())?;
+        std::env::set_var("ENGRAM_MODEL", &model);
+    } else {
+        save_env_value("ENGRAM_MODEL", "")?;
+    }
     if model.join("model.safetensors").exists() {
         ui::done(&format!("model present in {}", model.display()));
     } else {
-        ui::note(&format!("{} (Apache-2.0, 556 MB, downloaded once into {})", paths::DEFAULT_MODEL_REPO, model.display()));
+        ui::note(&format!("{repo} (Apache-2.0, downloaded once into {})", model.display()));
         if ui::confirm("Download it now?", true) {
-            download_model(paths::DEFAULT_MODEL_REPO, &model)?;
+            download_model(repo, &model)?;
             ui::done("model ready");
         } else {
-            ui::note("skipped: `engram init <dir>` downloads it later; until then search is lexical");
+            ui::note("skipped: `engram init <dir> --model <repo>` downloads it later; until then search is lexical");
         }
     }
     println!();

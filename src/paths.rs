@@ -50,3 +50,16 @@ pub fn model_dir() -> PathBuf {
 pub fn relative(file: &Path, root: &Path) -> String {
     file.strip_prefix(root).unwrap_or(file).to_string_lossy().into_owned()
 }
+
+/// Hugging Face repository of the long-context English model.
+pub const ALT_MODEL_REPO: &str = "ibm-granite/granite-embedding-small-english-r2";
+
+/// Directory of a model repository under `~/.engram/models/`.
+pub fn model_dir_of(repo: &str) -> PathBuf {
+    config_dir().join("models").join(repo.rsplit('/').next().unwrap_or(repo))
+}
+
+/// The long-context English model, for tests and the model choice.
+pub fn alt_model_dir() -> PathBuf {
+    std::env::var("ENGRAM_MODEL_ALT").map(PathBuf::from).unwrap_or_else(|_| model_dir_of(ALT_MODEL_REPO))
+}

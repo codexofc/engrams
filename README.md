@@ -4,20 +4,20 @@
 
 <p align="center">
   <a href="https://github.com/codexofc/engrams/actions/workflows/ci.yml"><img src="https://github.com/codexofc/engrams/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <a href="https://github.com/codexofc/engrams/releases"><img src="https://img.shields.io/github/v/release/codexofc/engrams?color=b7410e" alt="release"></a>
   <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%20or%20Apache--2.0-blue.svg" alt="license"></a>
   <img src="https://img.shields.io/badge/rust-1.85%2B-orange.svg" alt="rust 1.85+">
-  <img src="https://img.shields.io/badge/resident-198%20MB-b7410e.svg" alt="198 MB resident">
 </p>
 
 **engrams** gives coding agents a durable, searchable memory made of plain markdown
-files. One binary, no server, no network at search time, no database. A 278-million
-parameter multilingual embedding model runs on the CPU in **198 MB** of resident
-memory and answers in **0.10 s**. The notes stay yours: readable by any editor, any
-agent, any tool, ten years from now.
+files. One binary, no server, no network at search time, no database. A multilingual
+embedding model runs on the CPU in **198 MB** of resident memory and answers in
+**0.10 s**. The notes stay yours: readable by any editor, any agent, any tool, ten
+years from now.
 
 It plugs into **Claude Code** (a prompt hook and an MCP server), **Codex CLI**,
 **opencode**, **Gemini CLI**, **Cursor**, **Windsurf** and **Kandev** (MCP), and
-anything that can run a command. `engram init` finds the tools installed on the
+anything that can run a command. The guided setup finds the tools installed on the
 machine and wires them.
 
 ```
@@ -29,7 +29,223 @@ $ engram search "how are the databases isolated between agents"
        ...
 ```
 
-## Why
+## Install
+
+```sh
+curl -sSfL https://raw.githubusercontent.com/codexofc/engrams/master/install.sh | sh
+```
+
+The script picks the prebuilt binary for your platform (Linux x86_64 and aarch64,
+macOS Apple silicon and Intel) from the [releases](https://github.com/codexofc/engrams/releases),
+installs it in `~/.local/bin`, and starts the guided setup. From source, with Rust
+1.85 or later:
+
+```sh
+cargo install engrams
+```
+
+The binary is called `engram`. It needs `curl` once, to download the model.
+
+## Get started
+
+```sh
+engram init
+```
+
+<p align="center"><img src="docs/wizard.svg" alt="engram init, the guided setup" width="720"></p>
+
+Five steps, each with a default that Enter accepts:
+
+1. **Your notes.** The directory, remembered in `~/.engram/root`, with an ignore
+   rule for the derived files and a git repository if you want one.
+2. **The model.** Multilingual with a 512-token window (default, 556 MB), or English
+   with an 8192-token window (ModernBERT, 190 MB, faster). Downloaded once into
+   `~/.engram/models/`. See [Models](#models).
+3. **Tools on this machine.** Claude Code, Codex CLI, opencode, Gemini CLI, Cursor,
+   Windsurf, Kandev: each one found is offered, the prompt hook and the MCP server
+   for Claude Code, the MCP server for the others.
+4. **Indexed questions**, optional: a local LLM command that writes, once per
+   paragraph, the questions it answers. Skippable, settable later.
+5. **A first note**, then the first index.
+
+Everything the wizard does is also a plain command:
+
+```sh
+engram init ~/notes --no-download            # directory only
+engram init ~/notes --model ibm-granite/granite-embedding-small-english-r2
+engram setup claude-code                     # or codex, opencode, gemini, cursor, windsurf, kandev, all
+engram config                                # show the settings, or walk through them on a terminal
+engram config set ENGRAM_QUESTIONS_CMD "ollama run qwen2.5:3b"
+```
+
+Then write a note and search it:
+
+```sh
+mkdir -p ~/notes/work/backend
+cat > ~/notes/work/backend/token-rotation.md <<'EOF'
+---
+name: token-rotation
+description: API tokens rotate every ninety days, the old one stays valid for one hour
+type: reference
+status: active
+verified: 2026-09-06
+---
+
+Rotation is triggered by the `rotate-token` job. The previous token keeps working
+for one hour so that in-flight requests finish. Clients read the new token from the
+`X-Next-Token` header of any authenticated response.
+EOF
+
+engram index
+engram search "how long does an old token stay valid"
+```
+
+## Integrations
+
+### Claude Code
+
+`engram setup claude-code` adds a `UserPromptSubmit` hook to `~/.claude/settings.json`
+and registers the MCP server. Every prompt then arrives with a `<working-memory>`
+block holding the two passages closest to it, and the model has the `search`,
+`answer`, `read`, `write`, `append`, `link` and `learn` tools. Claude Code also loads
+a `MEMORY.md` from its per-project memory directory: point that directory at the
+matching `<family>/<project>/` of your root with a symbolic link and the hot index
+is loaded at every session.
+
+Add a few lines to your `CLAUDE.md` (or `AGENTS.md` for the tools that read it) so
+the model uses the memory deliberately:
+
+```markdown
+## Working memory
+Durable facts live in engrams. Before a task, search it (`engram search` or the
+`search` tool). Read a note with `engram read` before relying on it. Write durable
+facts with `engram write`, complete them with `engram append`, replace them with
+`engram supersede`; never edit the generated MEMORY.md files. Nothing dated, no
+secrets.
+```
+
+### Codex CLI, opencode, Gemini CLI, Cursor, Windsurf
+
+```sh
+engram setup codex      # ~/.codex/config.toml, [mcp_servers.engram]
+engram setup opencode   # ~/.config/opencode/opencode.json, mcp
+engram setup gemini     # ~/.gemini/settings.json, mcpServers
+engram setup cursor     # ~/.cursor/mcp.json, mcpServers
+engram setup windsurf   # ~/.codeium/windsurf/mcp_config.json, mcpServers
+```
+
+Each one registers `engram mcp` as a local MCP server, idempotently, with a backup
+of the edited file.
+
+### Kandev
+
+Cards run Claude Code or opencode with the user's configuration, so the setups above
+apply inside cards. For Kandev's own MCP settings, `engram setup kandev` prints the
+snippet to paste.
+
+### Any other agent
+
+`engram mcp` speaks the Model Context Protocol over stdio. `engram answer --json`
+returns passages for scripts. `engram context <topic> --out brief.md` writes a
+brief. `engram hook` reads Claude Code's hook JSON and prints the passages.
+
+## Everyday commands
+
+| command | what it does |
+|---|---|
+| `engram search <words>` | five notes at most, with score, path, description and the passage that matched; `--archives` includes replaced notes |
+| `engram answer <question>` | the passages that answer, bounded in size, ready to cite; `--json` for tools |
+| `engram context <topic>` | a markdown brief to hand an agent before it starts |
+| `engram read <name>` | print a note; a read after a search that missed it is a learning signal |
+| `engram write <family/project> <name> --type <t> --description <d>` | write a note (body on stdin); refuses secrets and near-duplicates of an active note |
+| `engram append <name>` | add a paragraph, mark verified today |
+| `engram verify <name>` | the fact still holds, the date says so |
+| `engram supersede <old> <new> --type <t> --description <d>` | replace a fact: new note, old one archived with `superseded_by`, links rewritten |
+| `engram link <a> <b>` | cross-reference two notes |
+| `engram learn "<query>" <name>` | confirm that a note answers a query; `--show`, `--forget` |
+| `engram index` | embed what changed, regenerate the `MEMORY.md` files |
+| `engram check` | naming, mandatory fields, dangling links, bound of the hot index, truncated paragraphs, near-duplicates |
+| `engram secrets` | exit 1 if any note looks like it contains a token, a key or a password (use it as a pre-commit hook) |
+| `engram curation` | a markdown checklist of stale, long, undated or duplicated notes |
+| `engram since 7`, `engram why <name>` | what changed, and where a note comes from (git) |
+| `engram status`, `engram stop` | the warm process, the index, the usage cadence |
+
+## Notes
+
+```yaml
+---
+name: token-rotation          # equals the file name, lowercase ASCII, digits, dashes
+description: One line. It decides relevance in the hot index and prefixes every chunk.
+type: reference               # user | feedback | project | reference
+status: active                # active | archived (archived notes name their successor)
+verified: 2026-09-06          # date of the last verification
+depends_on: tool 1.2          # optional, pinned version; `check` compares it with the installed one
+superseded_by: [[other-note]] # set by `supersede`
+source: TICKET-123            # optional
+---
+
+Markdown body. Paragraphs are the unit of indexing. [[wiki links]] are checked.
+```
+
+Notes live in `<root>/<family>/<project>/<name>.md`. A project named `common`
+inside a family is listed in the hot index of every sibling project. `engram check`
+enforces the rules. The `MEMORY.md` of each project is generated, ordered by type
+(durable knowledge first, ongoing projects last) and bounded to 17 KB: when it
+overflows, the oldest project notes leave first and a line says how many are
+missing.
+
+## Configuration
+
+Settings live in `~/.engram/env`, one `KEY=VALUE` per line, managed by
+`engram config` and read at every start. An environment variable of the same name
+wins.
+
+| variable | default | purpose |
+|---|---|---|
+| `ENGRAM_ROOT` | `~/.engram/root` pointer, else `~/engram` | notes directory |
+| `ENGRAM_MODEL` | `~/.engram/models/granite-embedding-278m-multilingual` | model directory |
+| `ENGRAM_PRECISION` | `q8` | `f32` restores full-precision linear layers |
+| `ENGRAM_NO_DAEMON` | unset | never start the warm process |
+| `ENGRAM_IDLE`, `ENGRAM_WATCH` | 300, 30 | idle timeout and background refresh period, seconds |
+| `ENGRAM_QUESTIONS_CMD` | unset | command that writes the questions a paragraph answers (text on stdin, one per line) |
+| `ENGRAM_QUESTIONS_BATCH` | unlimited / 4 | paragraphs sent per pass (`index` / warm process) |
+| `ENGRAM_ID_BONUS` | 0.04 | lexical bonus per identifier found in a note |
+| `ENGRAM_LEARN` | 1 | `0` disables the learned bonus |
+| `ENGRAM_DUP` | 0.90 | cosine above which a new note is a duplicate |
+| `ENGRAM_HOOK_MIN`, `ENGRAM_HOOK_CHARS`, `ENGRAM_HOOK_LEN` | 0.60, 700, 30 | hook thresholds |
+
+### Indexed questions
+
+Any command that reads a prompt on stdin and prints lines works, for example a
+local model through a CLI:
+
+```sh
+engram config set ENGRAM_QUESTIONS_CMD "ollama run qwen2.5:3b"
+engram index        # generates once per paragraph, cached in .engram/questions.json
+```
+
+The cache is keyed by paragraph fingerprint and worth versioning: a whole-corpus
+generation takes about an hour of model calls, an unchanged paragraph never goes
+through the model twice.
+
+## Models
+
+| model | languages | window | parameters | when |
+|---|---|---|---|---|
+| [granite-embedding-278m-multilingual](https://huggingface.co/ibm-granite/granite-embedding-278m-multilingual) (default) | 100+ | 512 tokens | 278 M | notes in several languages, or a mix |
+| [granite-embedding-small-english-r2](https://huggingface.co/ibm-granite/granite-embedding-small-english-r2) | English | 8192 tokens | 97 M | English notes, long paragraphs, smaller machines |
+
+Both are Apache-2.0 and run on the CPU with Q8 linear layers by default. Two
+encoder families are implemented: XLM-RoBERTa (SentencePiece Unigram tokenizer,
+read from the native model file) and ModernBERT (byte-level BPE tokenizer, alternating
+global and sliding-window attention, rotary positions, activation read from the
+configuration). Any sentence-embedding checkpoint of those families with `cls` or
+`mean` pooling declared in `1_Pooling/config.json` should load; every model change
+must pass the concordance test (cosine above 0.999 with reference vectors) before it
+is served. A plausible wrong vector is the failure mode this project refuses.
+Measured numbers per model are in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+
+## Why engrams
 
 Agents accumulate knowledge session after session, then lose it: the notes are
 there, but a keyword search misses half of them, especially when notes mix two
@@ -63,7 +279,7 @@ verified identical (cosine 0.9999 to full precision, benchmark unchanged):
 
 Full tables, protocol and error bars: [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
-## How it works
+## Under the hood
 
 ```mermaid
 flowchart LR
@@ -72,7 +288,7 @@ flowchart LR
   end
   N -->|split by paragraph, prefix with name + description| C[chunks]
   C -->|optional: an LLM writes 3 questions per paragraph, cached| Q[questions]
-  C --> E["embed on CPU\nXLM-RoBERTa 278M, Q8 layers"]
+  C --> E["embed on CPU\nQ8 linear layers"]
   Q --> E
   E --> I[".engram/index.bin\nflat f32 matrix"]
   N -->|frontmatter| H["MEMORY.md per project\nhot index, 17 KB bound"]
@@ -101,235 +317,9 @@ flowchart LR
   keeps the model loaded, refreshes the index when notes change, and exits after
   five minutes without a request. Isolated calls work too, at 0.21 s and 310 MB peak.
 
-## Install
+More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-One line, then answer a few questions:
-
-```sh
-curl -sSfL https://raw.githubusercontent.com/codexofc/engrams/master/install.sh | sh
-```
-
-The script picks the prebuilt binary for your platform (Linux x86_64 and aarch64,
-macOS Apple silicon and Intel) from the [releases](https://github.com/codexofc/engrams/releases),
-installs it in `~/.local/bin`, and starts the guided setup. Prefer building from
-source? Rust 1.85 or later:
-
-```sh
-cargo install engrams                       # from crates.io
-git clone https://github.com/codexofc/engrams && cd engrams && cargo install --path .
-```
-
-The binary is called `engram`. It needs `curl` once, to download the model.
-
-## Guided setup
-
-```sh
-engram init
-```
-
-<p align="center"><img src="docs/wizard.svg" alt="engram init, the guided setup" width="720"></p>
-
-Five steps, each with a default that Enter accepts:
-
-1. **Your notes.** The directory, remembered in `~/.engram/root`, with an ignore
-   rule for the derived files and a git repository if you want one.
-2. **The model.** [granite-embedding-278m-multilingual](https://huggingface.co/ibm-granite/granite-embedding-278m-multilingual)
-   (Apache-2.0, 556 MB), downloaded once into `~/.engram/models/`.
-3. **Tools on this machine.** engrams looks for Claude Code, Codex CLI, opencode,
-   Gemini CLI, Cursor, Windsurf and Kandev, and offers to wire each one it finds:
-   the prompt hook and the MCP server for Claude Code, the MCP server for the others.
-4. **Indexed questions**, optional: a local LLM command that writes, once per
-   paragraph, the questions it answers. Skippable, and settable later.
-5. **A first note**, then the first index.
-
-Everything the wizard does is also a plain command, for scripts and for later:
-
-```sh
-engram init ~/notes --no-download     # directory only
-engram setup claude-code              # or codex, opencode, gemini, cursor, windsurf, kandev, all
-engram config                         # show the settings, or walk through them on a terminal
-engram config set ENGRAM_QUESTIONS_CMD "ollama run qwen2.5:3b"
-engram config root ~/other-notes
-```
-
-Settings live in `~/.engram/env`, one `KEY=VALUE` per line, read at every start;
-an environment variable of the same name wins.
-
-Then write notes and index them:
-
-```sh
-mkdir -p ~/notes/work/backend
-cat > ~/notes/work/backend/token-rotation.md <<'EOF'
----
-name: token-rotation
-description: API tokens rotate every ninety days, the old one stays valid for one hour
-type: reference
-status: active
-verified: 2026-09-06
----
-
-Rotation is triggered by the `rotate-token` job. The previous token keeps working
-for one hour so that in-flight requests finish. Clients read the new token from the
-`X-Next-Token` header of any authenticated response.
-EOF
-
-engram index
-engram search "how long does an old token stay valid"
-```
-
-Notes live in `<root>/<family>/<project>/<name>.md`. A project named `common`
-inside a family is listed in the hot index of every sibling project.
-
-## Everyday commands
-
-| command | what it does |
-|---|---|
-| `engram search <words>` | five notes at most, with score, path, description and the passage that matched; `--archives` includes replaced notes |
-| `engram answer <question>` | the passages that answer, bounded in size, ready to cite; `--json` for tools |
-| `engram context <topic>` | a markdown brief to hand an agent before it starts |
-| `engram read <name>` | print a note; a read after a search that missed it is a learning signal |
-| `engram write <family/project> <name> --type <t> --description <d>` | write a note (body on stdin); refuses secrets and near-duplicates of an active note |
-| `engram append <name>` | add a paragraph, mark verified today |
-| `engram verify <name>` | the fact still holds, the date says so |
-| `engram supersede <old> <new> --type <t> --description <d>` | replace a fact: new note, old one archived with `superseded_by`, links rewritten |
-| `engram link <a> <b>` | cross-reference two notes |
-| `engram learn "<query>" <name>` | confirm that a note answers a query; `--show`, `--forget` |
-| `engram index` | embed what changed, regenerate the `MEMORY.md` files |
-| `engram check` | naming, mandatory fields, dangling links, bound of the hot index, truncated paragraphs, near-duplicates |
-| `engram secrets` | exit 1 if any note looks like it contains a token, a key or a password (use it as a pre-commit hook) |
-| `engram curation` | a markdown checklist of stale, long, undated or duplicated notes |
-| `engram since 7`, `engram why <name>` | what changed, and where a note comes from (git) |
-| `engram status`, `engram stop` | the warm process, the index, the usage cadence |
-
-## Integrations
-
-### Claude Code
-
-```sh
-engram setup claude-code
-```
-
-This adds a `UserPromptSubmit` hook to `~/.claude/settings.json` and registers the
-MCP server with `claude mcp add`. From then on every prompt arrives with a
-`<working-memory>` block holding the two passages closest to it, and the model has
-the `search`, `answer`, `read`, `write`, `append`, `link` and `learn` tools.
-
-Add a few lines to your `CLAUDE.md` so the model uses the memory deliberately:
-
-```markdown
-## Working memory
-Durable facts live in engrams. Before a task, search it (`engram search` or the
-`search` tool). Read a note with `engram read` before relying on it. Write durable
-facts with `engram write`, complete them with `engram append`, replace them with
-`engram supersede`; never edit the generated MEMORY.md files. Nothing dated, no
-secrets.
-```
-
-Claude Code also loads a `MEMORY.md` from its per-project memory directory: point
-that directory at the matching `<family>/<project>/` of your root with a symbolic
-link, and the hot index is loaded at every session.
-
-### opencode
-
-```sh
-engram setup opencode
-```
-
-This adds a local MCP server named `engram` to `~/.config/opencode/opencode.json`.
-opencode reads `CLAUDE.md` and `AGENTS.md`, so the instruction block above applies.
-
-### Codex CLI, Gemini CLI, Cursor, Windsurf
-
-```sh
-engram setup codex      # ~/.codex/config.toml, [mcp_servers.engram]
-engram setup gemini     # ~/.gemini/settings.json, mcpServers
-engram setup cursor     # ~/.cursor/mcp.json, mcpServers
-engram setup windsurf   # ~/.codeium/windsurf/mcp_config.json, mcpServers
-```
-
-Each one registers `engram mcp` as a local MCP server. Codex reads `AGENTS.md`,
-so the instruction block above belongs there for it.
-
-### Kandev
-
-Kandev cards run Claude Code or opencode with the user's configuration, so the two
-setups above already apply inside cards. To expose the tools to Kandev itself, add
-the MCP server in its settings (`engram setup kandev` prints the snippet):
-
-```json
-{"mcpServers": {"engram": {"command": "/path/to/engram", "args": ["mcp"]}}}
-```
-
-### Any other agent
-
-`engram mcp` speaks the Model Context Protocol over stdio. `engram answer --json`
-returns passages for scripts. `engram context <topic> --out brief.md` writes a brief.
-
-## Note format
-
-```yaml
----
-name: token-rotation          # equals the file name, lowercase ASCII, digits, dashes
-description: One line. It decides relevance in the hot index and prefixes every chunk.
-type: reference               # user | feedback | project | reference
-status: active                # active | archived (archived notes name their successor)
-verified: 2026-09-06          # date of the last verification
-depends_on: tool 1.2          # optional, pinned version; `check` compares it with the installed one
-superseded_by: [[other-note]] # set by `supersede`
-source: TICKET-123            # optional
----
-
-Markdown body. Paragraphs are the unit of indexing. [[wiki links]] are checked.
-```
-
-`engram check` enforces the rules. The `MEMORY.md` of each project is generated,
-ordered by type (durable knowledge first, ongoing projects last) and bounded to
-17 KB: when it overflows, the oldest project notes leave first and a line says how
-many are missing.
-
-## Configuration
-
-| variable | default | purpose |
-|---|---|---|
-| `ENGRAM_ROOT` | `~/.engram/root` pointer, else `~/engram` | notes directory |
-| `ENGRAM_MODEL` | `~/.engram/models/granite-embedding-278m-multilingual` | model directory |
-| `ENGRAM_PRECISION` | `q8` | `f32` restores full-precision linear layers |
-| `ENGRAM_NO_DAEMON` | unset | never start the warm process |
-| `ENGRAM_IDLE`, `ENGRAM_WATCH` | 300, 30 | idle timeout and background refresh period, seconds |
-| `ENGRAM_QUESTIONS_CMD` | unset | command that writes the questions a paragraph answers (text on stdin, one per line) |
-| `ENGRAM_QUESTIONS_BATCH` | unlimited / 4 | paragraphs sent per pass (`index` / warm process) |
-| `ENGRAM_ID_BONUS` | 0.04 | lexical bonus per identifier found in a note |
-| `ENGRAM_LEARN` | 1 | `0` disables the learned bonus |
-| `ENGRAM_DUP` | 0.90 | cosine above which a new note is a duplicate |
-| `ENGRAM_HOOK_MIN`, `ENGRAM_HOOK_CHARS`, `ENGRAM_HOOK_LEN` | 0.60, 700, 30 | hook thresholds |
-
-### Indexed questions
-
-Any command that reads a prompt on stdin and prints lines works, for example a
-local model through a CLI:
-
-```sh
-export ENGRAM_QUESTIONS_CMD="ollama run qwen2.5:3b"
-engram index        # generates once per paragraph, cached in .engram/questions.json
-```
-
-The cache is keyed by paragraph fingerprint and worth versioning: a whole-corpus
-generation takes about an hour of model calls, an unchanged paragraph never goes
-through the model twice.
-
-## Supported models
-
-Sentence-embedding models based on **XLM-RoBERTa** (SentencePiece Unigram tokenizer,
-`cls` or `mean` pooling declared in `1_Pooling/config.json`), in safetensors. The
-default is granite-embedding-278m-multilingual. The ModernBERT graph is wired but
-needs a BPE tokenizer, which the compact tokenizer does not implement yet:
-contributions welcome.
-
-Every model change must pass `tests/concordance.rs` (cosine above 0.999 with
-reference vectors) before it is served. A plausible wrong vector is the failure mode
-this project refuses.
-
-## Design principles
+## Principles
 
 1. **Files are the truth, everything else is derived and disposable.**
 2. **A control that only exists in prose does not exist.** Every rule is a check.
@@ -340,14 +330,9 @@ this project refuses.
 5. **Low level where it runs.** Memory layout, precision and evaluation order are
    decisions this code makes itself; that is where the 1.8 GB went.
 
-## Contributing
+## Contributing and license
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: English everywhere, no
-personal data in fixtures, `cargo fmt`, `clippy -D warnings`, tests, and a benchmark
-line for anything that touches ranking.
-
-## License
-
-Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or
-[MIT license](LICENSE-MIT) at your option. The default model is distributed by IBM
-under Apache-2.0.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md). Licensed
+under either of [Apache License, Version 2.0](LICENSE-APACHE) or
+[MIT license](LICENSE-MIT) at your option. The models are distributed by IBM under
+Apache-2.0.

@@ -35,8 +35,10 @@ frontmatter at search time, never from the index; a fact is replaced, never dele
 | `note` | frontmatter and body of a note, YAML subset | nothing |
 | `check` | naming rules, mandatory fields, links, YAML subset | `note` |
 | `chunking` | split a body along markdown structure, context prefix | nothing |
-| `tokenizer` | compact Unigram tokenizer, native SentencePiece reader | `spm_precompiled` |
-| `xlm_roberta` | the encoder graph, lazy embedding table, Q8 linear layers | `candle` |
+| `tokenizer` | compact Unigram tokenizer, native SentencePiece reader, tokenizer choice | `spm_precompiled` |
+| `bpe` | byte-level BPE tokenizer for ModernBERT checkpoints | `regex` |
+| `xlm_roberta` | the XLM-RoBERTa graph, lazy embedding table, Q8 linear layers | `candle` |
+| `modernbert` | the ModernBERT graph: rotary positions, global and sliding-window attention, gated MLP | `candle` |
 | `model`, `pooling` | model configuration and pooling read from the model | `serde_json` |
 | `embedder` | load a model directory, encode texts, parallel encoding | the above |
 | `index` | flat vector storage, freshness by content hash, atomic save | `serde` |

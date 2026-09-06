@@ -7,12 +7,12 @@
 //! paragraphs, so it was removed.
 
 use crate::model::{Architecture, ModelConfig};
+use crate::modernbert::{Config as ModernConfig, ModernBertModel};
 use crate::pooling::{pool, Pooling};
-use crate::tokenizer::Unigram;
+use crate::tokenizer::AnyTokenizer;
 use crate::xlm_roberta::{Config as XlmConfig, Precision, XLMRobertaModel};
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
-use candle_transformers::models::modernbert::{Config as ModernConfig, ModernBert};
 use std::path::Path;
 
 /// A normalised vector and the flag "the text was cut by the window".
@@ -20,12 +20,12 @@ pub type Encoded = (Vec<f32>, bool);
 
 enum Graph {
     XlmRoberta(Box<XLMRobertaModel>),
-    ModernBert(Box<ModernBert>),
+    ModernBert(Box<ModernBertModel>),
 }
 
 pub struct Embedder {
     model: Graph,
-    tokenizer: Unigram,
+    tokenizer: AnyTokenizer,
     pooling: Pooling,
     device: Device,
     config: ModelConfig,
@@ -42,7 +42,13 @@ impl Embedder {
     /// before the weights, so an incomplete directory names what is missing.
     pub fn load(dir: &Path) -> Result<Self, String> {
         let config = read_text(dir, "config.json")?;
-        let config = ModelConfig::parse(&config)?;
+        let mut config = ModelConfig::parse(&config)?;
+        // sentence-transformers caps the sequence below the position table.
+        if let Ok(sbert) = std::fs::read_to_string(dir.join("sentence_bert_config.json")) {
+            if let Some(n) = serde_json::from_str::<serde_json::Value>(&sbert).ok().and_then(|v| v["max_seq_length"].as_u64()) {
+                config.max_tokens = config.max_tokens.min(n as usize);
+            }
+        }
         let pooling = read_text(dir, "1_Pooling/config.json")?;
         let pooling = Pooling::from_config(&pooling)?;
 
@@ -54,7 +60,7 @@ impl Embedder {
         }
 
         // Truncation happens inside the tokenizer, markers included.
-        let tokenizer = Unigram::from_model_dir(dir, config.max_tokens)?;
+        let tokenizer = AnyTokenizer::from_model_dir(dir, config.max_tokens)?;
 
         let weights = dir.join("model.safetensors");
         let (device, dtype) = (Device::Cpu, DType::F32);
@@ -62,6 +68,10 @@ impl Embedder {
         let vb =
             unsafe { VarBuilder::from_mmaped_safetensors(std::slice::from_ref(&weights), dtype, &device).map_err(|e| format!("unreadable weights: {e}"))? };
 
+        let precision = match std::env::var("ENGRAM_PRECISION").as_deref() {
+            Ok("f32") => Precision::F32,
+            _ => Precision::Q8,
+        };
         let model = match config.architecture {
             Architecture::XlmRoberta => {
                 let raw = read_text(dir, "config.json")?;
@@ -69,18 +79,14 @@ impl Embedder {
                 // Q8_0 on the linear layers by default: weights only, F32 activations,
                 // cosine 0.9999 with F32 on real paragraphs. `ENGRAM_PRECISION=f32`
                 // restores full precision.
-                let precision = match std::env::var("ENGRAM_PRECISION").as_deref() {
-                    Ok("f32") => Precision::F32,
-                    _ => Precision::Q8,
-                };
                 Graph::XlmRoberta(Box::new(XLMRobertaModel::new(&cfg, vb, &weights, precision, &device).map_err(|e| format!("graph: {e}"))?))
             }
             Architecture::ModernBert => {
                 let raw = read_text(dir, "config.json")?;
                 let cfg: ModernConfig = serde_json::from_str(&raw).map_err(|e| format!("config incompatible with ModernBERT: {e}"))?;
-                // candle expects a `model.` prefix that some exports do not have.
+                // Some exports carry a `model.` prefix, some do not.
                 let vb = vb.rename_f(|name: &str| name.strip_prefix("model.").unwrap_or(name).to_string());
-                Graph::ModernBert(Box::new(ModernBert::load(vb, &cfg).map_err(|e| format!("graph: {e}"))?))
+                Graph::ModernBert(Box::new(ModernBertModel::new(&cfg, vb, &weights, precision, &device).map_err(|e| format!("graph: {e}"))?))
             }
         };
 
@@ -128,7 +134,7 @@ impl Embedder {
         let token_types = Tensor::zeros((1, n), DType::U32, &self.device).map_err(to_msg)?;
         let hidden = match &self.model {
             Graph::XlmRoberta(m) => m.forward(&input, &mask, &token_types).map_err(to_msg)?,
-            Graph::ModernBert(m) => m.forward(&input, &mask).map_err(to_msg)?,
+            Graph::ModernBert(m) => m.forward(&input).map_err(to_msg)?,
         };
         let v = pool(&hidden, &mask, self.pooling).map_err(to_msg)?;
         let v: Vec<f32> = v.squeeze(0).map_err(to_msg)?.to_dtype(DType::F32).map_err(to_msg)?.to_vec1().map_err(to_msg)?;

@@ -1,0 +1,32 @@
+name: Feature request
+description: A capability or a change you would like to see
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you are trying to do and where engrams stops short. Describe the situation, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: If you have one. Commands, flags, behaviour.
+  - type: textarea
+    id: measure
+    attributes:
+      label: How we would know it works
+      description: A change to ranking, chunking or the model path needs a benchmark line. What would you measure?
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Area
+      options:
+        - search and ranking
+        - notes and life cycle
+        - integrations (hook, MCP, tools)
+        - model and performance
+        - setup and configuration
+        - documentation

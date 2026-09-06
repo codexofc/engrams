@@ -1,0 +1,47 @@
+name: Bug report
+description: Something behaves differently from what the documentation says
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The command, its output, and what you expected instead.
+      placeholder: |
+        $ engram search "..."
+        engram: ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: engram version
+      placeholder: output of `engram version`
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: engram status
+      description: Output of `engram status` (paths only, no note content).
+      render: text
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      placeholder: macOS 15 arm64, Ubuntu 24.04 x86_64, ...
+    validations:
+      required: true
+  - type: textarea
+    id: ranking
+    attributes:
+      label: If the bug is a ranking
+      description: The query and the note you expected, anonymised. A reproducible case is worth more than a description.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I ran `engram check` and it reports no problem on my notes
+        - label: This report contains no secret, token or private note content
+          required: true

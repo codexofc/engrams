@@ -4,6 +4,7 @@
 //! caches) is derived and disposable. No server, no network, no database: one binary,
 //! a directory of notes, and a rebuildable index.
 
+pub mod bpe;
 pub mod check;
 pub mod chunking;
 pub mod duplicates;
@@ -13,6 +14,7 @@ pub mod hot;
 pub mod index;
 pub mod lifecycle;
 pub mod model;
+pub mod modernbert;
 pub mod note;
 pub mod paths;
 pub mod pooling;

@@ -31,7 +31,17 @@ jobs:
       - run: |
           mkdir -p dist
           tar -C target/${{ matrix.target }}/release -czf dist/engram-${{ github.ref_name }}-${{ matrix.target }}.tar.gz engram
+      - name: Release notes from the changelog
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { p = 1; next }
+            p && /^## \[/ { exit }
+            p { print }
+          ' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "See CHANGELOG.md." > notes.md
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/*.tar.gz
-          generate_release_notes: true
+          body_path: notes.md

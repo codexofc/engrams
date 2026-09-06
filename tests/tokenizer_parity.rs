@@ -142,3 +142,40 @@ fn native_sentencepiece_matches_tokenizer_json() {
     }
     assert_eq!(mismatches, 0, "{mismatches} mismatch(es) on {} texts", texts.len());
 }
+
+/// The byte-level BPE tokenizer must match the reference crate on the same texts.
+#[test]
+fn bpe_tokenizer_matches_the_reference_everywhere() {
+    let dir = engrams::paths::alt_model_dir();
+    if !dir.join("tokenizer.json").exists() {
+        eprintln!("BPE model absent, test skipped");
+        return;
+    }
+    let ours = engrams::bpe::Bpe::from_file(&dir.join("tokenizer.json"), 8192).expect("bpe tokenizer");
+    let mut reference = tokenizers::Tokenizer::from_file(dir.join("tokenizer.json")).expect("reference");
+    reference.with_truncation(Some(tokenizers::TruncationParams { max_length: 8192, ..Default::default() })).unwrap();
+    let mut texts = edge_cases();
+    texts.push("don't stop, it's 3.14 or 1234567 and    four spaces then\n\nnewlines, CamelCase HTTPServer x2".into());
+    texts.extend(corpus_texts());
+    let mut mismatches = 0;
+    for t in &texts {
+        let a = ours.encode(t);
+        let b = reference.encode(t.as_str(), true).unwrap();
+        if a.ids != b.get_ids() {
+            mismatches += 1;
+            if mismatches <= 3 {
+                let first = a.ids.iter().zip(b.get_ids()).position(|(x, y)| x != y);
+                eprintln!(
+                    "mismatch on {:?}: ours {} ids, reference {} ids, first difference at {:?}\n  ours {:?}\n  ref  {:?}",
+                    t.chars().take(60).collect::<String>(),
+                    a.ids.len(),
+                    b.get_ids().len(),
+                    first,
+                    &a.ids[..a.ids.len().min(24)],
+                    &b.get_ids()[..b.get_ids().len().min(24)]
+                );
+            }
+        }
+    }
+    assert_eq!(mismatches, 0, "{mismatches} mismatch(es) on {} texts", texts.len());
+}

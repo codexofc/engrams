@@ -83,3 +83,24 @@ fn a_short_text_is_not_reported_as_truncated() {
     let embedder = Embedder::load(&dir).expect("model");
     assert!(!embedder.would_truncate("A short note."));
 }
+
+/// The ModernBERT graph, written after the reference implementation, must match
+/// its reference vectors too. The library graph hard-codes a GELU activation and
+/// stalled at 0.85 on this model, which declares SiLU.
+#[test]
+fn the_modernbert_model_matches_its_reference() {
+    let dir = engrams::paths::alt_model_dir();
+    if !dir.join("model.safetensors").exists() {
+        eprintln!("ModernBERT model absent, test skipped; run `engram init --model {}`", engrams::paths::ALT_MODEL_REPO);
+        return;
+    }
+    let embedder = Embedder::load(&dir).expect("model");
+    let raw = include_str!("fixtures/reference-granite-small-english-r2.json");
+    let reference: std::collections::BTreeMap<String, Case> = serde_json::from_str(raw).expect("unreadable fixture");
+    for (name, case) in reference {
+        let got = embedder.encode(&case.text).expect("encoding");
+        let c = cosine(&got, &case.vector);
+        assert!(c > 0.999, "case {name}: cosine {c:.6}, below 0.999");
+    }
+    assert!(!embedder.would_truncate(&"word ".repeat(1500)), "the long-context model keeps 1 500 words");
+}

@@ -118,8 +118,9 @@ of recall on the same benchmark; Q8_0 on weights only is a different object.
   refuses any non-finite vector.
 - **BF16 on CPU.** No matmul in the inference library.
 - **Static embeddings.** 20 to 30 points of recall below the transformer.
-- **A long-context ModernBERT.** Its cosine with the reference implementation stayed
-  at 0.85; not served until it reaches 0.999.
+- **The library ModernBERT graph.** Its cosine with the reference stayed at 0.85
+  because of a hard-coded activation; replaced by a graph written after the reference
+  implementation, at 1.000000 (see the last section).
 
 ## Reproduce
 
@@ -133,3 +134,29 @@ cargo run --release --example q8_fidelity 6    # Q8 versus F32 on one paragraph 
 cargo run --release --example load_probe       # load and encode times
 cargo run --release --example rss_probe        # resident memory step by step
 ```
+
+## The ModernBERT model
+
+`ibm-granite/granite-embedding-small-english-r2` (ModernBERT, 12 layers, 384
+dimensions, 8192-token window, English) on the same corpus, text only, no
+questions: the long window merges paragraphs into 1 117 chunks instead of 1 661, so
+the "right passage" column is not comparable.
+
+| family | words only | multilingual 278M, text only | ModernBERT small English, text only |
+|---|---|---|---|
+| topic of a note (24) | 33 % | 83 % | 83 % |
+| buried detail (24) | 54 % | 58 % | 54 % |
+| named identifier (12) | 75 % | 75 % | **100 %** |
+| first benchmark (36), one third in French | 19 % | 81 % | 72 % |
+
+Reading: on an English-first corpus the smaller model holds the topic family and
+wins on identifiers without any lexical bonus; it loses nine points on the family
+where a third of the queries are in French, which is what an English model should
+lose. Isolated search 0.43 s and 285 MB peak: the byte-level BPE vocabulary
+(180 000 entries, 413 000 merges) is still parsed from JSON at every start, which
+the multilingual model no longer pays.
+
+Concordance with the reference vectors: cosine 1.000000 in F32, 0.99986 in Q8. The
+library implementation of the graph stalled at 0.85 on this model because it
+hard-codes a GELU activation where the configuration says SiLU; the graph shipped
+here reads the activation from the configuration.

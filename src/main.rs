@@ -245,7 +245,12 @@ fn open_index(model: &Path, embedder: &Embedder) -> Result<(PathBuf, Index), Str
         weights_hash: weights_fingerprint(model)?,
         dim: embedder.dim(),
         pooling: format!("{:?}", embedder.pooling()).to_lowercase(),
-        prompts: format!("{}|{}", embedder.prompts().query, embedder.prompts().document),
+        // Empty when the model has no prefixes, so indexes written before the field
+        // existed stay valid.
+        prompts: match embedder.prompts() {
+            p if p.query.is_empty() && p.document.is_empty() => String::new(),
+            p => format!("{}|{}", p.query, p.document),
+        },
     };
     let path = state_file("index.bin");
     let index = match std::fs::metadata(&path) {

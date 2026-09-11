@@ -6,6 +6,13 @@ All notable changes to Kept are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+- docs/SERVER-MODE.md: the specification of the server mode for teams, with the
+  database comparison that decided PostgreSQL, the schema, the retrieval pipeline
+  and the delivery lots. docs/MODEL-TUNING.md: the plan of the experiment that
+  tunes the embedding model on a team's own pairs, with the expected gains, the
+  costs and the acceptance criteria.
+
 ## [0.6.1] - 2026-09-07
 
 ### Changed

@@ -10,20 +10,23 @@ index is derived and disposable, everything lives on one machine and in one git
 repository. It is the right mode for a person and their agents, and it stays the
 default.
 
-The second mode, the **database mode**, is for a team or a server: several people
-and several agents writing to the same memory at once, corpora of tens of
-thousands of notes, and a memory that outlives any one laptop. The plan:
+The second mode, the **server mode**, is for a team: several people and several
+agents writing to the same memory at once, corpora of tens of thousands of notes,
+and a memory that outlives any one laptop. Its specification, with the database
+comparison that decided it, the schema, the retrieval pipeline and the delivery
+lots, is [SERVER-MODE.md](SERVER-MODE.md). In short:
 
 - the same CLI, the same MCP tools and the same hook, unchanged, so that a project
   can move from one mode to the other without touching the agents,
-- a store behind a trait, with SQLite and its vector extension as the first
-  backend (one file, no server), and a networked backend after it, so that the
-  choice is a configuration line,
-- notes stay readable markdown: the database holds the vectors, the questions
-  cache, the feedback table and the access log, the notes themselves are exported
-  as files on demand and can be versioned as today,
-- concurrent writers, one writer per note at a time, with the same refusal of
-  secrets and near-duplicates as the CLI,
+- a store behind a trait, SQLite for the file mode and PostgreSQL with pgvector
+  for the server mode, so that the choice is a configuration line,
+- queries and notes encoded on the server, so that a developer's machine carries
+  neither the model nor the index and the hook answers in tens of milliseconds,
+- notes stay whole and readable: `kept export` writes them back as files, and
+  nothing is locked in,
+- scopes (personal, project, team, company) with rights, learning tables per
+  scope, audit, and the same refusal of secrets and near-duplicates as the CLI,
+- a lexical channel fused with the vector ranking, measured before it ships,
 - the benchmark run in both modes on the same corpus, so that the database mode
   cannot silently lose recall or latency.
 
@@ -73,4 +76,6 @@ header and with several facts per file. The benchmarks assume the format
 - No cloud service, no account, no telemetry. The database mode is something you
   host.
 - No model training or fine-tuning inside the engine: the notes are the memory,
-  and they stay readable by a person.
+  and they stay readable by a person. Training a model on a team's own pairs is a
+  procedure outside the engine, planned as an experiment in
+  [MODEL-TUNING.md](MODEL-TUNING.md), and the engine only loads its weights.

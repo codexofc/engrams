@@ -426,12 +426,14 @@ tool when you know the exact word, which is why the engine keeps a lexical signa
 
 ## Roadmap
 
-Two storage modes, the current file mode and a database mode for teams behind the
-same commands, then `kept import` for memories that already exist (Claude Code,
-Gemini, Codex, plain folders), with a raw corpus in the benchmark to measure the
-gap, fresh-machine tests on Linux desktops, and a lexical channel merged with the vector
-ranking. Details and what is deliberately not planned in
-[docs/ROADMAP.md](docs/ROADMAP.md).
+Two storage modes, the current file mode and a server mode for teams behind the
+same commands, specified in [docs/SERVER-MODE.md](docs/SERVER-MODE.md). Then
+`kept import` for memories that already exist (Claude Code, Gemini, Codex, plain
+folders), with a raw corpus in the benchmark to measure the gap, fresh-machine
+tests on Linux desktops, a lexical channel merged with the vector ranking, and an
+experiment on tuning the model to a team's own memory, planned in
+[docs/MODEL-TUNING.md](docs/MODEL-TUNING.md). Details and what is deliberately not
+planned in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Principles
 
